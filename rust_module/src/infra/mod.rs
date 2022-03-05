@@ -9,37 +9,56 @@ use crate::error::Error;
 
 struct RepositoryImpl {
     sender: mpsc::Sender<(oneshot::Sender<String>, String)>,
+    receiver: mpsc::Receiver<String>,
 }
 
 #[async_trait]
 impl Repository for RepositoryImpl {
     async fn register(&self, params: Request) -> Result<Response, Error> {
         // SkyWay Crateからの戻り値を得るためのoneshot channelを生成
-        let (channel_tx, channel_rx) = tokio::sync::oneshot::channel();
+        let (channel_message_tx, channel_message_rx) = tokio::sync::oneshot::channel();
 
         // Request型である時点でto_stringには失敗しない
         let message = params.to_string().unwrap();
 
         // SkyWay Crateへメッセージを送る
         // 失敗した場合はエラーメッセージを返す
-        if let Err(_) = self.sender.send((channel_tx, message)).await {
+        if let Err(_) = self.sender.send((channel_message_tx, message)).await {
             return Err(error::Error::create_local_error(
                 "could not send request to skyway crate",
             ));
         }
 
         // SkyWay Crateからのメッセージを処理する
-        match channel_rx.await {
+        match channel_message_rx.await {
             Ok(message) => Ok(Response::from_str(&message)?),
             Err(_) => Err(error::Error::create_local_error(
                 "could not receive response from skyway crate",
             )),
         }
     }
+    async fn receive_event(&mut self) -> Result<Response, error::Error> {
+        use std::time::Duration;
+
+        use tokio::time;
+        loop {
+            match time::timeout(Duration::from_millis(1000), self.receiver.recv()).await {
+                Ok(Some(response_string)) => {
+                    return Response::from_str(&response_string);
+                }
+                Ok(None) => {
+                    // probably closed
+                }
+                Err(_) => {
+                    //timeout
+                }
+            }
+        }
+    }
 }
 
 #[cfg(test)]
-mod infra_test {
+mod infra_send_message_test {
     use module::prelude::request_message::{Parameter, PeerServiceParams};
 
     use super::*;
@@ -54,11 +73,15 @@ mod infra_test {
         let message: Request = Request::Peer(inner);
 
         // Repository Implの生成
-        let (tx, mut rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
-        let repository_impl = RepositoryImpl { sender: tx };
+        let (message_tx, mut message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
+        let (_event_tx, event_rx) = mpsc::channel::<String>(1000);
+        let repository_impl = RepositoryImpl {
+            sender: message_tx,
+            receiver: event_rx,
+        };
 
         tokio::spawn(async move {
-            let (response_tx, request_message) = rx.recv().await.unwrap();
+            let (response_message_tx, request_message) = message_rx.recv().await.unwrap();
 
             let request = Request::from_str(&request_message);
             match request {
@@ -79,7 +102,7 @@ mod infra_test {
                     "token":"pt-9749250e-d157-4f80-9ee2-359ce8524308"
                 }
             }"#;
-            let _ = response_tx.send(response_str.into());
+            let _ = response_message_tx.send(response_str.into());
         });
 
         // 実行
@@ -97,11 +120,15 @@ mod infra_test {
         let message: Request = Request::Peer(inner);
 
         // Repository Implの生成
-        let (tx, mut rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
-        let repository_impl = RepositoryImpl { sender: tx };
+        let (message_tx, mut message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
+        let (_event_tx, event_rx) = mpsc::channel::<String>(1000);
+        let repository_impl = RepositoryImpl {
+            sender: message_tx,
+            receiver: event_rx,
+        };
 
         tokio::spawn(async move {
-            let (_response_tx, request_message) = rx.recv().await.unwrap();
+            let (_response_message_tx, request_message) = message_rx.recv().await.unwrap();
 
             let request = Request::from_str(&request_message);
             match request {
@@ -134,11 +161,15 @@ mod infra_test {
         let message: Request = Request::Peer(inner);
 
         // Repository Implの生成
-        let (tx, mut rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
-        let repository_impl = RepositoryImpl { sender: tx };
+        let (message_tx, mut message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
+        let (_event_tx, event_rx) = mpsc::channel::<String>(1000);
+        let repository_impl = RepositoryImpl {
+            sender: message_tx,
+            receiver: event_rx,
+        };
 
         tokio::spawn(async move {
-            let (response_tx, request_message) = rx.recv().await.unwrap();
+            let (response_message_tx, request_message) = message_rx.recv().await.unwrap();
 
             let request = Request::from_str(&request_message);
             match request {
@@ -158,11 +189,79 @@ mod infra_test {
                     "peer_id":"hoge",
                     "token":"pt-9749250e-d157-4f80-9ee2-359ce8524308"
             }"#;
-            let _ = response_tx.send(response_str.into());
+            let _ = response_message_tx.send(response_str.into());
         });
 
         // 実行
         let result = repository_impl.register(message).await;
+        match result {
+            Err(error::Error::SerdeError { error: _ }) => {
+                assert!(true)
+            }
+            _ => assert!(false),
+        }
+    }
+}
+
+#[cfg(test)]
+mod infra_receive_event_test {
+    use super::*;
+
+    #[tokio::test]
+    // eventとして異常な文字列を受信した場合
+    async fn success() {
+        // Repository Implの生成
+        let (message_tx, _message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
+        let (event_tx, event_rx) = mpsc::channel::<String>(1000);
+        let mut repository_impl = RepositoryImpl {
+            sender: message_tx,
+            receiver: event_rx,
+        };
+
+        let (_close_tx, close_rx) = oneshot::channel::<()>();
+
+        tokio::spawn(async move {
+            let response_str = r#"{
+                "is_success":true,
+                "result":{
+                    "type":"PEER",
+                    "command":"CREATE",
+                    "peer_id":"hoge",
+                    "token":"pt-9749250e-d157-4f80-9ee2-359ce8524308"
+                }
+            }"#;
+            let _ = event_tx.send(response_str.to_string()).await;
+            let _ = close_rx.await;
+        });
+
+        // 実行
+        let result = repository_impl.receive_event().await;
+        match result {
+            Ok(_) => assert!(true),
+            _ => assert!(false),
+        }
+    }
+
+    #[tokio::test]
+    // eventとして異常な文字列を受信した場合
+    async fn recv_invalid_json() {
+        // Repository Implの生成
+        let (message_tx, _message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
+        let (event_tx, event_rx) = mpsc::channel::<String>(1000);
+        let mut repository_impl = RepositoryImpl {
+            sender: message_tx,
+            receiver: event_rx,
+        };
+
+        let (_close_tx, close_rx) = oneshot::channel::<()>();
+
+        tokio::spawn(async move {
+            let _ = event_tx.send("invalid json".to_string()).await;
+            let _ = close_rx.await;
+        });
+
+        // 実行
+        let result = repository_impl.receive_event().await;
         match result {
             Err(error::Error::SerdeError { error: _ }) => {
                 assert!(true)

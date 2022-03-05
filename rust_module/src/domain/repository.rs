@@ -11,4 +11,5 @@ use mockall::automock;
 #[async_trait]
 pub(crate) trait Repository: Interface {
     async fn register(&self, params: Request) -> Result<Response, error::Error>;
+    async fn receive_event(&mut self) -> Result<Response, error::Error>;
 }
