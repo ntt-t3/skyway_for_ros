@@ -930,6 +930,7 @@ dependencies = [
  "futures",
  "mockall",
  "module",
+ "once_cell",
  "serde",
  "serde_json",
  "shaku",

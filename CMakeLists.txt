@@ -4,6 +4,8 @@ add_compile_options(-std=c++14)
 
 include(ExternalProject)
 
+SET(SKYWAY_LIB_FILE ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/rust_module/target/release/libskyway.a)
+
 find_package(catkin REQUIRED COMPONENTS
         actionlib
         actionlib_msgs
@@ -40,6 +42,7 @@ add_executable(${PROJECT_NAME} src/main.cpp)
 
 target_link_libraries(${PROJECT_NAME}
         ${catkin_LIBRARIES}
+        ${SKYWAY_LIB_FILE}
         crypto
         ssl
         pthread
