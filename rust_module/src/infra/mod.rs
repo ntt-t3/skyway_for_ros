@@ -7,9 +7,18 @@ use crate::domain::repository::Repository;
 use crate::error;
 use crate::error::Error;
 
-struct RepositoryImpl {
+pub(crate) struct RepositoryImpl {
     sender: mpsc::Sender<(oneshot::Sender<String>, String)>,
     receiver: mpsc::Receiver<String>,
+}
+
+impl RepositoryImpl {
+    pub fn new(
+        sender: mpsc::Sender<(oneshot::Sender<String>, String)>,
+        receiver: mpsc::Receiver<String>,
+    ) -> Self {
+        RepositoryImpl { sender, receiver }
+    }
 }
 
 #[async_trait]

@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use shaku::Interface;
 
 use crate::domain::entity::{Request, Response};
 use crate::error;
@@ -9,7 +8,7 @@ use mockall::automock;
 
 #[cfg_attr(test, automock)]
 #[async_trait]
-pub(crate) trait Repository: Interface {
+pub(crate) trait Repository {
     async fn register(&self, params: Request) -> Result<Response, error::Error>;
     async fn receive_event(&mut self) -> Result<Response, error::Error>;
 }
