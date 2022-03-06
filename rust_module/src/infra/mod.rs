@@ -1,4 +1,6 @@
 use async_trait::async_trait;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use tokio::sync::{mpsc, oneshot};
 
 use crate::domain::entity::Stringify;
@@ -9,7 +11,7 @@ use crate::error::Error;
 
 pub(crate) struct RepositoryImpl {
     sender: mpsc::Sender<(oneshot::Sender<String>, String)>,
-    receiver: mpsc::Receiver<String>,
+    receiver: Mutex<mpsc::Receiver<String>>,
 }
 
 impl RepositoryImpl {
@@ -17,7 +19,10 @@ impl RepositoryImpl {
         sender: mpsc::Sender<(oneshot::Sender<String>, String)>,
         receiver: mpsc::Receiver<String>,
     ) -> Self {
-        RepositoryImpl { sender, receiver }
+        RepositoryImpl {
+            sender,
+            receiver: Mutex::new(receiver),
+        }
     }
 }
 
@@ -46,12 +51,14 @@ impl Repository for RepositoryImpl {
             )),
         }
     }
-    async fn receive_event(&mut self) -> Result<Response, error::Error> {
+    async fn receive_event(&self) -> Result<Response, error::Error> {
         use std::time::Duration;
 
         use tokio::time;
         loop {
-            match time::timeout(Duration::from_millis(1000), self.receiver.recv()).await {
+            let mut rx = self.receiver.lock().await;
+
+            match time::timeout(Duration::from_millis(1000), rx.recv()).await {
                 Ok(Some(response_string)) => {
                     return Response::from_str(&response_string);
                 }
@@ -84,10 +91,7 @@ mod infra_send_message_test {
         // Repository Implの生成
         let (message_tx, mut message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
         let (_event_tx, event_rx) = mpsc::channel::<String>(1000);
-        let repository_impl = RepositoryImpl {
-            sender: message_tx,
-            receiver: event_rx,
-        };
+        let repository_impl = RepositoryImpl::new(message_tx, event_rx);
 
         tokio::spawn(async move {
             let (response_message_tx, request_message) = message_rx.recv().await.unwrap();
@@ -131,10 +135,7 @@ mod infra_send_message_test {
         // Repository Implの生成
         let (message_tx, mut message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
         let (_event_tx, event_rx) = mpsc::channel::<String>(1000);
-        let repository_impl = RepositoryImpl {
-            sender: message_tx,
-            receiver: event_rx,
-        };
+        let repository_impl = RepositoryImpl::new(message_tx, event_rx);
 
         tokio::spawn(async move {
             let (_response_message_tx, request_message) = message_rx.recv().await.unwrap();
@@ -172,10 +173,7 @@ mod infra_send_message_test {
         // Repository Implの生成
         let (message_tx, mut message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
         let (_event_tx, event_rx) = mpsc::channel::<String>(1000);
-        let repository_impl = RepositoryImpl {
-            sender: message_tx,
-            receiver: event_rx,
-        };
+        let repository_impl = RepositoryImpl::new(message_tx, event_rx);
 
         tokio::spawn(async move {
             let (response_message_tx, request_message) = message_rx.recv().await.unwrap();
@@ -222,10 +220,7 @@ mod infra_receive_event_test {
         // Repository Implの生成
         let (message_tx, _message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
         let (event_tx, event_rx) = mpsc::channel::<String>(1000);
-        let mut repository_impl = RepositoryImpl {
-            sender: message_tx,
-            receiver: event_rx,
-        };
+        let repository_impl = RepositoryImpl::new(message_tx, event_rx);
 
         let (_close_tx, close_rx) = oneshot::channel::<()>();
 
@@ -257,10 +252,7 @@ mod infra_receive_event_test {
         // Repository Implの生成
         let (message_tx, _message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
         let (event_tx, event_rx) = mpsc::channel::<String>(1000);
-        let mut repository_impl = RepositoryImpl {
-            sender: message_tx,
-            receiver: event_rx,
-        };
+        let repository_impl = RepositoryImpl::new(message_tx, event_rx);
 
         let (_close_tx, close_rx) = oneshot::channel::<()>();
 

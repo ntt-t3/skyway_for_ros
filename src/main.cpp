@@ -26,6 +26,7 @@ void register_program_state(bool_void_func is_running_c,
                             void_double_func sleep_c,
                             void_void_func wait_for_shutdown_c);
 bool run();
+void execute();
 }
 
 int main(int argc, char** argv) {
@@ -43,6 +44,7 @@ int main(int argc, char** argv) {
     ROS_ERROR("some errors occurred");
   }
 
+  ros::waitForShutdown();
   spinner.stop();
   return 0;
 }

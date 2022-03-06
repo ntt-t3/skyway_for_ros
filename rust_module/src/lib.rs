@@ -8,15 +8,13 @@ mod domain;
 mod error;
 mod infra;
 
-use std::sync::Mutex;
-
 use once_cell::sync::OnceCell;
 
 use crate::c_module::*;
 use crate::domain::repository::Repository;
 use crate::infra::RepositoryImpl;
 
-static REPOSITORY_INSTANCE: OnceCell<Mutex<Box<dyn Repository + Send + Sync>>> = OnceCell::new();
+static REPOSITORY_INSTANCE: OnceCell<Box<dyn Repository + Send + Sync>> = OnceCell::new();
 
 #[no_mangle]
 pub extern "C" fn run() -> bool {
@@ -31,19 +29,19 @@ pub extern "C" fn run() -> bool {
     }
 
     // SkyWay Crateを開始する
-    let rt = tokio::runtime::Runtime::new().unwrap();
-    rt.block_on(async {
-        let (sender, receiver) = module::run("http://localhost:8000").await;
-        // SkyWay Crateにアクセスするためのsender, receiverはRepositoryの中で保持する
-        // Repositoryはonce_cellでglobalで確保される
-        let repository = RepositoryImpl::new(sender, receiver);
-        if REPOSITORY_INSTANCE
-            .set(Mutex::new(Box::new(repository)))
-            .is_err()
-        {
-            return;
-        }
-        ProgramState::global().wait_for_shutdown();
+    std::thread::spawn(|| {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let (sender, receiver) = module::run("http://localhost:8000").await;
+            // SkyWay Crateにアクセスするためのsender, receiverはRepositoryの中で保持する
+            // Repositoryはonce_cellでglobalで確保される
+            let repository = RepositoryImpl::new(sender, receiver);
+            if REPOSITORY_INSTANCE.set(Box::new(repository)).is_err() {
+                return;
+            }
+            ProgramState::global().wait_for_shutdown();
+        });
     });
+
     return true;
 }
