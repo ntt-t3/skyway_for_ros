@@ -4,6 +4,8 @@ add_compile_options(-std=c++14)
 
 include(ExternalProject)
 
+SET(VENDOR_DIR ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/vendor)
+
 SET(SKYWAY_LIB_FILE ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/rust_module/target/release/libskyway.a)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -36,13 +38,37 @@ catkin_package(
 
 include_directories(
         ${catkin_INCLUDE_DIRS}
+        ${VENDOR_DIR}/fruit/include
 )
 
-add_executable(${PROJECT_NAME} src/main.cpp)
+###########
+## Build ##
+###########
+
+# add DI framework
+SET(FRUIT_LIB_FILE ${VENDOR_DIR}/fruit/src/libfruit.a)
+ExternalProject_Add(${PROJECT_NAME}_fruit
+        GIT_REPOSITORY https://github.com/google/fruit.git
+        GIT_TAG v3.6.0
+        DOWNLOAD_COMMAND git clone --depth 1 https://github.com/google/fruit.git .
+        UPDATE_COMMAND ""
+        INSTALL_COMMAND ""
+        SOURCE_DIR ${VENDOR_DIR}/fruit
+        DOWNLOAD_DIR ${VENDOR_DIR}/fruit
+        BINARY_DIR ${VENDOR_DIR}/fruit
+        CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=Off
+        )
+
+aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/presentation PRESENTATION)
+
+add_executable(${PROJECT_NAME} src/main.cpp ${PRESENTATION})
+
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_fruit)
 
 target_link_libraries(${PROJECT_NAME}
         ${catkin_LIBRARIES}
         ${SKYWAY_LIB_FILE}
+        ${FRUIT_LIB_FILE}
         crypto
         ssl
         pthread

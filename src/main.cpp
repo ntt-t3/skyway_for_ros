@@ -1,5 +1,7 @@
 #include <ros/ros.h>
 
+#include "presentation/control_service.h"
+
 using void_char_func = void (*)(char*);
 using void_double_func = void (*)(double);
 using void_void_func = void (*)();
