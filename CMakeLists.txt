@@ -61,7 +61,11 @@ ExternalProject_Add(${PROJECT_NAME}_fruit
 
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/presentation PRESENTATION)
 
-add_executable(${PROJECT_NAME} src/main.cpp ${PRESENTATION})
+add_executable(${PROJECT_NAME}
+        src/main.cpp
+        src/router.cpp
+        src/di.cpp
+        ${PRESENTATION})
 
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_fruit)
 
