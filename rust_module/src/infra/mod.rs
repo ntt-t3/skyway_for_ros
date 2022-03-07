@@ -63,10 +63,12 @@ impl Repository for RepositoryImpl {
                     return Response::from_str(&response_string);
                 }
                 Ok(None) => {
-                    // probably closed
+                    // closed
+                    return Err(error::Error::create_local_error("receiver is closed"));
                 }
                 Err(_) => {
                     //timeout
+                    continue;
                 }
             }
         }
