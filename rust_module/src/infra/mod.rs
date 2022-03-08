@@ -55,7 +55,7 @@ impl Repository for RepositoryImpl {
         use std::time::Duration;
 
         use tokio::time;
-        loop {
+        while !crate::ProgramState::global().is_shutting_down() {
             let mut rx = self.receiver.lock().await;
 
             match time::timeout(Duration::from_millis(1000), rx.recv()).await {
@@ -72,6 +72,8 @@ impl Repository for RepositoryImpl {
                 }
             }
         }
+
+        return Err(error::Error::create_local_error("ros has been shut down"));
     }
 }
 

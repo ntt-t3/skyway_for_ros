@@ -15,7 +15,7 @@ using void_void_func = void (*)();
 extern "C" {
 typedef struct {
   void_char_char_func create_peer_callback;
-  void_void_func delete_peer_callback;
+  void_void_func peer_deleted_callback;
   void_char_func create_data_callback;
 } callback_function_t;
 
@@ -23,6 +23,7 @@ void setup_service(callback_function_t& functions);
 char* call_service(const char* message);
 char* receive_events();
 void release_string(char* message);
+void shutdown_service(const char* peer_id, const char* token);
 
 void create_peer_callback(char* peer_id, char* token) {
   create_peer_callback_handler(peer_id, token);
@@ -30,7 +31,7 @@ void create_peer_callback(char* peer_id, char* token) {
   release_string(token);
 }
 
-void delete_peer_callback() { ros::shutdown(); }
+void peer_deleted_callback() { ros::shutdown(); }
 
 void create_data_callback(char* parameter) {
   // todo impl
@@ -38,7 +39,7 @@ void create_data_callback(char* parameter) {
 }
 
 void RouterImpl::Start() {
-  callback_function_t functions{create_peer_callback, delete_peer_callback,
+  callback_function_t functions{create_peer_callback, peer_deleted_callback,
                                 create_data_callback};
   setup_service(functions);
 
@@ -46,7 +47,7 @@ void RouterImpl::Start() {
   shutdown_handler = [&](int signal) {
     control_service_->Shutdown();
     events_observe_action_->Shutdown();
-    // Todo: Peer Objectの削除とその確認後プログラムのshutdownをここでする
+    shutdown_service(peer_id_.c_str(), token_.c_str());
   };
   signal(SIGINT, signal_handler);
 

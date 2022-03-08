@@ -20,16 +20,6 @@ impl Service for DeletePeer {
             let request = Request::Peer(inner);
             let message = repository.register(request).await;
 
-            // 成功した場合はC++側の終了処理を呼び出す
-            if let Ok(Response::Success(ResponseMessageBodyEnum::Peer(
-                PeerResponseMessageBodyEnum::Delete(ref _p),
-            ))) = message
-            {
-                crate::application::REPOSITORY_INSTANCE
-                    .get()
-                    .map(|functions| functions.delete_peer_callback());
-            }
-
             return message;
         }
 

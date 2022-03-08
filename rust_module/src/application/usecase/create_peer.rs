@@ -26,7 +26,7 @@ impl Service for CreatePeer {
             ))) = message
             {
                 let peer_id = peer_info.peer_id();
-                let token = peer_info.peer_id();
+                let token = peer_info.token();
                 crate::application::REPOSITORY_INSTANCE
                     .get()
                     .map(|functions| {

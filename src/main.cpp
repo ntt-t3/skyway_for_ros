@@ -70,5 +70,6 @@ int main(int argc, char** argv) {
     ROS_DEBUG("Waiting for Rust side thread to finish");
     join_handler(response.handler);
   }
+
   return 0;
 }
