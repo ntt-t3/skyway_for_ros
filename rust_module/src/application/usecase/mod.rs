@@ -3,7 +3,7 @@ pub(crate) mod create_peer;
 use async_trait::async_trait;
 
 use crate::application::Dto;
-use crate::domain::entity::{Request, Response};
+use crate::domain::entity::Response;
 use crate::error;
 use crate::Repository;
 

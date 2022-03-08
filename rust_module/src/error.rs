@@ -1,1 +1,1 @@
-pub use module::error::Error;
+pub(crate) use module::error::Error;

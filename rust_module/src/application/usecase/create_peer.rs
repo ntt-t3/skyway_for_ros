@@ -4,7 +4,6 @@ use crate::application::dto::Dto;
 use crate::application::usecase::Service;
 use crate::domain::entity::{Request, Response};
 use crate::error;
-use crate::error::Error;
 use crate::Repository;
 
 pub(crate) struct CreatePeer {}
