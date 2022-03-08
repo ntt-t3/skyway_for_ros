@@ -18,7 +18,7 @@ use crate::c_module::*;
 use crate::domain::repository::Repository;
 use crate::infra::RepositoryImpl;
 
-static REPOSITORY_INSTANCE: OnceCell<Box<dyn Repository + Send + Sync>> = OnceCell::new();
+static REPOSITORY_INSTANCE: OnceCell<Box<dyn Repository>> = OnceCell::new();
 
 #[repr(C)]
 pub struct RunResponse {

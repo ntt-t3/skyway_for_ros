@@ -9,6 +9,7 @@ use crate::domain::repository::Repository;
 use crate::error;
 use crate::error::Error;
 
+#[derive(Debug)]
 pub(crate) struct RepositoryImpl {
     sender: mpsc::Sender<(oneshot::Sender<String>, String)>,
     receiver: Mutex<mpsc::Receiver<String>>,
