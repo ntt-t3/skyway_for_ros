@@ -1,21 +1,18 @@
 mod dto;
 mod usecase;
 
-use module::ServiceParams;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
-use std::time::Duration;
 
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 
 use crate::application::dto::{Command, Dto};
-use crate::application::usecase::create_peer::CreatePeer;
-use crate::application::usecase::delete_peer::DeletePeer;
 use crate::application::usecase::Service;
 use crate::domain::entity::*;
 use crate::error;
 use crate::error::Error;
+use usecase::peer;
 
 static REPOSITORY_INSTANCE: OnceCell<Functions> = OnceCell::new();
 
@@ -127,13 +124,8 @@ fn peer_factory(dto: &Dto) -> Box<dyn Service> {
     match dto {
         Dto::Peer(PeerServiceParams::Create {
             params: ref _params,
-        }) => Box::new(CreatePeer {}),
-        Dto::Peer(PeerServiceParams::Delete {
-            params: ref _params,
-        }) => Box::new(DeletePeer {}),
-        _ => {
-            todo!()
-        }
+        }) => Box::new(peer::create::Create {}),
+        _ => Box::new(peer::general::General {}),
     }
 }
 
@@ -199,8 +191,8 @@ pub extern "C" fn shutdown_service(peer_id: *const c_char, token: *const c_char)
             peer_id, token
         );
         let param = Dto::from_str(&message).unwrap();
-        let service = DeletePeer {};
+        let service = peer::general::General {};
         let repository = crate::REPOSITORY_INSTANCE.get().unwrap();
-        let result = service.execute(&repository, param).await;
+        let _ = service.execute(&repository, param).await;
     });
 }
