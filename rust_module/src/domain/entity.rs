@@ -1,6 +1,9 @@
 use crate::error;
 
 pub(crate) use module::prelude::request_message::PeerServiceParams;
+pub(crate) use module::prelude::response_message::{
+    PeerResponseMessageBodyEnum, ResponseMessageBodyEnum,
+};
 pub(crate) use module::ResponseMessage as Response;
 pub(crate) use module::ServiceParams as Request;
 

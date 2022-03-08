@@ -25,6 +25,8 @@ class RouterImpl : public Router {
   EventsObserveActionFactory events_observe_action_factory_;
   std::unique_ptr<ControlService> control_service_;
   std::unique_ptr<EventsObserveAction> events_observe_action_;
+  std::string peer_id_ = "";
+  std::string token_ = "";
 
  public:
   INJECT(RouterImpl(ControlServiceFactory control_service_factory,

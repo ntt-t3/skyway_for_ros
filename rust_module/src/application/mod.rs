@@ -4,6 +4,7 @@ mod usecase;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 
+use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 
 use crate::application::dto::{Command, Dto};
@@ -12,6 +13,35 @@ use crate::application::usecase::Service;
 use crate::domain::entity::{PeerServiceParams, Stringify};
 use crate::error;
 use crate::error::Error;
+
+static REPOSITORY_INSTANCE: OnceCell<Functions> = OnceCell::new();
+
+#[repr(C)]
+pub struct Functions {
+    peer_callback_c: fn(peer_id: *mut c_char, token: *mut c_char),
+    data_callback_c: fn(param: *mut c_char),
+}
+
+impl Functions {
+    pub fn peer_callback(&self, peer_id: &str, token: &str) {
+        (self.peer_callback_c)(
+            CString::new(peer_id).unwrap().into_raw(),
+            CString::new(token).unwrap().into_raw(),
+        );
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn setup_service(param: &Functions) {
+    let functions = Functions {
+        peer_callback_c: param.peer_callback_c,
+        data_callback_c: param.data_callback_c,
+    };
+
+    if REPOSITORY_INSTANCE.set(functions).is_err() {
+        return;
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct ErrorMessage {

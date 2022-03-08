@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
   ros::shutdown();
   // Rust側のthreadが終了するまで待機する
   if (response.flag) {
-    ROS_DEBUG("Waiting for Rust side thread to finish")
+    ROS_DEBUG("Waiting for Rust side thread to finish");
     join_handler(response.handler);
   }
   return 0;

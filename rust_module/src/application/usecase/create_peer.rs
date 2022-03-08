@@ -1,7 +1,10 @@
+use std::ffi::CString;
+
 use async_trait::async_trait;
 
 use crate::application::dto::Dto;
 use crate::application::usecase::Service;
+use crate::domain::entity::{PeerResponseMessageBodyEnum, ResponseMessageBodyEnum};
 use crate::domain::entity::{Request, Response};
 use crate::error;
 use crate::Repository;
@@ -17,7 +20,21 @@ impl Service for CreatePeer {
     ) -> Result<Response, error::Error> {
         if let Dto::Peer(inner) = message {
             let request = Request::Peer(inner);
-            return repository.register(request).await;
+            let message = repository.register(request).await;
+
+            // 成功した場合はC++側にpeer_id, tokenを渡す
+            if let Ok(Response::Success(ResponseMessageBodyEnum::Peer(
+                PeerResponseMessageBodyEnum::Create(ref peer_info),
+            ))) = message
+            {
+                let peer_id = peer_info.peer_id();
+                let token = peer_info.peer_id();
+                crate::application::REPOSITORY_INSTANCE
+                    .get()
+                    .map(|functions| functions.peer_callback(peer_id.as_str(), token.as_str()));
+            }
+
+            return message;
         }
 
         let error_message = format!("wrong parameter {:?}", message);
