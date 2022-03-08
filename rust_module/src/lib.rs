@@ -72,7 +72,7 @@ pub extern "C" fn run() -> RunResponse {
 #[no_mangle]
 pub extern "C" fn call_service(message_char: *const c_char) -> *mut c_char {
     let c_str: &CStr = unsafe { CStr::from_ptr(message_char) };
-    let message = c_str.to_str().unwrap().to_string();
+    let _message = c_str.to_str().unwrap().to_string();
     let message = r#"{"is_success":true,"result":{"type":"PEER","command":"CREATE","peer_id":"data_caller","token":"pt-7dceefb0-5e34-4dc4-a433-3c8b56345247"}}"#;
     return CString::new(message).unwrap().into_raw();
 }
@@ -86,7 +86,7 @@ pub extern "C" fn receive_events() -> *mut c_char {
 #[no_mangle]
 pub extern "C" fn release_string(message: *mut c_char) {
     unsafe {
-        CString::from_raw(message);
+        let _ = CString::from_raw(message);
     }
 }
 
