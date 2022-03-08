@@ -10,16 +10,14 @@ std::function<void(char*, char*)> create_peer_callback_handler;
 
 using void_char_char_func = void (*)(char*, char*);
 using void_char_func = void (*)(char*);
+using void_void_func = void (*)();
 
 extern "C" {
 typedef struct {
   void_char_char_func create_peer_callback;
+  void_void_func delete_peer_callback;
   void_char_func create_data_callback;
 } callback_function_t;
-
-void create_data_callback(char* parameter) {
-  // todo impl
-}
 
 void setup_service(callback_function_t& functions);
 char* call_service(const char* message);
@@ -31,10 +29,17 @@ void create_peer_callback(char* peer_id, char* token) {
   release_string(peer_id);
   release_string(token);
 }
+
+void delete_peer_callback() { ros::shutdown(); }
+
+void create_data_callback(char* parameter) {
+  // todo impl
+}
 }
 
 void RouterImpl::Start() {
-  callback_function_t functions{create_peer_callback, create_data_callback};
+  callback_function_t functions{create_peer_callback, delete_peer_callback,
+                                create_data_callback};
   setup_service(functions);
 
   // 終了処理は全てここで行う

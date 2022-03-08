@@ -1,5 +1,5 @@
 pub(crate) mod create_peer;
-mod delete_peer;
+pub(crate) mod delete_peer;
 
 use async_trait::async_trait;
 

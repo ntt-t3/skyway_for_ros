@@ -7,10 +7,10 @@ use crate::domain::entity::{Request, Response};
 use crate::error;
 use crate::Repository;
 
-pub(crate) struct CreatePeer {}
+pub(crate) struct DeletePeer {}
 
 #[async_trait]
-impl Service for CreatePeer {
+impl Service for DeletePeer {
     async fn execute(
         &self,
         repository: &Box<dyn Repository>,
@@ -20,18 +20,14 @@ impl Service for CreatePeer {
             let request = Request::Peer(inner);
             let message = repository.register(request).await;
 
-            // 成功した場合はC++側にpeer_id, tokenを渡す
+            // 成功した場合はC++側の終了処理を呼び出す
             if let Ok(Response::Success(ResponseMessageBodyEnum::Peer(
-                PeerResponseMessageBodyEnum::Create(ref peer_info),
+                PeerResponseMessageBodyEnum::Delete(ref _p),
             ))) = message
             {
-                let peer_id = peer_info.peer_id();
-                let token = peer_info.peer_id();
                 crate::application::REPOSITORY_INSTANCE
                     .get()
-                    .map(|functions| {
-                        functions.create_peer_callback(peer_id.as_str(), token.as_str())
-                    });
+                    .map(|functions| functions.delete_peer_callback());
             }
 
             return message;
@@ -49,31 +45,29 @@ mod create_peer_test {
 
     #[tokio::test]
     async fn success() {
-        // CreatePeerに成功したメッセージが得られるはずである
+        // DeletePeerに成功したメッセージが得られるはずである
         let answer = {
             let message = r#"{
-                    "is_success":true,
-                    "result":{
-                        "type":"PEER",
-                        "command":"CREATE",
-                        "peer_id":"data_caller",
-                        "token":"pt-06cf1d26-0ef0-4b03-aca6-933027d434c2"
-                    }
-                }"#;
+                "is_success":true,
+                "result":{
+                    "type":"PEER",
+                    "command":"DELETE",
+                    "peer_id":"data_caller",
+                    "token":"pt-87b54b79-643b-4c60-9c64-ead4ab902dee"
+                }
+            }"#;
             Response::from_str(message).unwrap()
         };
 
-        // CreatePeerのパラメータ生成
+        // DeletePeerのパラメータ生成
         let message = r#"{
-            "type": "PEER",
-            "command": "CREATE",
-            "params": {
-                "key": "pt-9749250e-d157-4f80-9ee2-359ce8524308",
-                "domain": "localhost",
-                "peer_id": "peer_id",
-                "turn": true
-            }
-        }"#;
+                "type": "PEER",
+                "command": "DELETE",
+                "params": {
+                    "peer_id": "data_caller",
+                    "token": "pt-87b54b79-643b-4c60-9c64-ead4ab902dee"
+                }
+            }"#;
         let dto = Dto::from_str(message).unwrap();
 
         // repositoryのMockを生成
@@ -81,20 +75,20 @@ mod create_peer_test {
         let mut repository = MockRepository::new();
         repository.expect_register().times(1).returning(|_| {
             let message = r#"{
-                    "is_success":true,
-                    "result":{
-                        "type":"PEER",
-                        "command":"CREATE",
-                        "peer_id":"data_caller",
-                        "token":"pt-06cf1d26-0ef0-4b03-aca6-933027d434c2"
-                    }
-                }"#;
+                "is_success":true,
+                "result":{
+                    "type":"PEER",
+                    "command":"DELETE",
+                    "peer_id":"data_caller",
+                    "token":"pt-87b54b79-643b-4c60-9c64-ead4ab902dee"
+                }
+            }"#;
             Response::from_str(message)
         });
         let repository: Box<dyn Repository> = Box::new(repository);
 
         // 実行
-        let create_peer = CreatePeer {};
+        let create_peer = DeletePeer {};
         let result = create_peer.execute(&repository, dto).await;
         assert_eq!(result.unwrap(), answer);
     }
@@ -103,17 +97,15 @@ mod create_peer_test {
     async fn fail() {
         // APIがエラーを返してくるケース
 
-        // CreatePeerのパラメータ生成
+        // DeletePeerのパラメータ生成
         let message = r#"{
-            "type": "PEER",
-            "command": "CREATE",
-            "params": {
-                "key": "pt-9749250e-d157-4f80-9ee2-359ce8524308",
-                "domain": "localhost",
-                "peer_id": "peer_id",
-                "turn": true
-            }
-        }"#;
+                "type": "PEER",
+                "command": "DELETE",
+                "params": {
+                    "peer_id": "data_caller",
+                    "token": "pt-87b54b79-643b-4c60-9c64-ead4ab902dee"
+                }
+            }"#;
         let dto = Dto::from_str(message).unwrap();
 
         // repositoryのMockを生成
@@ -126,7 +118,7 @@ mod create_peer_test {
         let repository: Box<dyn Repository> = Box::new(repository);
 
         // 実行
-        let create_peer = CreatePeer {};
+        let create_peer = DeletePeer {};
         if let Err(error::Error::LocalError(message)) = create_peer.execute(&repository, dto).await
         {
             assert_eq!(message, "error");
@@ -148,7 +140,7 @@ mod create_peer_test {
         let repository: Box<dyn Repository> = Box::new(repository);
 
         // 実行
-        let create_peer = CreatePeer {};
+        let create_peer = DeletePeer {};
 
         // 評価
         // 間違ったパラメータである旨を返してくるはずである

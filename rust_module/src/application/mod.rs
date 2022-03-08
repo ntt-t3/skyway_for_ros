@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::application::dto::{Command, Dto};
 use crate::application::usecase::create_peer::CreatePeer;
+use crate::application::usecase::delete_peer::DeletePeer;
 use crate::application::usecase::Service;
 use crate::domain::entity::{PeerServiceParams, Stringify};
 use crate::error;
@@ -18,23 +19,29 @@ static REPOSITORY_INSTANCE: OnceCell<Functions> = OnceCell::new();
 
 #[repr(C)]
 pub struct Functions {
-    peer_callback_c: fn(peer_id: *mut c_char, token: *mut c_char),
+    create_peer_callback_c: fn(peer_id: *mut c_char, token: *mut c_char),
+    delete_peer_callback_c: fn(),
     data_callback_c: fn(param: *mut c_char),
 }
 
 impl Functions {
-    pub fn peer_callback(&self, peer_id: &str, token: &str) {
-        (self.peer_callback_c)(
+    pub fn create_peer_callback(&self, peer_id: &str, token: &str) {
+        (self.create_peer_callback_c)(
             CString::new(peer_id).unwrap().into_raw(),
             CString::new(token).unwrap().into_raw(),
         );
+    }
+
+    pub fn delete_peer_callback(&self) {
+        (self.delete_peer_callback_c)();
     }
 }
 
 #[no_mangle]
 pub extern "C" fn setup_service(param: &Functions) {
     let functions = Functions {
-        peer_callback_c: param.peer_callback_c,
+        create_peer_callback_c: param.create_peer_callback_c,
+        delete_peer_callback_c: param.delete_peer_callback_c,
         data_callback_c: param.data_callback_c,
     };
 
@@ -118,10 +125,10 @@ fn peer_factory(dto: &Dto) -> Box<dyn Service> {
     match dto {
         Dto::Peer(PeerServiceParams::Create {
             params: ref _params,
-        }) => {
-            let create_peer = CreatePeer {};
-            Box::new(create_peer)
-        }
+        }) => Box::new(CreatePeer {}),
+        Dto::Peer(PeerServiceParams::Delete {
+            params: ref _params,
+        }) => Box::new(DeletePeer {}),
         _ => {
             todo!()
         }
