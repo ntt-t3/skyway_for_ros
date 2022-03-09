@@ -1,5 +1,5 @@
 mod dto;
-mod usecase;
+pub(crate) mod usecase;
 
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;

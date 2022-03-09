@@ -87,28 +87,11 @@ impl Repository for RepositoryImpl {
 }
 
 #[cfg(test)]
-mod helper {
-    use std::os::raw::{c_char, c_double};
-
-    pub extern "C" fn log(_message: *const c_char) {}
-
-    pub extern "C" fn is_running() -> bool {
-        return true;
-    }
-
-    pub extern "C" fn is_shutting_down() -> bool {
-        return false;
-    }
-
-    pub extern "C" fn sleep_(_duration: c_double) {}
-    pub extern "C" fn wait_for_shutdown() {}
-}
-
-#[cfg(test)]
 mod infra_send_message_test {
     use module::prelude::request_message::{Parameter, PeerServiceParams};
 
     use super::*;
+    use crate::application::usecase::helper;
     use crate::domain::entity::FromStr;
 
     #[tokio::test]
@@ -149,13 +132,8 @@ mod infra_send_message_test {
             let _ = response_message_tx.send(response_str.into());
         });
 
-        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
-        let program_state = ProgramState::new(
-            helper::is_running,
-            helper::is_shutting_down,
-            helper::sleep_,
-            helper::wait_for_shutdown,
-        );
+        let logger = helper::create_logger();
+        let program_state = helper::create_program_state();
         // 実行
         let result = repository_impl
             .register(&program_state, &logger, message)
@@ -191,13 +169,8 @@ mod infra_send_message_test {
             }
         });
 
-        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
-        let program_state = ProgramState::new(
-            helper::is_running,
-            helper::is_shutting_down,
-            helper::sleep_,
-            helper::wait_for_shutdown,
-        );
+        let logger = helper::create_logger();
+        let program_state = helper::create_program_state();
         // 実行
         let result = repository_impl
             .register(&program_state, &logger, message)
@@ -248,13 +221,8 @@ mod infra_send_message_test {
             let _ = response_message_tx.send(response_str.into());
         });
 
-        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
-        let program_state = ProgramState::new(
-            helper::is_running,
-            helper::is_shutting_down,
-            helper::sleep_,
-            helper::wait_for_shutdown,
-        );
+        let logger = helper::create_logger();
+        let program_state = helper::create_program_state();
         // 実行
         let result = repository_impl
             .register(&program_state, &logger, message)
@@ -271,6 +239,7 @@ mod infra_send_message_test {
 #[cfg(test)]
 mod infra_receive_event_test {
     use super::*;
+    use crate::application::usecase::helper;
 
     #[tokio::test]
     // eventとして異常な文字列を受信した場合
@@ -296,13 +265,8 @@ mod infra_receive_event_test {
             let _ = close_rx.await;
         });
 
-        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
-        let program_state = ProgramState::new(
-            helper::is_running,
-            helper::is_shutting_down,
-            helper::sleep_,
-            helper::wait_for_shutdown,
-        );
+        let logger = helper::create_logger();
+        let program_state = helper::create_program_state();
         // 実行
         let result = repository_impl.receive_event(&program_state, &logger).await;
         match result {
@@ -326,13 +290,8 @@ mod infra_receive_event_test {
             let _ = close_rx.await;
         });
 
-        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
-        let program_state = ProgramState::new(
-            helper::is_running,
-            helper::is_shutting_down,
-            helper::sleep_,
-            helper::wait_for_shutdown,
-        );
+        let logger = helper::create_logger();
+        let program_state = helper::create_program_state();
         // 実行
         let result = repository_impl.receive_event(&program_state, &logger).await;
         match result {

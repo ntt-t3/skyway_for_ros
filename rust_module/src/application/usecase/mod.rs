@@ -42,21 +42,31 @@ impl Service for General {
 }
 
 #[cfg(test)]
-mod helper {
+pub(crate) mod helper {
     use std::os::raw::{c_char, c_double};
 
-    pub extern "C" fn log(_message: *const c_char) {}
+    use crate::{Logger, ProgramState};
 
-    pub extern "C" fn is_running() -> bool {
+    extern "C" fn log(_message: *const c_char) {}
+
+    extern "C" fn is_running() -> bool {
         return true;
     }
 
-    pub extern "C" fn is_shutting_down() -> bool {
-        return true;
+    extern "C" fn is_shutting_down() -> bool {
+        return false;
     }
 
-    pub extern "C" fn sleep_(_duration: c_double) {}
-    pub extern "C" fn wait_for_shutdown() {}
+    extern "C" fn sleep_(_duration: c_double) {}
+    extern "C" fn wait_for_shutdown() {}
+
+    pub(crate) fn create_logger() -> Logger {
+        Logger::new(log, log, log, log)
+    }
+
+    pub(crate) fn create_program_state() -> ProgramState {
+        ProgramState::new(is_running, is_shutting_down, sleep_, wait_for_shutdown)
+    }
 }
 
 #[cfg(test)]
@@ -67,7 +77,7 @@ mod general_service_test {
     use crate::domain::entity::Response;
     use crate::domain::repository::MockRepository;
     use crate::error;
-    use crate::{Logger, ProgramState, Repository};
+    use crate::Repository;
 
     #[tokio::test]
     async fn success() {
@@ -113,13 +123,8 @@ mod general_service_test {
         });
         let repository: Box<dyn Repository> = Box::new(repository);
 
-        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
-        let program_state = ProgramState::new(
-            helper::is_running,
-            helper::is_shutting_down,
-            helper::sleep_,
-            helper::wait_for_shutdown,
-        );
+        let logger = helper::create_logger();
+        let program_state = helper::create_program_state();
         // 実行
         let general_peer_service = General {};
         let result = general_peer_service
@@ -152,13 +157,8 @@ mod general_service_test {
         });
         let repository: Box<dyn Repository> = Box::new(repository);
 
-        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
-        let program_state = ProgramState::new(
-            helper::is_running,
-            helper::is_shutting_down,
-            helper::sleep_,
-            helper::wait_for_shutdown,
-        );
+        let logger = helper::create_logger();
+        let program_state = helper::create_program_state();
         // 実行
         let general_peer_service = General {};
         if let Err(error::Error::LocalError(message)) = general_peer_service
@@ -183,13 +183,8 @@ mod general_service_test {
             .returning(|_, _, _| unreachable!());
         let repository: Box<dyn Repository> = Box::new(repository);
 
-        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
-        let program_state = ProgramState::new(
-            helper::is_running,
-            helper::is_shutting_down,
-            helper::sleep_,
-            helper::wait_for_shutdown,
-        );
+        let logger = helper::create_logger();
+        let program_state = helper::create_program_state();
         // 実行
         let general_peer_service = General {};
 

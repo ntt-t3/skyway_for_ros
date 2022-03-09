@@ -45,26 +45,9 @@ impl Service for Create {
 }
 
 #[cfg(test)]
-mod helper {
-    use std::os::raw::{c_char, c_double};
-
-    pub extern "C" fn log(_message: *const c_char) {}
-
-    pub extern "C" fn is_running() -> bool {
-        return true;
-    }
-
-    pub extern "C" fn is_shutting_down() -> bool {
-        return true;
-    }
-
-    pub extern "C" fn sleep_(_duration: c_double) {}
-    pub extern "C" fn wait_for_shutdown() {}
-}
-
-#[cfg(test)]
 mod create_peer_test {
     use super::*;
+    use crate::application::usecase::helper;
     use crate::domain::repository::MockRepository;
 
     #[tokio::test]
@@ -112,13 +95,8 @@ mod create_peer_test {
             Response::from_str(message)
         });
         let repository: Box<dyn Repository> = Box::new(repository);
-        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
-        let program_state = ProgramState::new(
-            helper::is_running,
-            helper::is_shutting_down,
-            helper::sleep_,
-            helper::wait_for_shutdown,
-        );
+        let logger = helper::create_logger();
+        let program_state = helper::create_program_state();
 
         // 実行
         let create_peer = Create {};
@@ -153,13 +131,8 @@ mod create_peer_test {
             return Err(answer);
         });
         let repository: Box<dyn Repository> = Box::new(repository);
-        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
-        let program_state = ProgramState::new(
-            helper::is_running,
-            helper::is_shutting_down,
-            helper::sleep_,
-            helper::wait_for_shutdown,
-        );
+        let logger = helper::create_logger();
+        let program_state = helper::create_program_state();
 
         // 実行
         let create_peer = Create {};
@@ -185,13 +158,8 @@ mod create_peer_test {
             .returning(|_, _, _| unreachable!());
         let repository: Box<dyn Repository> = Box::new(repository);
 
-        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
-        let program_state = ProgramState::new(
-            helper::is_running,
-            helper::is_shutting_down,
-            helper::sleep_,
-            helper::wait_for_shutdown,
-        );
+        let logger = helper::create_logger();
+        let program_state = helper::create_program_state();
         // 実行
         let create_peer = Create {};
 
