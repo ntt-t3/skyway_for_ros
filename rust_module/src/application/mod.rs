@@ -128,7 +128,7 @@ fn peer_factory(dto: &Dto) -> Box<dyn Service> {
         Dto::Peer(PeerServiceParams::Create {
             params: ref _params,
         }) => Box::new(peer::create::Create {}),
-        _ => Box::new(peer::general::General {}),
+        _ => Box::new(usecase::General {}),
     }
 }
 
@@ -194,7 +194,7 @@ pub extern "C" fn shutdown_service(peer_id: *const c_char, token: *const c_char)
             peer_id, token
         );
         let param = Dto::from_str(&message).unwrap();
-        let service = peer::general::General {};
+        let service = usecase::General {};
         let repository = crate::REPOSITORY_INSTANCE.get().unwrap();
         let _ = service
             .execute(&repository, ProgramState::global(), Logger::global(), param)
