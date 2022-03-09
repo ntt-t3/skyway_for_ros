@@ -13,6 +13,20 @@ pub struct Logger {
 
 #[allow(dead_code)]
 impl Logger {
+    pub fn new(
+        debug_c: extern "C" fn(*const c_char) -> (),
+        info_c: extern "C" fn(*const c_char) -> (),
+        warn_c: extern "C" fn(*const c_char) -> (),
+        error_c: extern "C" fn(*const c_char) -> (),
+    ) -> Self {
+        Logger {
+            debug_c,
+            info_c,
+            warn_c,
+            error_c,
+        }
+    }
+
     pub fn global() -> &'static Logger {
         LOGGER_INSTANCE.get().expect("logger is not initialized")
     }
@@ -72,10 +86,24 @@ pub struct ProgramState {
 
 #[allow(dead_code)]
 impl ProgramState {
+    pub fn new(
+        is_running_c: extern "C" fn() -> bool,
+        is_shutting_down_c: extern "C" fn() -> bool,
+        sleep_c: extern "C" fn(c_double) -> (),
+        wait_for_shutdown_c: extern "C" fn() -> (),
+    ) -> Self {
+        ProgramState {
+            is_running_c,
+            is_shutting_down_c,
+            sleep_c,
+            wait_for_shutdown_c,
+        }
+    }
+
     pub fn global() -> &'static ProgramState {
         PROGRAM_STATE_INSTANCE
             .get()
-            .expect("logger is not initialized")
+            .expect("ProgramState is not initialized")
     }
 
     pub fn is_allocated() -> bool {

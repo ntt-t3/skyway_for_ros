@@ -3,8 +3,8 @@ use async_trait::async_trait;
 use crate::application::dto::Dto;
 use crate::application::usecase::Service;
 use crate::domain::entity::{Request, Response};
-use crate::error;
 use crate::Repository;
+use crate::{error, Logger, ProgramState};
 
 pub(crate) struct General {}
 
@@ -13,11 +13,13 @@ impl Service for General {
     async fn execute(
         &self,
         repository: &Box<dyn Repository>,
+        program_state: &ProgramState,
+        logger: &Logger,
         message: Dto,
     ) -> Result<Response, error::Error> {
         if let Dto::Peer(inner) = message {
             let request = Request::Peer(inner);
-            let message = repository.register(request).await;
+            let message = repository.register(program_state, logger, request).await;
 
             return message;
         }
@@ -25,6 +27,24 @@ impl Service for General {
         let error_message = format!("wrong parameter {:?}", message);
         return Err(error::Error::create_local_error(&error_message));
     }
+}
+
+#[cfg(test)]
+mod helper {
+    use std::os::raw::{c_char, c_double};
+
+    pub extern "C" fn log(_message: *const c_char) {}
+
+    pub extern "C" fn is_running() -> bool {
+        return true;
+    }
+
+    pub extern "C" fn is_shutting_down() -> bool {
+        return true;
+    }
+
+    pub extern "C" fn sleep_(_duration: c_double) {}
+    pub extern "C" fn wait_for_shutdown() {}
 }
 
 #[cfg(test)]
@@ -62,7 +82,7 @@ mod general_peer_test {
         // repositoryのMockを生成
         // 呼び出しに成功するケース
         let mut repository = MockRepository::new();
-        repository.expect_register().times(1).returning(|_| {
+        repository.expect_register().times(1).returning(|_, _, _| {
             let message = r#"{
                 "is_success":true,
                 "result":{
@@ -76,9 +96,18 @@ mod general_peer_test {
         });
         let repository: Box<dyn Repository> = Box::new(repository);
 
+        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
+        let program_state = ProgramState::new(
+            helper::is_running,
+            helper::is_shutting_down,
+            helper::sleep_,
+            helper::wait_for_shutdown,
+        );
         // 実行
         let general_peer_service = General {};
-        let result = general_peer_service.execute(&repository, dto).await;
+        let result = general_peer_service
+            .execute(&repository, &program_state, &logger, dto)
+            .await;
         assert_eq!(result.unwrap(), answer);
     }
 
@@ -100,16 +129,24 @@ mod general_peer_test {
         // repositoryのMockを生成
         // 呼び出しに成功するケース
         let mut repository = MockRepository::new();
-        repository.expect_register().times(1).returning(|_| {
+        repository.expect_register().times(1).returning(|_, _, _| {
             let answer = error::Error::create_local_error("error");
             return Err(answer);
         });
         let repository: Box<dyn Repository> = Box::new(repository);
 
+        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
+        let program_state = ProgramState::new(
+            helper::is_running,
+            helper::is_shutting_down,
+            helper::sleep_,
+            helper::wait_for_shutdown,
+        );
         // 実行
         let general_peer_service = General {};
-        if let Err(error::Error::LocalError(message)) =
-            general_peer_service.execute(&repository, dto).await
+        if let Err(error::Error::LocalError(message)) = general_peer_service
+            .execute(&repository, &program_state, &logger, dto)
+            .await
         {
             assert_eq!(message, "error");
         }
@@ -126,16 +163,24 @@ mod general_peer_test {
         repository
             .expect_register()
             .times(0)
-            .returning(|_| unreachable!());
+            .returning(|_, _, _| unreachable!());
         let repository: Box<dyn Repository> = Box::new(repository);
 
+        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
+        let program_state = ProgramState::new(
+            helper::is_running,
+            helper::is_shutting_down,
+            helper::sleep_,
+            helper::wait_for_shutdown,
+        );
         // 実行
         let general_peer_service = General {};
 
         // 評価
         // 間違ったパラメータである旨を返してくるはずである
-        if let Err(error::Error::LocalError(error_message)) =
-            general_peer_service.execute(&repository, dto).await
+        if let Err(error::Error::LocalError(error_message)) = general_peer_service
+            .execute(&repository, &program_state, &logger, dto)
+            .await
         {
             assert_eq!(error_message, "wrong parameter Test");
         }

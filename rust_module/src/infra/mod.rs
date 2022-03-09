@@ -5,8 +5,8 @@ use tokio::sync::{mpsc, oneshot};
 use crate::domain::entity::Stringify;
 use crate::domain::entity::{Request, Response};
 use crate::domain::repository::Repository;
-use crate::error;
 use crate::error::Error;
+use crate::{error, Logger, ProgramState};
 
 #[derive(Debug)]
 pub(crate) struct RepositoryImpl {
@@ -28,7 +28,12 @@ impl RepositoryImpl {
 
 #[async_trait]
 impl Repository for RepositoryImpl {
-    async fn register(&self, params: Request) -> Result<Response, Error> {
+    async fn register(
+        &self,
+        _program_state: &ProgramState,
+        _logger: &Logger,
+        params: Request,
+    ) -> Result<Response, Error> {
         // SkyWay Crateからの戻り値を得るためのoneshot channelを生成
         let (channel_message_tx, channel_message_rx) = tokio::sync::oneshot::channel();
 
@@ -51,11 +56,15 @@ impl Repository for RepositoryImpl {
             )),
         }
     }
-    async fn receive_event(&self) -> Result<Response, error::Error> {
+    async fn receive_event(
+        &self,
+        program_state: &ProgramState,
+        _logger: &Logger,
+    ) -> Result<Response, error::Error> {
         use std::time::Duration;
 
         use tokio::time;
-        while !crate::ProgramState::global().is_shutting_down() {
+        while !program_state.is_shutting_down() {
             let mut rx = self.receiver.lock().await;
 
             match time::timeout(Duration::from_millis(1000), rx.recv()).await {
@@ -75,6 +84,24 @@ impl Repository for RepositoryImpl {
 
         return Err(error::Error::create_local_error("ros has been shut down"));
     }
+}
+
+#[cfg(test)]
+mod helper {
+    use std::os::raw::{c_char, c_double};
+
+    pub extern "C" fn log(_message: *const c_char) {}
+
+    pub extern "C" fn is_running() -> bool {
+        return true;
+    }
+
+    pub extern "C" fn is_shutting_down() -> bool {
+        return false;
+    }
+
+    pub extern "C" fn sleep_(_duration: c_double) {}
+    pub extern "C" fn wait_for_shutdown() {}
 }
 
 #[cfg(test)]
@@ -122,8 +149,17 @@ mod infra_send_message_test {
             let _ = response_message_tx.send(response_str.into());
         });
 
+        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
+        let program_state = ProgramState::new(
+            helper::is_running,
+            helper::is_shutting_down,
+            helper::sleep_,
+            helper::wait_for_shutdown,
+        );
         // 実行
-        let result = repository_impl.register(message).await;
+        let result = repository_impl
+            .register(&program_state, &logger, message)
+            .await;
         assert!(result.is_ok());
     }
 
@@ -155,8 +191,17 @@ mod infra_send_message_test {
             }
         });
 
+        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
+        let program_state = ProgramState::new(
+            helper::is_running,
+            helper::is_shutting_down,
+            helper::sleep_,
+            helper::wait_for_shutdown,
+        );
         // 実行
-        let result = repository_impl.register(message).await;
+        let result = repository_impl
+            .register(&program_state, &logger, message)
+            .await;
         match result {
             Err(error::Error::LocalError(message)) => {
                 assert_eq!(message, "could not receive response from skyway crate");
@@ -203,8 +248,17 @@ mod infra_send_message_test {
             let _ = response_message_tx.send(response_str.into());
         });
 
+        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
+        let program_state = ProgramState::new(
+            helper::is_running,
+            helper::is_shutting_down,
+            helper::sleep_,
+            helper::wait_for_shutdown,
+        );
         // 実行
-        let result = repository_impl.register(message).await;
+        let result = repository_impl
+            .register(&program_state, &logger, message)
+            .await;
         match result {
             Err(error::Error::SerdeError { error: _ }) => {
                 assert!(true)
@@ -242,8 +296,15 @@ mod infra_receive_event_test {
             let _ = close_rx.await;
         });
 
+        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
+        let program_state = ProgramState::new(
+            helper::is_running,
+            helper::is_shutting_down,
+            helper::sleep_,
+            helper::wait_for_shutdown,
+        );
         // 実行
-        let result = repository_impl.receive_event().await;
+        let result = repository_impl.receive_event(&program_state, &logger).await;
         match result {
             Ok(_) => assert!(true),
             _ => assert!(false),
@@ -265,8 +326,15 @@ mod infra_receive_event_test {
             let _ = close_rx.await;
         });
 
+        let logger = Logger::new(helper::log, helper::log, helper::log, helper::log);
+        let program_state = ProgramState::new(
+            helper::is_running,
+            helper::is_shutting_down,
+            helper::sleep_,
+            helper::wait_for_shutdown,
+        );
         // 実行
-        let result = repository_impl.receive_event().await;
+        let result = repository_impl.receive_event(&program_state, &logger).await;
         match result {
             Err(error::Error::SerdeError { error: _ }) => {
                 assert!(true)

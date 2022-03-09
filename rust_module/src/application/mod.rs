@@ -10,8 +10,8 @@ use serde::{Deserialize, Serialize};
 use crate::application::dto::{Command, Dto};
 use crate::application::usecase::Service;
 use crate::domain::entity::*;
-use crate::error;
 use crate::error::Error;
+use crate::{error, Logger, ProgramState};
 use usecase::peer;
 
 static REPOSITORY_INSTANCE: OnceCell<Functions> = OnceCell::new();
@@ -83,7 +83,10 @@ pub extern "C" fn call_service(message_char: *const c_char) -> *mut c_char {
                 // errorメッセージを生成する際に必要なので確保しておく
                 let command = dto.command();
                 let dto_type = dto.dto_type();
-                match service.execute(&repository, dto).await {
+                match service
+                    .execute(&repository, ProgramState::global(), Logger::global(), dto)
+                    .await
+                {
                     Ok(response) => {
                         // ResponseMessageはto_stringでエラーを出すことはない
                         response.to_string().unwrap()
@@ -136,7 +139,7 @@ pub extern "C" fn receive_events() -> *mut c_char {
         crate::REPOSITORY_INSTANCE
             .get()
             .unwrap()
-            .receive_event()
+            .receive_event(ProgramState::global(), Logger::global())
             .await
     });
 
@@ -193,6 +196,8 @@ pub extern "C" fn shutdown_service(peer_id: *const c_char, token: *const c_char)
         let param = Dto::from_str(&message).unwrap();
         let service = peer::general::General {};
         let repository = crate::REPOSITORY_INSTANCE.get().unwrap();
-        let _ = service.execute(&repository, param).await;
+        let _ = service
+            .execute(&repository, ProgramState::global(), Logger::global(), param)
+            .await;
     });
 }
