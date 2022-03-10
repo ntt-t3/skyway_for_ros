@@ -20,7 +20,7 @@ pub enum PeerRequestParams {
 #[serde(tag = "command")]
 pub enum DataRequestParams {
     #[serde(rename = "CREATE")]
-    Create,
+    Create { params: bool },
     #[serde(rename = "DELETE")]
     Delete { params: DataIdWrapper },
     #[serde(rename = "CONNECT")]

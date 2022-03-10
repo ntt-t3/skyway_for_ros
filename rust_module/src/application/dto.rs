@@ -1,4 +1,5 @@
-use serde::{Deserialize, Serialize};
+use serde::ser::SerializeStruct;
+use serde::{Deserialize, Serialize, Serializer};
 
 use crate::domain::entity::*;
 use crate::error;
@@ -101,12 +102,21 @@ impl PeerDtoResponseMessageBodyEnum {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct DataConnectionResponse {
+    pub data_connection_id: DataConnectionId,
+    pub source_topic_name: String,
+    pub source_ip: String,
+    pub source_port: u16,
+    pub destination_topic_name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "command")]
 pub enum DataDtoResponseMessageBodyEnum {
     #[serde(rename = "CREATE")]
     Create(SocketInfo<DataId>),
     #[serde(rename = "CONNECT")]
-    Connect(DataConnectionIdWrapper),
+    Connect(DataConnectionResponse),
     #[serde(rename = "DELETE")]
     Delete(DataIdWrapper),
     #[serde(rename = "DISCONNECT")]
@@ -126,7 +136,14 @@ impl DataDtoResponseMessageBodyEnum {
                 DataDtoResponseMessageBodyEnum::Create(item)
             }
             DataResponseMessageBodyEnum::Connect(item) => {
-                DataDtoResponseMessageBodyEnum::Connect(item)
+                let data = DataConnectionResponse {
+                    data_connection_id: item.data_connection_id,
+                    source_topic_name: "".to_string(),
+                    source_ip: "".to_string(),
+                    source_port: 0,
+                    destination_topic_name: "".to_string(),
+                };
+                DataDtoResponseMessageBodyEnum::Connect(data)
             }
             DataResponseMessageBodyEnum::Delete(item) => {
                 DataDtoResponseMessageBodyEnum::Delete(item)
@@ -154,7 +171,7 @@ pub enum ResponseDtoMessageBodyEnum {
     Data(DataDtoResponseMessageBodyEnum),
 }
 
-#[derive(Serialize, Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 pub enum ResponseDto {
     Success(ResponseDtoMessageBodyEnum),
     Error(String),
@@ -186,6 +203,26 @@ impl ResponseDto {
 
     pub fn to_string(&self) -> Result<String, error::Error> {
         serde_json::to_string(self).map_err(|e| error::Error::SerdeError { error: e })
+    }
+}
+
+impl Serialize for ResponseDto {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("Person", 2)?;
+        match self {
+            ResponseDto::Success(value) => {
+                state.serialize_field("is_success", &true)?;
+                state.serialize_field("result", &value)?;
+            }
+            ResponseDto::Error(value) => {
+                state.serialize_field("is_success", &false)?;
+                state.serialize_field("result", &value)?;
+            }
+        }
+        state.end()
     }
 }
 

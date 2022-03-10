@@ -12,8 +12,8 @@ use async_trait::async_trait;
 use module::prelude::{PhantomId, SocketInfo};
 
 use crate::application::dto::{
-    DataDtoResponseMessageBodyEnum, DataRequestDtoParams, RequestDto, ResponseDto,
-    ResponseDtoMessageBodyEnum,
+    DataConnectionResponse, DataDtoResponseMessageBodyEnum, DataRequestDtoParams, RequestDto,
+    ResponseDto, ResponseDtoMessageBodyEnum,
 };
 use crate::application::usecase::Service;
 use crate::application::Functions;
@@ -46,9 +46,10 @@ async fn create_data(
     logger: &Logger,
 ) -> Result<(DataId, String, u16), error::Error> {
     logger.debug("create_data for DATA CONNECT");
-    let request = Request::Data(DataRequestParams::Create {});
+    let request = Request::Data(DataRequestParams::Create { params: true });
+    let result = repository.register(program_state, logger, request).await?;
 
-    return match repository.register(program_state, logger, request).await? {
+    return match result {
         Response::Success(ResponseMessageBodyEnum::Data(DataResponseMessageBodyEnum::Create(
             ref socket_info,
         ))) => {
@@ -83,6 +84,8 @@ impl Service for Connect {
         {
             // 1.は単独で実施可能なので最初に行う
             let (data_id, address, port) = create_data(repository, program_state, logger).await?;
+            // topic名には-が使えないので_に置換する
+            let source_topic_name = data_id.as_str().replace("-", "_");
 
             // 3. GWから受信したデータをEnd-User-Programにデータを渡すためのDest Topicのパラメータを生成する
             // GWからこのポートに転送されたデータが最終的にエンドユーザに届けられる
@@ -117,7 +120,7 @@ impl Service for Connect {
             {
                 // 2.はData Port開放時に得られるData IDをTopic Nameにするので、1.の後に実施する
                 let source_parameters = SourceParameters {
-                    source_topic_name: CString::new(data_id.as_str()).unwrap().into_raw(),
+                    source_topic_name: CString::new(source_topic_name.as_str()).unwrap().into_raw(),
                     destination_address: CString::new(address.as_str()).unwrap().into_raw(),
                     destination_port: port,
                 };
@@ -141,8 +144,15 @@ impl Service for Connect {
                 // 5. 4.で確立に成功した場合は、C++側の機能を利用し、Src, Dest Topic生成、保存する
                 cb_functions.data_callback(topic_parameters);
 
+                let response_data = DataConnectionResponse {
+                    data_connection_id: params.data_connection_id,
+                    source_topic_name: source_topic_name,
+                    source_ip: address,
+                    source_port: port,
+                    destination_topic_name: connect_params.destination_topic,
+                };
                 return Ok(ResponseDto::Success(ResponseDtoMessageBodyEnum::Data(
-                    DataDtoResponseMessageBodyEnum::Connect(params),
+                    DataDtoResponseMessageBodyEnum::Connect(response_data),
                 )));
             }
         }
@@ -165,15 +175,19 @@ mod connect_data_test {
     // eventとして異常な文字列を受信した場合
     async fn success() {
         // 成功するケースの結果を生成
-        let answer_str = r#"{
-            "is_success":true,
-            "result":{
-                "type":"DATA",
-                "command":"CONNECT",
-                "data_connection_id":"dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c"
-            }
-        }"#;
-        let answer = ResponseDto::from_str(answer_str).unwrap();
+        let value = DataConnectionResponse {
+            data_connection_id: DataConnectionId::try_create(
+                "dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+            )
+            .unwrap(),
+            source_topic_name: "da_50a32bab_b3d9_4913_8e20_f79c90a6a211".to_string(),
+            source_ip: "127.0.0.1".to_string(),
+            source_port: 10000,
+            destination_topic_name: "destination_topic".to_string(),
+        };
+        let answer = ResponseDto::Success(ResponseDtoMessageBodyEnum::Data(
+            DataDtoResponseMessageBodyEnum::Connect(value),
+        ));
 
         // repositoryのMockを生成
         // create_dataに失敗するケース
@@ -184,7 +198,7 @@ mod connect_data_test {
             .returning(|_, _, dto| {
                 let message = r#"{
                     "data_id": "da-50a32bab-b3d9-4913-8e20-f79c90a6a211",
-                    "port": 10001,
+                    "port": 10000,
                     "ip_v4": "127.0.0.1"
                 }"#;
                 let socket = serde_json::from_str::<SocketInfo<DataId>>(message).unwrap();
@@ -218,7 +232,7 @@ mod connect_data_test {
                 peer_id: PeerId::new("peer_id"),
                 token: Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap(),
                 target_id: PeerId::new("target_id"),
-                destination_topic: "topic".to_string(),
+                destination_topic: "destination_topic".to_string(),
             },
         });
 
