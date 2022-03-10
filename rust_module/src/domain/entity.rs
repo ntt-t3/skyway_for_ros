@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
 
 use crate::error;
-pub(crate) use module::prelude::request_message::Parameter;
 pub(crate) use module::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -25,7 +24,7 @@ pub enum DataRequestParams {
     #[serde(rename = "DELETE")]
     Delete { params: DataIdWrapper },
     #[serde(rename = "CONNECT")]
-    Connect { params: Parameter },
+    Connect { params: ConnectQuery },
     #[serde(rename = "REDIRECT")]
     Redirect { params: RedirectParams },
     #[serde(rename = "DISCONNECT")]

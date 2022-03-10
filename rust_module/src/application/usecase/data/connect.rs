@@ -11,12 +11,12 @@ use std::net::TcpListener;
 use async_trait::async_trait;
 use module::prelude::{PhantomId, SocketInfo};
 
-use crate::application::dto::{DataDtoParams, Dto};
+use crate::application::dto::{DataRequestDtoParams, RequestDto};
 use crate::application::usecase::Service;
 use crate::application::Functions;
 use crate::application::{DestinationParameters, SourceParameters, TopicParameters};
 use crate::domain::entity::{
-    ConnectQuery, DataId, DataIdWrapper, DataRequestParams, DataResponseMessageBodyEnum, Parameter,
+    ConnectQuery, DataId, DataIdWrapper, DataRequestParams, DataResponseMessageBodyEnum,
     ResponseMessageBodyEnum,
 };
 use crate::domain::entity::{Request, Response, SerializableId, SerializableSocket};
@@ -43,7 +43,7 @@ async fn create_data(
     logger: &Logger,
 ) -> Result<(DataId, String, u16), error::Error> {
     logger.debug("create_data for DATA CONNECT");
-    let request = Request::Data(DataRequestParams::Create);
+    let request = Request::Data(DataRequestParams::Create {});
 
     return match repository.register(program_state, logger, request).await? {
         Response::Success(ResponseMessageBodyEnum::Data(DataResponseMessageBodyEnum::Create(
@@ -66,7 +66,7 @@ impl Service for Connect {
         program_state: &ProgramState,
         logger: &Logger,
         cb_functions: &Functions,
-        message: Dto,
+        message: RequestDto,
     ) -> Result<Response, error::Error> {
         let log = format!(
             "Connect Service starting. Parameter: {:?}",
@@ -74,7 +74,7 @@ impl Service for Connect {
         );
         logger.debug(log.as_str());
 
-        if let Dto::Data(DataDtoParams::Connect {
+        if let RequestDto::Data(DataRequestDtoParams::Connect {
             params: connect_params,
         }) = message
         {
@@ -99,9 +99,10 @@ impl Service for Connect {
                     SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", available_port).unwrap(),
                 ),
             };
-            let params =
-                serde_json::from_str::<Parameter>(serde_json::to_string(&query).unwrap().as_str())
-                    .unwrap();
+            let params = serde_json::from_str::<ConnectQuery>(
+                serde_json::to_string(&query).unwrap().as_str(),
+            )
+            .unwrap();
             let params = Request::Data(DataRequestParams::Connect { params });
             let result = repository.register(program_state, logger, params).await?;
 
@@ -206,7 +207,7 @@ mod connect_data_test {
         let function = helper::create_functions();
 
         let connect = Connect::default();
-        let param = Dto::Data(DataDtoParams::Connect {
+        let param = RequestDto::Data(DataRequestDtoParams::Connect {
             params: ConnectParams {
                 peer_id: PeerId::new("peer_id"),
                 token: Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap(),
@@ -238,7 +239,7 @@ mod connect_data_test {
         let function = helper::create_functions();
 
         let connect = Connect::default();
-        let param = Dto::Data(DataDtoParams::Connect {
+        let param = RequestDto::Data(DataRequestDtoParams::Connect {
             params: ConnectParams {
                 peer_id: PeerId::new("peer_id"),
                 token: Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap(),

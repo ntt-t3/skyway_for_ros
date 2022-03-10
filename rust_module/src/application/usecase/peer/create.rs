@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::application::dto::Dto;
+use crate::application::dto::RequestDto;
 use crate::application::usecase::Service;
 use crate::application::Functions;
 use crate::domain::entity::{
@@ -19,9 +19,9 @@ impl Service for Create {
         program_state: &ProgramState,
         logger: &Logger,
         _cb_functions: &Functions,
-        message: Dto,
+        message: RequestDto,
     ) -> Result<Response, error::Error> {
-        if let Dto::Peer(inner) = message {
+        if let RequestDto::Peer(inner) = message {
             let request = Request::Peer(inner);
             let message = repository.register(program_state, logger, request).await;
 
@@ -80,7 +80,7 @@ mod create_peer_test {
                 "turn": true
             }
         }"#;
-        let dto = Dto::from_str(message).unwrap();
+        let dto = RequestDto::from_str(message).unwrap();
 
         // repositoryのMockを生成
         // 呼び出しに成功するケース
@@ -125,7 +125,7 @@ mod create_peer_test {
                 "turn": true
             }
         }"#;
-        let dto = Dto::from_str(message).unwrap();
+        let dto = RequestDto::from_str(message).unwrap();
 
         // repositoryのMockを生成
         // 呼び出しに成功するケース
@@ -152,7 +152,7 @@ mod create_peer_test {
     #[tokio::test]
     async fn invalid_parameter() {
         // 間違ったパラメータの生成
-        let dto = Dto::Test;
+        let dto = RequestDto::Test;
 
         // mockの生成
         // パラメータが違う場合、repositoryが呼ばれないはずである

@@ -7,7 +7,7 @@ use std::os::raw::c_char;
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 
-use crate::application::dto::{Command, DataDtoParams, Dto};
+use crate::application::dto::{Command, DataRequestDtoParams, RequestDto};
 use crate::application::usecase::Service;
 use crate::domain::entity::*;
 use crate::error::Error;
@@ -118,7 +118,7 @@ pub extern "C" fn call_service(message_char: *const c_char) -> *mut c_char {
     let message: String = rt.block_on(async {
         let c_str: &CStr = unsafe { CStr::from_ptr(message_char) };
         let message = c_str.to_str().unwrap().to_string();
-        match Dto::from_str(&message) {
+        match RequestDto::from_str(&message) {
             Ok(dto) => {
                 let repository = crate::REPOSITORY_INSTANCE.get().unwrap();
                 let service = factory(&dto);
@@ -173,7 +173,7 @@ pub extern "C" fn call_service(message_char: *const c_char) -> *mut c_char {
     return CString::new(message.as_str()).unwrap().into_raw();
 }
 
-fn factory(dto: &Dto) -> Box<dyn Service> {
+fn factory(dto: &RequestDto) -> Box<dyn Service> {
     let message = format!(
         "creating service in factory {}:{}",
         dto.dto_type(),
@@ -181,13 +181,13 @@ fn factory(dto: &Dto) -> Box<dyn Service> {
     );
     Logger::global().debug(message);
     match dto {
-        Dto::Peer(..) => peer_factory(dto),
-        Dto::Data(..) => data_factory(dto),
+        RequestDto::Peer(..) => peer_factory(dto),
+        RequestDto::Data(..) => data_factory(dto),
         _ => Box::new(usecase::General {}),
     }
 }
 
-fn peer_factory(dto: &Dto) -> Box<dyn Service> {
+fn peer_factory(dto: &RequestDto) -> Box<dyn Service> {
     let message = format!(
         "creating service in peer_factory {}:{}",
         dto.dto_type(),
@@ -195,14 +195,14 @@ fn peer_factory(dto: &Dto) -> Box<dyn Service> {
     );
     Logger::global().debug(message);
     match dto {
-        Dto::Peer(PeerRequestParams::Create {
+        RequestDto::Peer(PeerRequestParams::Create {
             params: ref _params,
         }) => Box::new(peer::create::Create {}),
         _ => Box::new(usecase::General {}),
     }
 }
 
-fn data_factory(dto: &Dto) -> Box<dyn Service> {
+fn data_factory(dto: &RequestDto) -> Box<dyn Service> {
     let message = format!(
         "creating service in data_factory {}:{}",
         dto.dto_type(),
@@ -210,7 +210,7 @@ fn data_factory(dto: &Dto) -> Box<dyn Service> {
     );
     Logger::global().debug(message);
     match dto {
-        Dto::Data(DataDtoParams::Connect { .. }) => {
+        RequestDto::Data(DataRequestDtoParams::Connect { .. }) => {
             Box::new(usecase::data::connect::Connect::default())
         }
         _ => Box::new(usecase::General {}),
@@ -278,7 +278,7 @@ pub extern "C" fn shutdown_service(peer_id: *const c_char, token: *const c_char)
         }}"#,
             peer_id, token
         );
-        let param = Dto::from_str(&message).unwrap();
+        let param = RequestDto::from_str(&message).unwrap();
         let service = usecase::General {};
         let repository = crate::REPOSITORY_INSTANCE.get().unwrap();
         let _ = service

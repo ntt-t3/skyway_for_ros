@@ -3,7 +3,7 @@ pub(crate) mod peer;
 
 use async_trait::async_trait;
 
-use crate::application::{Dto, Functions};
+use crate::application::{Functions, RequestDto};
 use crate::domain::entity::{Request, Response};
 use crate::Repository;
 use crate::{error, Logger, ProgramState};
@@ -16,7 +16,7 @@ pub(crate) trait Service {
         program_state: &ProgramState,
         logger: &Logger,
         cb_functions: &Functions,
-        message: Dto,
+        message: RequestDto,
     ) -> Result<Response, error::Error>;
 }
 
@@ -30,9 +30,9 @@ impl Service for General {
         program_state: &ProgramState,
         logger: &Logger,
         _cb_functions: &Functions,
-        message: Dto,
+        message: RequestDto,
     ) -> Result<Response, error::Error> {
-        if let Dto::Peer(inner) = message {
+        if let RequestDto::Peer(inner) = message {
             let request = Request::Peer(inner);
             let message = repository.register(program_state, logger, request).await;
 
@@ -90,7 +90,7 @@ pub(crate) mod helper {
 
 #[cfg(test)]
 mod general_service_test {
-    use crate::application::dto::Dto;
+    use crate::application::dto::RequestDto;
     use crate::application::usecase::Service;
     use crate::application::usecase::{helper, General};
     use crate::domain::entity::Response;
@@ -123,7 +123,7 @@ mod general_service_test {
                     "token": "pt-87b54b79-643b-4c60-9c64-ead4ab902dee"
                 }
             }"#;
-        let dto = Dto::from_str(message).unwrap();
+        let dto = RequestDto::from_str(message).unwrap();
 
         // repositoryのMockを生成
         // 呼び出しに成功するケース
@@ -166,7 +166,7 @@ mod general_service_test {
                     "token": "pt-87b54b79-643b-4c60-9c64-ead4ab902dee"
                 }
             }"#;
-        let dto = Dto::from_str(message).unwrap();
+        let dto = RequestDto::from_str(message).unwrap();
 
         // repositoryのMockを生成
         // 呼び出しに成功するケース
@@ -193,7 +193,7 @@ mod general_service_test {
     #[tokio::test]
     async fn invalid_parameter() {
         // 間違ったパラメータの生成
-        let dto = Dto::Test;
+        let dto = RequestDto::Test;
 
         // mockの生成
         // パラメータが違う場合、repositoryが呼ばれないはずである
