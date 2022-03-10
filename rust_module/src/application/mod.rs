@@ -7,7 +7,7 @@ use std::os::raw::c_char;
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 
-use crate::application::dto::{Command, ConnectParams, DataDtoParams, Dto};
+use crate::application::dto::{Command, DataDtoParams, Dto};
 use crate::application::usecase::Service;
 use crate::domain::entity::*;
 use crate::error::Error;
@@ -114,15 +114,6 @@ impl Stringify for ErrorMessage {
 // Fixme: Unit Test
 #[no_mangle]
 pub extern "C" fn call_service(message_char: *const c_char) -> *mut c_char {
-    let param = Dto::Data(DataDtoParams::Connect {
-        params: ConnectParams {
-            peer_id: PeerId::new("peer_id"),
-            token: Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap(),
-            target_id: PeerId::new("target_id"),
-            destination_topic: "topic".to_string(),
-        },
-    });
-
     let rt = tokio::runtime::Runtime::new().unwrap();
     let message: String = rt.block_on(async {
         let c_str: &CStr = unsafe { CStr::from_ptr(message_char) };

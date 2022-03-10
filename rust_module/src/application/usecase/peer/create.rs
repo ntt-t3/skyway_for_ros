@@ -3,8 +3,9 @@ use async_trait::async_trait;
 use crate::application::dto::Dto;
 use crate::application::usecase::Service;
 use crate::application::Functions;
-use crate::domain::entity::{PeerResponseMessageBodyEnum, ResponseMessageBodyEnum};
-use crate::domain::entity::{Request, Response};
+use crate::domain::entity::{
+    PeerResponseMessageBodyEnum, Request, Response, ResponseMessageBodyEnum,
+};
 use crate::Repository;
 use crate::{error, Logger, ProgramState};
 

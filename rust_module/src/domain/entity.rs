@@ -1,14 +1,104 @@
-use crate::error;
+use serde::ser::SerializeStruct;
+use serde::{Deserialize, Serialize, Serializer};
+use serde_json::Value;
 
+use crate::error;
 pub(crate) use module::prelude::request_message::{
     DataServiceParams, Parameter, PeerServiceParams,
 };
-pub(crate) use module::prelude::response_message::{
-    DataResponseMessageBodyEnum, PeerResponseMessageBodyEnum, ResponseMessageBodyEnum,
-};
 pub(crate) use module::prelude::*;
-pub(crate) use module::ResponseMessage as Response;
 pub(crate) use module::ServiceParams as Request;
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(tag = "command")]
+pub enum PeerResponseMessageBodyEnum {
+    #[serde(rename = "CREATE")]
+    Create(PeerInfo),
+    #[serde(rename = "STATUS")]
+    Status(PeerStatusMessage),
+    #[serde(rename = "DELETE")]
+    Delete(PeerInfo),
+    #[serde(rename = "EVENT")]
+    Event(PeerEventEnum),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(tag = "command")]
+pub enum DataResponseMessageBodyEnum {
+    #[serde(rename = "CREATE")]
+    Create(SocketInfo<DataId>),
+    #[serde(rename = "CONNECT")]
+    Connect(DataConnectionIdWrapper),
+    #[serde(rename = "DELETE")]
+    Delete(DataIdWrapper),
+    #[serde(rename = "DISCONNECT")]
+    Disconnect(DataConnectionIdWrapper),
+    #[serde(rename = "REDIRECT")]
+    Redirect(DataConnectionIdWrapper),
+    #[serde(rename = "EVENT")]
+    Event(DataConnectionEventEnum),
+    #[serde(rename = "STATUS")]
+    Status(DataConnectionStatus),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(tag = "type")]
+pub enum ResponseMessageBodyEnum {
+    #[serde(rename = "PEER")]
+    Peer(PeerResponseMessageBodyEnum),
+    #[serde(rename = "DATA")]
+    Data(DataResponseMessageBodyEnum),
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub enum Response {
+    Success(ResponseMessageBodyEnum),
+    Error(String),
+}
+
+impl Response {
+    pub fn from_str(json: &str) -> Result<Response, error::Error> {
+        #[derive(Deserialize)]
+        struct ResponseMessageStruct {
+            is_success: bool,
+            result: Value,
+        }
+        let value = serde_json::from_str::<ResponseMessageStruct>(json)
+            .map_err(|e| error::Error::SerdeError { error: e })?;
+        match value.is_success {
+            true => {
+                let content: ResponseMessageBodyEnum = serde_json::from_value(value.result)
+                    .map_err(|e| error::Error::SerdeError { error: e })?;
+                Ok(Response::Success(content))
+            }
+            _ => {
+                let content: String = serde_json::from_value(value.result)
+                    .map_err(|e| error::Error::SerdeError { error: e })?;
+                Ok(Response::Error(content))
+            }
+        }
+    }
+}
+
+impl Serialize for Response {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("Person", 2)?;
+        match self {
+            Response::Success(value) => {
+                state.serialize_field("is_success", &true)?;
+                state.serialize_field("result", &value)?;
+            }
+            Response::Error(value) => {
+                state.serialize_field("is_success", &false)?;
+                state.serialize_field("result", &value)?;
+            }
+        }
+        state.end()
+    }
+}
 
 // メッセージを自然にStringに変換できるようにする
 pub(crate) trait Stringify {

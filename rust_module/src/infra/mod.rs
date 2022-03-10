@@ -2,8 +2,7 @@ use async_trait::async_trait;
 use tokio::sync::Mutex;
 use tokio::sync::{mpsc, oneshot};
 
-use crate::domain::entity::Stringify;
-use crate::domain::entity::{Request, Response};
+use crate::domain::entity::{Request, Response, Stringify};
 use crate::domain::repository::Repository;
 use crate::error::Error;
 use crate::{error, Logger, ProgramState};

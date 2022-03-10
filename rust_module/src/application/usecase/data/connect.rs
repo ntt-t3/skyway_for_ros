@@ -240,12 +240,14 @@ mod connect_data_test {
         let function = helper::create_functions();
 
         let connect = Connect::default();
-        let param = Dto::Data(DataDtoParams::Connect(ConnectParams {
-            peer_id: PeerId::new("peer_id"),
-            token: Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap(),
-            target_id: PeerId::new("target_id"),
-            destination_topic: "topic".to_string(),
-        }));
+        let param = Dto::Data(DataDtoParams::Connect {
+            params: ConnectParams {
+                peer_id: PeerId::new("peer_id"),
+                token: Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap(),
+                target_id: PeerId::new("target_id"),
+                destination_topic: "topic".to_string(),
+            },
+        });
         let _response = connect
             .execute(&repository, &program_state, &logger, &function, param)
             .await;
