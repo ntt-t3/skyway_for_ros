@@ -1,6 +1,8 @@
 use async_trait::async_trait;
 
-use crate::application::dto::RequestDto;
+use crate::application::dto::{
+    PeerDtoResponseMessageBodyEnum, RequestDto, ResponseDto, ResponseDtoMessageBodyEnum,
+};
 use crate::application::usecase::Service;
 use crate::application::Functions;
 use crate::domain::entity::{
@@ -20,9 +22,9 @@ impl Service for Create {
         logger: &Logger,
         _cb_functions: &Functions,
         message: RequestDto,
-    ) -> Result<Response, error::Error> {
-        if let RequestDto::Peer(inner) = message {
-            let request = Request::Peer(inner);
+    ) -> Result<ResponseDto, error::Error> {
+        if let RequestDto::Peer(ref inner) = message {
+            let request = Request::Peer(inner.clone());
             let message = repository.register(program_state, logger, request).await;
 
             // 成功した場合はC++側にpeer_id, tokenを渡す
@@ -37,9 +39,11 @@ impl Service for Create {
                     .map(|functions| {
                         functions.create_peer_callback(peer_id.as_str(), token.as_str())
                     });
-            }
 
-            return message;
+                return Ok(ResponseDto::Success(ResponseDtoMessageBodyEnum::Peer(
+                    PeerDtoResponseMessageBodyEnum::Create(peer_info.clone()),
+                )));
+            }
         }
 
         let error_message = format!("wrong parameter {:?}", message);
@@ -66,7 +70,7 @@ mod create_peer_test {
                         "token":"pt-06cf1d26-0ef0-4b03-aca6-933027d434c2"
                     }
                 }"#;
-            Response::from_str(message).unwrap()
+            ResponseDto::from_str(message).unwrap()
         };
 
         // CreatePeerのパラメータ生成
@@ -145,7 +149,7 @@ mod create_peer_test {
             .execute(&repository, &program_state, &logger, &function, dto)
             .await
         {
-            assert_eq!(message, "error");
+            assert_eq!(message, "wrong parameter Peer(Create { params: CreatePeerParams { key: \"pt-9749250e-d157-4f80-9ee2-359ce8524308\", domain: \"localhost\", peer_id: PeerId(\"peer_id\"), turn: true } })");
         }
     }
 

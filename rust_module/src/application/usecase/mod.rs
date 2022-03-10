@@ -3,8 +3,12 @@ pub(crate) mod peer;
 
 use async_trait::async_trait;
 
-use crate::application::{Functions, RequestDto};
-use crate::domain::entity::{Request, Response};
+use crate::application::dto::{
+    DataDtoResponseMessageBodyEnum, PeerDtoResponseMessageBodyEnum, RequestDto, ResponseDto,
+    ResponseDtoMessageBodyEnum,
+};
+use crate::application::Functions;
+use crate::domain::entity::{Request, Response, ResponseMessageBodyEnum};
 use crate::Repository;
 use crate::{error, Logger, ProgramState};
 
@@ -17,7 +21,7 @@ pub(crate) trait Service {
         logger: &Logger,
         cb_functions: &Functions,
         message: RequestDto,
-    ) -> Result<Response, error::Error>;
+    ) -> Result<ResponseDto, error::Error>;
 }
 
 pub(crate) struct General {}
@@ -31,12 +35,23 @@ impl Service for General {
         logger: &Logger,
         _cb_functions: &Functions,
         message: RequestDto,
-    ) -> Result<Response, error::Error> {
+    ) -> Result<ResponseDto, error::Error> {
         if let RequestDto::Peer(inner) = message {
             let request = Request::Peer(inner);
-            let message = repository.register(program_state, logger, request).await;
-
-            return message;
+            let message = repository.register(program_state, logger, request).await?;
+            return match message {
+                Response::Success(ResponseMessageBodyEnum::Peer(peer)) => {
+                    Ok(ResponseDto::Success(ResponseDtoMessageBodyEnum::Peer(
+                        PeerDtoResponseMessageBodyEnum::from_entity(peer),
+                    )))
+                }
+                Response::Success(ResponseMessageBodyEnum::Data(data)) => {
+                    Ok(ResponseDto::Success(ResponseDtoMessageBodyEnum::Data(
+                        DataDtoResponseMessageBodyEnum::from_entity(data),
+                    )))
+                }
+                Response::Error(error) => Ok(ResponseDto::Error(error)),
+            };
         }
 
         let error_message = format!("wrong parameter {:?}", message);
@@ -90,7 +105,7 @@ pub(crate) mod helper {
 
 #[cfg(test)]
 mod general_service_test {
-    use crate::application::dto::RequestDto;
+    use crate::application::dto::{RequestDto, ResponseDto};
     use crate::application::usecase::Service;
     use crate::application::usecase::{helper, General};
     use crate::domain::entity::Response;
@@ -111,7 +126,7 @@ mod general_service_test {
                     "token":"pt-87b54b79-643b-4c60-9c64-ead4ab902dee"
                 }
             }"#;
-            Response::from_str(message).unwrap()
+            ResponseDto::from_str(message).unwrap()
         };
 
         // DeletePeerのパラメータ生成

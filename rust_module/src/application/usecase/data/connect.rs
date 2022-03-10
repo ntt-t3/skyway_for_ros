@@ -11,7 +11,10 @@ use std::net::TcpListener;
 use async_trait::async_trait;
 use module::prelude::{PhantomId, SocketInfo};
 
-use crate::application::dto::{DataRequestDtoParams, RequestDto};
+use crate::application::dto::{
+    DataDtoResponseMessageBodyEnum, DataRequestDtoParams, RequestDto, ResponseDto,
+    ResponseDtoMessageBodyEnum,
+};
 use crate::application::usecase::Service;
 use crate::application::Functions;
 use crate::application::{DestinationParameters, SourceParameters, TopicParameters};
@@ -67,7 +70,7 @@ impl Service for Connect {
         logger: &Logger,
         cb_functions: &Functions,
         message: RequestDto,
-    ) -> Result<Response, error::Error> {
+    ) -> Result<ResponseDto, error::Error> {
         let log = format!(
             "Connect Service starting. Parameter: {:?}",
             message.to_string()
@@ -109,7 +112,7 @@ impl Service for Connect {
             // 5.でSrc, Dest Topicを保存する際には、DataConnection IDをキーにしたhashで管理するため、
             // 4.の実施後である必要がある
             if let Response::Success(ResponseMessageBodyEnum::Data(
-                DataResponseMessageBodyEnum::Connect(ref params),
+                DataResponseMessageBodyEnum::Connect(params),
             )) = result
             {
                 // 2.はData Port開放時に得られるData IDをTopic Nameにするので、1.の後に実施する
@@ -137,8 +140,11 @@ impl Service for Connect {
 
                 // 5. 4.で確立に成功した場合は、C++側の機能を利用し、Src, Dest Topic生成、保存する
                 cb_functions.data_callback(topic_parameters);
+
+                return Ok(ResponseDto::Success(ResponseDtoMessageBodyEnum::Data(
+                    DataDtoResponseMessageBodyEnum::Connect(params),
+                )));
             }
-            return Ok(result);
         }
 
         return Err(error::Error::create_local_error("invalid parameters"));
@@ -167,7 +173,7 @@ mod connect_data_test {
                 "data_connection_id":"dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c"
             }
         }"#;
-        let answer = Response::from_str(answer_str).unwrap();
+        let answer = ResponseDto::from_str(answer_str).unwrap();
 
         // repositoryのMockを生成
         // create_dataに失敗するケース
