@@ -1,8 +1,9 @@
+pub(crate) mod data;
 pub(crate) mod peer;
 
 use async_trait::async_trait;
 
-use crate::application::Dto;
+use crate::application::{Dto, Functions};
 use crate::domain::entity::{Request, Response};
 use crate::Repository;
 use crate::{error, Logger, ProgramState};
@@ -14,6 +15,7 @@ pub(crate) trait Service {
         repository: &Box<dyn Repository>,
         program_state: &ProgramState,
         logger: &Logger,
+        cb_functions: &Functions,
         message: Dto,
     ) -> Result<Response, error::Error>;
 }
@@ -27,6 +29,7 @@ impl Service for General {
         repository: &Box<dyn Repository>,
         program_state: &ProgramState,
         logger: &Logger,
+        _cb_functions: &Functions,
         message: Dto,
     ) -> Result<Response, error::Error> {
         if let Dto::Peer(inner) = message {
@@ -45,9 +48,14 @@ impl Service for General {
 pub(crate) mod helper {
     use std::os::raw::{c_char, c_double};
 
+    use crate::application::{Functions, TopicParameters};
     use crate::{Logger, ProgramState};
 
     extern "C" fn log(_message: *const c_char) {}
+
+    pub(crate) fn create_logger() -> Logger {
+        Logger::new(log, log, log, log)
+    }
 
     extern "C" fn is_running() -> bool {
         return true;
@@ -58,14 +66,25 @@ pub(crate) mod helper {
     }
 
     extern "C" fn sleep_(_duration: c_double) {}
-    extern "C" fn wait_for_shutdown() {}
 
-    pub(crate) fn create_logger() -> Logger {
-        Logger::new(log, log, log, log)
-    }
+    extern "C" fn wait_for_shutdown() {}
 
     pub(crate) fn create_program_state() -> ProgramState {
         ProgramState::new(is_running, is_shutting_down, sleep_, wait_for_shutdown)
+    }
+
+    extern "C" fn create_peer(_peer_id: *mut c_char, _token: *mut c_char) {}
+
+    extern "C" fn peer_delete() {}
+
+    extern "C" fn create_data(_param: TopicParameters) {}
+
+    pub(crate) fn create_functions() -> Functions {
+        Functions {
+            create_peer_callback_c: create_peer,
+            peer_deleted_callback: peer_delete,
+            data_callback_c: create_data,
+        }
     }
 }
 
@@ -125,10 +144,11 @@ mod general_service_test {
 
         let logger = helper::create_logger();
         let program_state = helper::create_program_state();
+        let function = helper::create_functions();
         // 実行
         let general_peer_service = General {};
         let result = general_peer_service
-            .execute(&repository, &program_state, &logger, dto)
+            .execute(&repository, &program_state, &logger, &function, dto)
             .await;
         assert_eq!(result.unwrap(), answer);
     }
@@ -159,10 +179,11 @@ mod general_service_test {
 
         let logger = helper::create_logger();
         let program_state = helper::create_program_state();
+        let function = helper::create_functions();
         // 実行
         let general_peer_service = General {};
         if let Err(error::Error::LocalError(message)) = general_peer_service
-            .execute(&repository, &program_state, &logger, dto)
+            .execute(&repository, &program_state, &logger, &function, dto)
             .await
         {
             assert_eq!(message, "error");
@@ -185,13 +206,14 @@ mod general_service_test {
 
         let logger = helper::create_logger();
         let program_state = helper::create_program_state();
+        let function = helper::create_functions();
         // 実行
         let general_peer_service = General {};
 
         // 評価
         // 間違ったパラメータである旨を返してくるはずである
         if let Err(error::Error::LocalError(error_message)) = general_peer_service
-            .execute(&repository, &program_state, &logger, dto)
+            .execute(&repository, &program_state, &logger, &function, dto)
             .await
         {
             assert_eq!(error_message, "wrong parameter Test");

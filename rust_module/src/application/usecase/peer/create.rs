@@ -2,6 +2,7 @@ use async_trait::async_trait;
 
 use crate::application::dto::Dto;
 use crate::application::usecase::Service;
+use crate::application::Functions;
 use crate::domain::entity::{PeerResponseMessageBodyEnum, ResponseMessageBodyEnum};
 use crate::domain::entity::{Request, Response};
 use crate::Repository;
@@ -16,6 +17,7 @@ impl Service for Create {
         repository: &Box<dyn Repository>,
         program_state: &ProgramState,
         logger: &Logger,
+        _cb_functions: &Functions,
         message: Dto,
     ) -> Result<Response, error::Error> {
         if let Dto::Peer(inner) = message {
@@ -29,7 +31,7 @@ impl Service for Create {
             {
                 let peer_id = peer_info.peer_id();
                 let token = peer_info.token();
-                crate::application::REPOSITORY_INSTANCE
+                crate::application::FUNCTIONS_INSTANCE
                     .get()
                     .map(|functions| {
                         functions.create_peer_callback(peer_id.as_str(), token.as_str())
@@ -97,11 +99,12 @@ mod create_peer_test {
         let repository: Box<dyn Repository> = Box::new(repository);
         let logger = helper::create_logger();
         let program_state = helper::create_program_state();
+        let function = helper::create_functions();
 
         // 実行
         let create_peer = Create {};
         let result = create_peer
-            .execute(&repository, &program_state, &logger, dto)
+            .execute(&repository, &program_state, &logger, &function, dto)
             .await;
         assert_eq!(result.unwrap(), answer);
     }
@@ -133,11 +136,12 @@ mod create_peer_test {
         let repository: Box<dyn Repository> = Box::new(repository);
         let logger = helper::create_logger();
         let program_state = helper::create_program_state();
+        let function = helper::create_functions();
 
         // 実行
         let create_peer = Create {};
         if let Err(error::Error::LocalError(message)) = create_peer
-            .execute(&repository, &program_state, &logger, dto)
+            .execute(&repository, &program_state, &logger, &function, dto)
             .await
         {
             assert_eq!(message, "error");
@@ -160,13 +164,14 @@ mod create_peer_test {
 
         let logger = helper::create_logger();
         let program_state = helper::create_program_state();
+        let function = helper::create_functions();
         // 実行
         let create_peer = Create {};
 
         // 評価
         // 間違ったパラメータである旨を返してくるはずである
         if let Err(error::Error::LocalError(error_message)) = create_peer
-            .execute(&repository, &program_state, &logger, dto)
+            .execute(&repository, &program_state, &logger, &function, dto)
             .await
         {
             assert_eq!(error_message, "wrong parameter Test");

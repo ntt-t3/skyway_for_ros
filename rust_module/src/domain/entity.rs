@@ -1,8 +1,10 @@
 use crate::error;
 
-pub(crate) use module::prelude::request_message::PeerServiceParams;
+pub(crate) use module::prelude::request_message::{
+    DataServiceParams, Parameter, PeerServiceParams,
+};
 pub(crate) use module::prelude::response_message::{
-    PeerResponseMessageBodyEnum, ResponseMessageBodyEnum,
+    DataResponseMessageBodyEnum, PeerResponseMessageBodyEnum, ResponseMessageBodyEnum,
 };
 pub(crate) use module::prelude::*;
 pub(crate) use module::ResponseMessage as Response;

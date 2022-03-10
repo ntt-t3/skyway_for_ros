@@ -4,14 +4,13 @@ use crate::domain::entity::*;
 use crate::error;
 
 // JSONでクライアントから受け取るメッセージ
-// JSONとしてなので、キャメルケースではなくスネークケースで受け取る
-#[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "type")]
 pub(crate) enum Dto {
     #[serde(rename = "PEER")]
     Peer(PeerServiceParams),
-    Data,
+    #[serde(rename = "DATA")]
+    Data(DataDtoParams),
     Media,
     #[cfg(test)]
     Test,
@@ -25,14 +24,41 @@ impl Dto {
     pub fn dto_type(&self) -> String {
         match self {
             Dto::Peer(ref _p) => "PEER".to_string(),
-            Dto::Data => "DATA".to_string(),
+            Dto::Data(ref _d) => "DATA".to_string(),
             Dto::Media => "MEDIA".to_string(),
             #[cfg(test)]
             _ => "TEST".to_string(),
         }
     }
+
+    pub fn to_string(&self) -> Result<String, error::Error> {
+        serde_json::to_string(self).map_err(|e| error::Error::SerdeError { error: e })
+    }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub(crate) struct ConnectParams {
+    pub peer_id: PeerId,
+    pub token: Token,
+    pub target_id: PeerId,
+    pub destination_topic: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(tag = "command")]
+pub(crate) enum DataDtoParams {
+    #[serde(rename = "CONNECT")]
+    Connect { params: ConnectParams },
+}
+
+impl Command for DataDtoParams {
+    fn command(&self) -> String {
+        match self {
+            DataDtoParams::Connect { .. } => "CONNECT".to_string(),
+            _ => todo!(),
+        }
+    }
+}
 pub(crate) trait Command {
     fn command(&self) -> String;
 }
@@ -51,6 +77,7 @@ impl Command for Dto {
     fn command(&self) -> String {
         match self {
             Dto::Peer(ref peer) => peer.command(),
+            Dto::Data(ref data) => data.command(),
             _ => {
                 todo!()
             }
