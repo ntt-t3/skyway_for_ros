@@ -3,11 +3,43 @@ use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
 
 use crate::error;
-pub(crate) use module::prelude::request_message::{
-    DataServiceParams, Parameter, PeerServiceParams,
-};
+pub(crate) use module::prelude::request_message::Parameter;
 pub(crate) use module::prelude::*;
-pub(crate) use module::ServiceParams as Request;
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(tag = "command")]
+pub enum PeerRequestParams {
+    #[serde(rename = "CREATE")]
+    Create { params: CreatePeerParams },
+    #[serde(rename = "STATUS")]
+    Status { params: PeerInfo },
+    #[serde(rename = "DELETE")]
+    Delete { params: PeerInfo },
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(tag = "command")]
+pub enum DataRequestParams {
+    #[serde(rename = "CREATE")]
+    Create,
+    #[serde(rename = "DELETE")]
+    Delete { params: DataIdWrapper },
+    #[serde(rename = "CONNECT")]
+    Connect { params: Parameter },
+    #[serde(rename = "REDIRECT")]
+    Redirect { params: RedirectParams },
+    #[serde(rename = "DISCONNECT")]
+    Disconnect { params: DataConnectionIdWrapper },
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(tag = "type")]
+pub enum Request {
+    #[serde(rename = "PEER")]
+    Peer(PeerRequestParams),
+    #[serde(rename = "DATA")]
+    Data(DataRequestParams),
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "command")]

@@ -8,7 +8,7 @@ use crate::error;
 #[serde(tag = "type")]
 pub(crate) enum Dto {
     #[serde(rename = "PEER")]
-    Peer(PeerServiceParams),
+    Peer(PeerRequestParams),
     #[serde(rename = "DATA")]
     Data(DataDtoParams),
     Media,
@@ -63,12 +63,12 @@ pub(crate) trait Command {
     fn command(&self) -> String;
 }
 
-impl Command for PeerServiceParams {
+impl Command for PeerRequestParams {
     fn command(&self) -> String {
         match self {
-            PeerServiceParams::Create { params: ref _p } => "CREATE".to_string(),
-            PeerServiceParams::Delete { params: ref _p } => "DELETE".to_string(),
-            PeerServiceParams::Status { params: ref _p } => "STATUS".to_string(),
+            PeerRequestParams::Create { params: ref _p } => "CREATE".to_string(),
+            PeerRequestParams::Delete { params: ref _p } => "DELETE".to_string(),
+            PeerRequestParams::Status { params: ref _p } => "STATUS".to_string(),
         }
     }
 }

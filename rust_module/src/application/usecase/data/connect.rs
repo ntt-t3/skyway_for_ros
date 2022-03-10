@@ -16,7 +16,7 @@ use crate::application::usecase::Service;
 use crate::application::Functions;
 use crate::application::{DestinationParameters, SourceParameters, TopicParameters};
 use crate::domain::entity::{
-    ConnectQuery, DataId, DataIdWrapper, DataResponseMessageBodyEnum, DataServiceParams, Parameter,
+    ConnectQuery, DataId, DataIdWrapper, DataRequestParams, DataResponseMessageBodyEnum, Parameter,
     ResponseMessageBodyEnum,
 };
 use crate::domain::entity::{Request, Response, SerializableId, SerializableSocket};
@@ -43,9 +43,7 @@ async fn create_data(
     logger: &Logger,
 ) -> Result<(DataId, String, u16), error::Error> {
     logger.debug("create_data for DATA CONNECT");
-    let request = Request::Data(DataServiceParams::Create {
-        params: Parameter(Default::default()),
-    });
+    let request = Request::Data(DataRequestParams::Create);
 
     return match repository.register(program_state, logger, request).await? {
         Response::Success(ResponseMessageBodyEnum::Data(DataResponseMessageBodyEnum::Create(
@@ -104,7 +102,7 @@ impl Service for Connect {
             let params =
                 serde_json::from_str::<Parameter>(serde_json::to_string(&query).unwrap().as_str())
                     .unwrap();
-            let params = Request::Data(DataServiceParams::Connect { params });
+            let params = Request::Data(DataRequestParams::Connect { params });
             let result = repository.register(program_state, logger, params).await?;
 
             // 5.でSrc, Dest Topicを保存する際には、DataConnection IDをキーにしたhashで管理するため、
@@ -184,10 +182,10 @@ mod connect_data_test {
                 }"#;
                 let socket = serde_json::from_str::<SocketInfo<DataId>>(message).unwrap();
                 return match dto {
-                    Request::Data(DataServiceParams::Create { .. }) => Ok(Response::Success(
+                    Request::Data(DataRequestParams::Create { .. }) => Ok(Response::Success(
                         ResponseMessageBodyEnum::Data(DataResponseMessageBodyEnum::Create(socket)),
                     )),
-                    Request::Data(DataServiceParams::Connect { .. }) => {
+                    Request::Data(DataRequestParams::Connect { .. }) => {
                         Ok(Response::Success(ResponseMessageBodyEnum::Data(
                             DataResponseMessageBodyEnum::Connect(DataConnectionIdWrapper {
                                 data_connection_id: DataConnectionId::try_create(

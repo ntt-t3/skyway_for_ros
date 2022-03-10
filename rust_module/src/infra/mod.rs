@@ -87,19 +87,26 @@ impl Repository for RepositoryImpl {
 
 #[cfg(test)]
 mod infra_send_message_test {
-    use module::prelude::request_message::{Parameter, PeerServiceParams};
-
     use super::*;
     use crate::application::usecase::helper;
-    use crate::domain::entity::FromStr;
+    use crate::domain::entity::{CreatePeerParams, FromStr, PeerId, PeerRequestParams};
+
+    fn create_request() -> Request {
+        let inner = PeerRequestParams::Create {
+            params: CreatePeerParams {
+                key: "API_KEY".to_string(),
+                domain: "localhost".to_string(),
+                peer_id: PeerId::new("peer_id"),
+                turn: false,
+            },
+        };
+        return Request::Peer(inner);
+    }
 
     #[tokio::test]
     async fn success() {
         // 送信メッセージの生成
-        let inner = PeerServiceParams::Create {
-            params: Parameter(Default::default()),
-        };
-        let message: Request = Request::Peer(inner);
+        let message = create_request();
 
         // Repository Implの生成
         let (message_tx, mut message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
@@ -144,10 +151,7 @@ mod infra_send_message_test {
     // responseが帰ってこないケース
     async fn error_no_response() {
         // 送信メッセージの生成
-        let inner = PeerServiceParams::Create {
-            params: Parameter(Default::default()),
-        };
-        let message: Request = Request::Peer(inner);
+        let message = create_request();
 
         // Repository Implの生成
         let (message_tx, mut message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
@@ -186,10 +190,7 @@ mod infra_send_message_test {
     // responseがinvalidなJSONでパースできないケース
     async fn error_recv_invalid_message() {
         // 送信メッセージの生成
-        let inner = PeerServiceParams::Create {
-            params: Parameter(Default::default()),
-        };
-        let message: Request = Request::Peer(inner);
+        let message = create_request();
 
         // Repository Implの生成
         let (message_tx, mut message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);

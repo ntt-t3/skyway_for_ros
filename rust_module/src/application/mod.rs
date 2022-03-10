@@ -195,7 +195,7 @@ fn peer_factory(dto: &Dto) -> Box<dyn Service> {
     );
     Logger::global().debug(message);
     match dto {
-        Dto::Peer(PeerServiceParams::Create {
+        Dto::Peer(PeerRequestParams::Create {
             params: ref _params,
         }) => Box::new(peer::create::Create {}),
         _ => Box::new(usecase::General {}),
