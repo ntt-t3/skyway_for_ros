@@ -1,14 +1,13 @@
-// このサービスでは、End-User-Programの指示を受けて、DataConnectionの確立を行う
+use std::ffi::CString;
+// このサービスでは、End-User-Programの指示を受けて、DataConnectionのRedirect設定を行う
 // 責務は以下の通りである
 // 1. GWにData Portを開放させる
 // 2. Data Portにデータを流し込むためのSrc Topicのパラメータを生成する
 // 3. GWから受信したデータをEnd-User-Programにデータを渡すためのDest Topicのパラメータを生成する
-// 4. CONNECT APIをコールし、DataConnectionを確立させる
+// 4. REDIRECT APIをコールし、DataConnectionを確立させる
 // 5. 4.で確立に成功した場合は、C++側の機能を利用し、Src, Dest Topic生成、保存する
-
-use std::ffi::CString;
-
 use async_trait::async_trait;
+use module::prelude::{DataIdWrapper, RedirectParams};
 
 use crate::application::dto::{
     DataConnectionResponse, DataDtoResponseMessageBodyEnum, DataRequestDtoParams, RequestDto,
@@ -16,25 +15,23 @@ use crate::application::dto::{
 };
 use crate::application::usecase::data::create_data;
 use crate::application::usecase::{available_port, Service};
-use crate::application::Functions;
-use crate::application::{DestinationParameters, SourceParameters, TopicParameters};
+use crate::application::{DestinationParameters, Functions, SourceParameters, TopicParameters};
 use crate::domain::entity::{
-    ConnectQuery, DataIdWrapper, DataRequestParams, DataResponseMessageBodyEnum, PhantomId,
-    ResponseMessageBodyEnum, SocketInfo,
+    DataRequestParams, DataResponseMessageBodyEnum, PhantomId, Request, Response,
+    ResponseMessageBodyEnum, SerializableId, SerializableSocket, SocketInfo,
 };
-use crate::domain::entity::{Request, Response, SerializableId, SerializableSocket};
 use crate::{error, Logger, ProgramState, Repository};
 
-pub(crate) struct Connect {}
+pub(crate) struct Redirect {}
 
-impl Default for Connect {
+impl Default for Redirect {
     fn default() -> Self {
-        Connect {}
+        Redirect {}
     }
 }
 
 #[async_trait]
-impl Service for Connect {
+impl Service for Redirect {
     async fn execute(
         &self,
         repository: &Box<dyn Repository>,
@@ -44,13 +41,13 @@ impl Service for Connect {
         message: RequestDto,
     ) -> Result<ResponseDto, error::Error> {
         let log = format!(
-            "Connect Service starting. Parameter: {:?}",
+            "Redirect Service starting. Parameter: {:?}",
             message.to_string()
         );
         logger.debug(log.as_str());
 
-        if let RequestDto::Data(DataRequestDtoParams::Connect {
-            params: connect_params,
+        if let RequestDto::Data(DataRequestDtoParams::Redirect {
+            params: redirect_params,
         }) = message
         {
             // 1.は単独で実施可能なので最初に行う
@@ -62,31 +59,22 @@ impl Service for Connect {
             // GWからこのポートに転送されたデータが最終的にエンドユーザに届けられる
             let available_port = available_port().expect("bind port failed");
 
-            // 4.でCONNECT APIを呼ぶ際には、JSONメッセージ内にData PortのData IDと、
+            // 4.でREDIRECT APIを呼ぶ際には、JSONメッセージ内にData PortのData IDと、
             // Dest ObjectのUDPソケット情報が必要なので、このタイミングで実施する
-            let query = ConnectQuery {
-                peer_id: connect_params.peer_id,
-                token: connect_params.token,
-                options: None,
-                target_id: connect_params.target_id,
-                params: Some(DataIdWrapper {
-                    data_id: data_id.clone(),
-                }),
+            let params = RedirectParams {
+                data_connection_id: redirect_params.data_connection_id,
+                feed_params: Some(DataIdWrapper { data_id }),
                 redirect_params: Some(
                     SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", available_port).unwrap(),
                 ),
             };
-            let params = serde_json::from_str::<ConnectQuery>(
-                serde_json::to_string(&query).unwrap().as_str(),
-            )
-            .unwrap();
-            let params = Request::Data(DataRequestParams::Connect { params });
+            let params = Request::Data(DataRequestParams::Redirect { params });
             let result = repository.register(program_state, logger, params).await?;
 
             // 5.でSrc, Dest Topicを保存する際には、DataConnection IDをキーにしたhashで管理するため、
             // 4.の実施後である必要がある
             if let Response::Success(ResponseMessageBodyEnum::Data(
-                DataResponseMessageBodyEnum::Connect(params),
+                DataResponseMessageBodyEnum::Redirect(params),
             )) = result
             {
                 // 2.はData Port開放時に得られるData IDをTopic Nameにするので、1.の後に実施する
@@ -99,9 +87,11 @@ impl Service for Connect {
                 // 3.はDto内に含まれるEnd-User-ProgramのTopic Nameがあればいつでも実施可能である
                 let destination_parameters = DestinationParameters {
                     source_port: available_port,
-                    destination_topic_name: CString::new(connect_params.destination_topic.as_str())
-                        .unwrap()
-                        .into_raw(),
+                    destination_topic_name: CString::new(
+                        redirect_params.destination_topic.as_str(),
+                    )
+                    .unwrap()
+                    .into_raw(),
                 };
 
                 let topic_parameters = TopicParameters {
@@ -119,11 +109,11 @@ impl Service for Connect {
                     data_connection_id: params.data_connection_id,
                     source_topic_name: source_topic_name,
                     source_ip: address,
-                    source_port: port,
-                    destination_topic_name: connect_params.destination_topic,
+                    source_port: 10000,
+                    destination_topic_name: redirect_params.destination_topic,
                 };
                 return Ok(ResponseDto::Success(ResponseDtoMessageBodyEnum::Data(
-                    DataDtoResponseMessageBodyEnum::Connect(response_data),
+                    DataDtoResponseMessageBodyEnum::Redirect(response_data),
                 )));
             }
         }
@@ -133,38 +123,36 @@ impl Service for Connect {
 }
 
 #[cfg(test)]
-mod connect_data_test {
+mod redirect_data_test {
     use super::*;
-    use crate::application::dto::ConnectParams;
     use crate::application::usecase::helper;
     use crate::domain::entity::{
-        DataConnectionId, DataConnectionIdWrapper, DataId, PeerId, SocketInfo, Token,
+        DataConnectionId, DataConnectionIdWrapper, DataId, DataRequestParams,
+        DataResponseMessageBodyEnum, Request, Response, ResponseMessageBodyEnum, SocketInfo,
     };
     use crate::domain::repository::MockRepository;
 
     #[tokio::test]
     // eventとして異常な文字列を受信した場合
     async fn success() {
-        // 成功するケースの結果を生成
-        let value = DataConnectionResponse {
-            data_connection_id: DataConnectionId::try_create(
-                "dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
-            )
-            .unwrap(),
-            source_topic_name: "da_50a32bab_b3d9_4913_8e20_f79c90a6a211".to_string(),
-            source_ip: "127.0.0.1".to_string(),
-            source_port: 10000,
-            destination_topic_name: "destination_topic".to_string(),
-        };
+        // DataConnectionResponseを含むRedirectパラメータを受け取れるはずである
         let answer = ResponseDto::Success(ResponseDtoMessageBodyEnum::Data(
-            DataDtoResponseMessageBodyEnum::Connect(value),
+            DataDtoResponseMessageBodyEnum::Redirect(DataConnectionResponse {
+                data_connection_id: DataConnectionId::try_create(
+                    "dc-8bdef7a1-65c8-46be-a82e-37d51c776309",
+                )
+                .unwrap(),
+                source_topic_name: "da_50a32bab_b3d9_4913_8e20_f79c90a6a211".to_string(),
+                source_ip: "127.0.0.1".to_string(),
+                source_port: 10000,
+                destination_topic_name: "destination_topic".to_string(),
+            }),
         ));
 
-        // repositoryのMockを生成
-        // create_dataに失敗するケース
         let mut repository = MockRepository::new();
         repository
             .expect_register()
+            // create_dataとredirectの2回呼ばれる
             .times(2)
             .returning(|_, _, dto| {
                 return match dto {
@@ -181,13 +169,13 @@ mod connect_data_test {
                             DataResponseMessageBodyEnum::Create(socket),
                         )))
                     }
-                    Request::Data(DataRequestParams::Connect { .. }) => {
-                        // connectのmock
+                    Request::Data(DataRequestParams::Redirect { .. }) => {
+                        // redirectのmock
                         // 成功し、DataConnectionIdを返すケース
                         Ok(Response::Success(ResponseMessageBodyEnum::Data(
-                            DataResponseMessageBodyEnum::Connect(DataConnectionIdWrapper {
+                            DataResponseMessageBodyEnum::Redirect(DataConnectionIdWrapper {
                                 data_connection_id: DataConnectionId::try_create(
-                                    "dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+                                    "dc-8bdef7a1-65c8-46be-a82e-37d51c776309",
                                 )
                                 .unwrap(),
                             }),
@@ -202,29 +190,29 @@ mod connect_data_test {
 
         // パラメータの生成
         let logger = helper::create_logger();
-        let program_state = helper::create_program_state();
-        let function = helper::create_functions();
-        let param = RequestDto::Data(DataRequestDtoParams::Connect {
-            params: ConnectParams {
-                peer_id: PeerId::new("peer_id"),
-                token: Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap(),
-                target_id: PeerId::new("target_id"),
-                destination_topic: "destination_topic".to_string(),
-            },
-        });
+        let state = helper::create_program_state();
+        let functions = helper::create_functions();
+        let message = r#"{
+            "type":"DATA",
+            "command":"REDIRECT",
+            "params":{
+                "data_connection_id":"dc-8bdef7a1-65c8-46be-a82e-37d51c776309",
+                "destination_topic":"destination_topic"
+            }
+        }"#;
+        let request = RequestDto::from_str(&message).unwrap();
 
         // 実行
-        let connect = Connect::default();
-        let response = connect
-            .execute(&repository, &program_state, &logger, &function, param)
-            .await
-            .unwrap();
-        assert_eq!(response, answer);
+        let redirect = Redirect::default();
+        let result = redirect
+            .execute(&repository, &state, &logger, &functions, request)
+            .await;
+        assert_eq!(result.unwrap(), answer);
     }
 
     #[tokio::test]
     // eventとして異常な文字列を受信した場合
-    async fn create_data_error() {
+    async fn redirect_data_error() {
         // repositoryのMockを生成
         // create_dataに失敗するケース
         let mut repository = MockRepository::new();
@@ -239,19 +227,19 @@ mod connect_data_test {
         let logger = helper::create_logger();
         let program_state = helper::create_program_state();
         let function = helper::create_functions();
-        let param = RequestDto::Data(DataRequestDtoParams::Connect {
-            params: ConnectParams {
-                peer_id: PeerId::new("peer_id"),
-                token: Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap(),
-                target_id: PeerId::new("target_id"),
-                destination_topic: "topic".to_string(),
-            },
-        });
+        let message = r#"{
+            "type":"DATA",
+            "command":"REDIRECT",
+            "params":{
+                "data_connection_id":"dc-8bdef7a1-65c8-46be-a82e-37d51c776309",
+                "destination_topic":"destination_topic"
+            }
+        }"#;
+        let request = RequestDto::from_str(&message).unwrap();
 
         // 実行
-        let connect = Connect::default();
-        let _response = connect
-            .execute(&repository, &program_state, &logger, &function, param)
+        let _response = Redirect::default()
+            .execute(&repository, &program_state, &logger, &function, request)
             .await;
     }
 }

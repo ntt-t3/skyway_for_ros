@@ -1,10 +1,11 @@
+pub(crate) mod connect;
+pub(crate) mod redirect;
+
 use crate::domain::entity::{
     DataId, DataRequestParams, DataResponseMessageBodyEnum, Request, Response,
     ResponseMessageBodyEnum, SerializableSocket,
 };
 use crate::{error, Logger, ProgramState, Repository};
-
-pub(crate) mod connect;
 
 async fn create_data(
     repository: &Box<dyn Repository>,

@@ -14,7 +14,7 @@ pub(crate) enum DataRequestDtoParams {
     #[serde(rename = "CONNECT")]
     Connect { params: ConnectParams },
     #[serde(rename = "REDIRECT")]
-    Redirect { params: RedirectParams },
+    Redirect { params: RedirectDtoParams },
     #[serde(rename = "DISCONNECT")]
     Disconnect { params: DataConnectionIdWrapper },
 }
@@ -72,6 +72,12 @@ pub(crate) struct ConnectParams {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub(crate) struct RedirectDtoParams {
+    pub data_connection_id: DataConnectionId,
+    pub destination_topic: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "command")]
 pub enum PeerDtoResponseMessageBodyEnum {
     #[serde(rename = "CREATE")]
@@ -122,7 +128,7 @@ pub enum DataDtoResponseMessageBodyEnum {
     #[serde(rename = "DISCONNECT")]
     Disconnect(DataConnectionIdWrapper),
     #[serde(rename = "REDIRECT")]
-    Redirect(DataConnectionIdWrapper),
+    Redirect(DataConnectionResponse),
     #[serde(rename = "EVENT")]
     Event(DataConnectionEventEnum),
     #[serde(rename = "STATUS")]
@@ -152,7 +158,14 @@ impl DataDtoResponseMessageBodyEnum {
                 DataDtoResponseMessageBodyEnum::Disconnect(item)
             }
             DataResponseMessageBodyEnum::Redirect(item) => {
-                DataDtoResponseMessageBodyEnum::Redirect(item)
+                let data = DataConnectionResponse {
+                    data_connection_id: item.data_connection_id,
+                    source_topic_name: "".to_string(),
+                    source_ip: "".to_string(),
+                    source_port: 0,
+                    destination_topic_name: "".to_string(),
+                };
+                DataDtoResponseMessageBodyEnum::Redirect(data)
             }
             DataResponseMessageBodyEnum::Event(item) => DataDtoResponseMessageBodyEnum::Event(item),
             DataResponseMessageBodyEnum::Status(item) => {

@@ -213,6 +213,9 @@ fn data_factory(dto: &RequestDto) -> Box<dyn Service> {
         RequestDto::Data(DataRequestDtoParams::Connect { .. }) => {
             Box::new(usecase::data::connect::Connect::default())
         }
+        RequestDto::Data(DataRequestDtoParams::Redirect { .. }) => {
+            Box::new(usecase::data::redirect::Redirect::default())
+        }
         _ => Box::new(usecase::General {}),
     }
 }
