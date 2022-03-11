@@ -1,6 +1,8 @@
 pub(crate) mod data;
 pub(crate) mod peer;
 
+use std::net::TcpListener;
+
 use async_trait::async_trait;
 
 use crate::application::dto::{
@@ -12,6 +14,16 @@ use crate::domain::entity::{Request, Response, ResponseMessageBodyEnum};
 use crate::Repository;
 use crate::{error, Logger, ProgramState};
 
+//========== Utility Methods ==========
+
+pub(crate) fn available_port() -> std::io::Result<u16> {
+    match TcpListener::bind("0.0.0.0:0") {
+        Ok(listener) => Ok(listener.local_addr().unwrap().port()),
+        Err(e) => Err(e),
+    }
+}
+
+//========== Service ==========
 #[async_trait]
 pub(crate) trait Service {
     async fn execute(

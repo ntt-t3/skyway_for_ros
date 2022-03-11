@@ -1,4 +1,3 @@
-use std::ffi::CString;
 // このサービスでは、End-User-Programの指示を受けて、DataConnectionの確立を行う
 // 責務は以下の通りである
 // 1. GWにData Portを開放させる
@@ -6,31 +5,25 @@ use std::ffi::CString;
 // 3. GWから受信したデータをEnd-User-Programにデータを渡すためのDest Topicのパラメータを生成する
 // 4. CONNECT APIをコールし、DataConnectionを確立させる
 // 5. 4.で確立に成功した場合は、C++側の機能を利用し、Src, Dest Topic生成、保存する
-use std::net::TcpListener;
+
+use std::ffi::CString;
 
 use async_trait::async_trait;
-use module::prelude::{PhantomId, SocketInfo};
 
 use crate::application::dto::{
     DataConnectionResponse, DataDtoResponseMessageBodyEnum, DataRequestDtoParams, RequestDto,
     ResponseDto, ResponseDtoMessageBodyEnum,
 };
-use crate::application::usecase::Service;
+use crate::application::usecase::data::create_data;
+use crate::application::usecase::{available_port, Service};
 use crate::application::Functions;
 use crate::application::{DestinationParameters, SourceParameters, TopicParameters};
 use crate::domain::entity::{
-    ConnectQuery, DataId, DataIdWrapper, DataRequestParams, DataResponseMessageBodyEnum,
-    ResponseMessageBodyEnum,
+    ConnectQuery, DataIdWrapper, DataRequestParams, DataResponseMessageBodyEnum, PhantomId,
+    ResponseMessageBodyEnum, SocketInfo,
 };
 use crate::domain::entity::{Request, Response, SerializableId, SerializableSocket};
 use crate::{error, Logger, ProgramState, Repository};
-
-fn available_port() -> std::io::Result<u16> {
-    match TcpListener::bind("0.0.0.0:0") {
-        Ok(listener) => Ok(listener.local_addr().unwrap().port()),
-        Err(e) => Err(e),
-    }
-}
 
 pub(crate) struct Connect {}
 
@@ -38,28 +31,6 @@ impl Default for Connect {
     fn default() -> Self {
         Connect {}
     }
-}
-
-async fn create_data(
-    repository: &Box<dyn Repository>,
-    program_state: &ProgramState,
-    logger: &Logger,
-) -> Result<(DataId, String, u16), error::Error> {
-    logger.debug("create_data for DATA CONNECT");
-    let request = Request::Data(DataRequestParams::Create { params: true });
-    let result = repository.register(program_state, logger, request).await?;
-
-    return match result {
-        Response::Success(ResponseMessageBodyEnum::Data(DataResponseMessageBodyEnum::Create(
-            ref socket_info,
-        ))) => {
-            let data_id = socket_info.get_id().unwrap();
-            let address = socket_info.ip().to_string();
-            let port = socket_info.port();
-            Ok((data_id, address, port))
-        }
-        _ => Err(error::Error::create_local_error("invalid response")),
-    };
 }
 
 #[async_trait]
@@ -167,7 +138,7 @@ mod connect_data_test {
     use crate::application::dto::ConnectParams;
     use crate::application::usecase::helper;
     use crate::domain::entity::{
-        DataConnectionId, DataConnectionIdWrapper, PeerId, SocketInfo, Token,
+        DataConnectionId, DataConnectionIdWrapper, DataId, PeerId, SocketInfo, Token,
     };
     use crate::domain::repository::MockRepository;
 
