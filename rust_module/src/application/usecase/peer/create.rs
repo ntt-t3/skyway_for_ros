@@ -4,9 +4,8 @@ use crate::application::dto::request::RequestDto;
 use crate::application::dto::response::{PeerResponseDto, ResponseDto, ResponseDtoResult};
 use crate::application::usecase::Service;
 use crate::application::Functions;
-use crate::domain::entity::{
-    PeerResponseMessageBodyEnum, Request, Response, ResponseMessageBodyEnum,
-};
+use crate::domain::entity::request::Request;
+use crate::domain::entity::response::{PeerResponse, Response, ResponseResult};
 use crate::Repository;
 use crate::{error, Logger, ProgramState};
 
@@ -27,9 +26,9 @@ impl Service for Create {
             let message = repository.register(program_state, logger, request).await;
 
             // 成功した場合はC++側にpeer_id, tokenを渡す
-            if let Ok(Response::Success(ResponseMessageBodyEnum::Peer(
-                PeerResponseMessageBodyEnum::Create(ref peer_info),
-            ))) = message
+            if let Ok(ResponseResult::Success(Response::Peer(PeerResponse::Create(
+                ref peer_info,
+            )))) = message
             {
                 let peer_id = peer_info.peer_id();
                 let token = peer_info.token();
@@ -98,7 +97,7 @@ mod create_peer_test {
                         "token":"pt-06cf1d26-0ef0-4b03-aca6-933027d434c2"
                     }
                 }"#;
-            Response::from_str(message)
+            ResponseResult::from_str(message)
         });
         let repository: Box<dyn Repository> = Box::new(repository);
         let logger = helper::create_logger();

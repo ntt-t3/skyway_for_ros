@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::application::dto::Command;
-pub use crate::domain::entity::PeerRequestParams as PeerRequestDto;
+pub use crate::domain::entity::request::PeerRequest as PeerRequestDto;
 use crate::domain::entity::{
     DataConnectionId, DataConnectionIdWrapper, DataIdWrapper, PeerId, Token,
 };

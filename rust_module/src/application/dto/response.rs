@@ -1,10 +1,10 @@
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize, Serializer};
 
+use crate::domain::entity::response::{DataResponse, PeerResponse};
 use crate::domain::entity::{
     DataConnectionEventEnum, DataConnectionId, DataConnectionIdWrapper, DataConnectionStatus,
-    DataId, DataIdWrapper, DataResponseMessageBodyEnum, PeerEventEnum, PeerInfo,
-    PeerResponseMessageBodyEnum, PeerStatusMessage, SocketInfo,
+    DataId, DataIdWrapper, PeerEventEnum, PeerInfo, PeerStatusMessage, SocketInfo,
 };
 use crate::error;
 
@@ -22,12 +22,12 @@ pub enum PeerResponseDto {
 }
 
 impl PeerResponseDto {
-    pub fn from_entity(entity: PeerResponseMessageBodyEnum) -> Self {
+    pub fn from_entity(entity: PeerResponse) -> Self {
         match entity {
-            PeerResponseMessageBodyEnum::Create(item) => PeerResponseDto::Create(item),
-            PeerResponseMessageBodyEnum::Delete(item) => PeerResponseDto::Delete(item),
-            PeerResponseMessageBodyEnum::Status(item) => PeerResponseDto::Status(item),
-            PeerResponseMessageBodyEnum::Event(item) => PeerResponseDto::Event(item),
+            PeerResponse::Create(item) => PeerResponseDto::Create(item),
+            PeerResponse::Delete(item) => PeerResponseDto::Delete(item),
+            PeerResponse::Status(item) => PeerResponseDto::Status(item),
+            PeerResponse::Event(item) => PeerResponseDto::Event(item),
         }
     }
 }
@@ -61,10 +61,10 @@ pub enum DataResponseDto {
 }
 
 impl DataResponseDto {
-    pub fn from_entity(entity: DataResponseMessageBodyEnum) -> Self {
+    pub fn from_entity(entity: DataResponse) -> Self {
         match entity {
-            DataResponseMessageBodyEnum::Create(item) => DataResponseDto::Create(item),
-            DataResponseMessageBodyEnum::Connect(item) => {
+            DataResponse::Create(item) => DataResponseDto::Create(item),
+            DataResponse::Connect(item) => {
                 let data = DataConnectionResponse {
                     data_connection_id: item.data_connection_id,
                     source_topic_name: "".to_string(),
@@ -74,9 +74,9 @@ impl DataResponseDto {
                 };
                 DataResponseDto::Connect(data)
             }
-            DataResponseMessageBodyEnum::Delete(item) => DataResponseDto::Delete(item),
-            DataResponseMessageBodyEnum::Disconnect(item) => DataResponseDto::Disconnect(item),
-            DataResponseMessageBodyEnum::Redirect(item) => {
+            DataResponse::Delete(item) => DataResponseDto::Delete(item),
+            DataResponse::Disconnect(item) => DataResponseDto::Disconnect(item),
+            DataResponse::Redirect(item) => {
                 let data = DataConnectionResponse {
                     data_connection_id: item.data_connection_id,
                     source_topic_name: "".to_string(),
@@ -86,8 +86,8 @@ impl DataResponseDto {
                 };
                 DataResponseDto::Redirect(data)
             }
-            DataResponseMessageBodyEnum::Event(item) => DataResponseDto::Event(item),
-            DataResponseMessageBodyEnum::Status(item) => DataResponseDto::Status(item),
+            DataResponse::Event(item) => DataResponseDto::Event(item),
+            DataResponse::Status(item) => DataResponseDto::Status(item),
         }
     }
 }

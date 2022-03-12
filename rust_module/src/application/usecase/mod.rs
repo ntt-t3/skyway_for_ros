@@ -10,7 +10,8 @@ use crate::application::dto::response::{
     DataResponseDto, PeerResponseDto, ResponseDto, ResponseDtoResult,
 };
 use crate::application::Functions;
-use crate::domain::entity::{Request, Response, ResponseMessageBodyEnum};
+use crate::domain::entity::request::Request;
+use crate::domain::entity::response::{Response, ResponseResult};
 use crate::Repository;
 use crate::{error, Logger, ProgramState};
 
@@ -52,17 +53,13 @@ impl Service for General {
             let request = Request::Peer(inner);
             let message = repository.register(program_state, logger, request).await?;
             return match message {
-                Response::Success(ResponseMessageBodyEnum::Peer(peer)) => {
-                    Ok(ResponseDtoResult::Success(ResponseDto::Peer(
-                        PeerResponseDto::from_entity(peer),
-                    )))
-                }
-                Response::Success(ResponseMessageBodyEnum::Data(data)) => {
-                    Ok(ResponseDtoResult::Success(ResponseDto::Data(
-                        DataResponseDto::from_entity(data),
-                    )))
-                }
-                Response::Error(error) => Ok(ResponseDtoResult::Error(error)),
+                ResponseResult::Success(Response::Peer(peer)) => Ok(ResponseDtoResult::Success(
+                    ResponseDto::Peer(PeerResponseDto::from_entity(peer)),
+                )),
+                ResponseResult::Success(Response::Data(data)) => Ok(ResponseDtoResult::Success(
+                    ResponseDto::Data(DataResponseDto::from_entity(data)),
+                )),
+                ResponseResult::Error(error) => Ok(ResponseDtoResult::Error(error)),
             };
         }
 
@@ -124,7 +121,7 @@ mod general_service_test {
     use crate::application::dto::response::ResponseDtoResult;
     use crate::application::usecase::Service;
     use crate::application::usecase::{helper, General};
-    use crate::domain::entity::Response;
+    use crate::domain::entity::response::ResponseResult;
     use crate::domain::repository::MockRepository;
     use crate::error;
     use crate::Repository;
@@ -169,7 +166,7 @@ mod general_service_test {
                     "token":"pt-87b54b79-643b-4c60-9c64-ead4ab902dee"
                 }
             }"#;
-            Response::from_str(message)
+            ResponseResult::from_str(message)
         });
         let repository: Box<dyn Repository> = Box::new(repository);
 

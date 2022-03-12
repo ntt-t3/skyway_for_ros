@@ -7,7 +7,6 @@ use std::ffi::CString;
 // 4. REDIRECT APIをコールし、DataConnectionを確立させる
 // 5. 4.で確立に成功した場合は、C++側の機能を利用し、Src, Dest Topic生成、保存する
 use async_trait::async_trait;
-use module::prelude::{DataIdWrapper, RedirectParams};
 
 use crate::application::dto::request::{DataRequestDto, RequestDto};
 use crate::application::dto::response::{
@@ -16,9 +15,10 @@ use crate::application::dto::response::{
 use crate::application::usecase::data::create_data;
 use crate::application::usecase::{available_port, Service};
 use crate::application::{DestinationParameters, Functions, SourceParameters, TopicParameters};
+use crate::domain::entity::request::{DataRequest, Request};
+use crate::domain::entity::response::{DataResponse, Response, ResponseResult};
 use crate::domain::entity::{
-    DataRequestParams, DataResponseMessageBodyEnum, PhantomId, Request, Response,
-    ResponseMessageBodyEnum, SerializableId, SerializableSocket, SocketInfo,
+    DataIdWrapper, PhantomId, RedirectParams, SerializableId, SerializableSocket, SocketInfo,
 };
 use crate::{error, Logger, ProgramState, Repository};
 
@@ -68,14 +68,12 @@ impl Service for Redirect {
                     SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", available_port).unwrap(),
                 ),
             };
-            let params = Request::Data(DataRequestParams::Redirect { params });
+            let params = Request::Data(DataRequest::Redirect { params });
             let result = repository.register(program_state, logger, params).await?;
 
             // 5.でSrc, Dest Topicを保存する際には、DataConnection IDをキーにしたhashで管理するため、
             // 4.の実施後である必要がある
-            if let Response::Success(ResponseMessageBodyEnum::Data(
-                DataResponseMessageBodyEnum::Redirect(params),
-            )) = result
+            if let ResponseResult::Success(Response::Data(DataResponse::Redirect(params))) = result
             {
                 // 2.はData Port開放時に得られるData IDをTopic Nameにするので、1.の後に実施する
                 let source_parameters = SourceParameters {
@@ -126,10 +124,9 @@ impl Service for Redirect {
 mod redirect_data_test {
     use super::*;
     use crate::application::usecase::helper;
-    use crate::domain::entity::{
-        DataConnectionId, DataConnectionIdWrapper, DataId, DataRequestParams,
-        DataResponseMessageBodyEnum, Request, Response, ResponseMessageBodyEnum, SocketInfo,
-    };
+    use crate::domain::entity::request::{DataRequest, Request};
+    use crate::domain::entity::response::{DataResponse, Response, ResponseResult};
+    use crate::domain::entity::{DataConnectionId, DataConnectionIdWrapper, DataId, SocketInfo};
     use crate::domain::repository::MockRepository;
 
     #[tokio::test]
@@ -156,7 +153,7 @@ mod redirect_data_test {
             .times(2)
             .returning(|_, _, dto| {
                 return match dto {
-                    Request::Data(DataRequestParams::Create { .. }) => {
+                    Request::Data(DataRequest::Create { .. }) => {
                         // create_dataのmock
                         // 成功し、ポートを返すケース
                         let message = r#"{
@@ -165,15 +162,15 @@ mod redirect_data_test {
                             "ip_v4": "127.0.0.1"
                         }"#;
                         let socket = serde_json::from_str::<SocketInfo<DataId>>(message).unwrap();
-                        Ok(Response::Success(ResponseMessageBodyEnum::Data(
-                            DataResponseMessageBodyEnum::Create(socket),
+                        Ok(ResponseResult::Success(Response::Data(
+                            DataResponse::Create(socket),
                         )))
                     }
-                    Request::Data(DataRequestParams::Redirect { .. }) => {
+                    Request::Data(DataRequest::Redirect { .. }) => {
                         // redirectのmock
                         // 成功し、DataConnectionIdを返すケース
-                        Ok(Response::Success(ResponseMessageBodyEnum::Data(
-                            DataResponseMessageBodyEnum::Redirect(DataConnectionIdWrapper {
+                        Ok(ResponseResult::Success(Response::Data(
+                            DataResponse::Redirect(DataConnectionIdWrapper {
                                 data_connection_id: DataConnectionId::try_create(
                                     "dc-8bdef7a1-65c8-46be-a82e-37d51c776309",
                                 )
@@ -220,7 +217,7 @@ mod redirect_data_test {
             .expect_register()
             // create dataで失敗した場合は1回しか呼ばれない
             .times(1)
-            .returning(|_, _, _| Ok(Response::Error("invalid".to_string())));
+            .returning(|_, _, _| Ok(ResponseResult::Error("invalid".to_string())));
         let repository: Box<dyn Repository> = Box::new(repository);
 
         // パラメータの生成

@@ -1,8 +1,9 @@
 use async_trait::async_trait;
 
-use crate::domain::entity::{Request, Response};
+use crate::domain::entity::response::ResponseResult;
 use crate::{error, Logger, ProgramState};
 
+use crate::domain::entity::request::Request;
 #[cfg(test)]
 use mockall::automock;
 
@@ -14,10 +15,10 @@ pub(crate) trait Repository: Send + Sync {
         program_state: &ProgramState,
         logger: &Logger,
         params: Request,
-    ) -> Result<Response, error::Error>;
+    ) -> Result<ResponseResult, error::Error>;
     async fn receive_event(
         &self,
         program_state: &ProgramState,
         logger: &Logger,
-    ) -> Result<Response, error::Error>;
+    ) -> Result<ResponseResult, error::Error>;
 }

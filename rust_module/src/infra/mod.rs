@@ -2,7 +2,9 @@ use async_trait::async_trait;
 use tokio::sync::Mutex;
 use tokio::sync::{mpsc, oneshot};
 
-use crate::domain::entity::{Request, Response, Stringify};
+use crate::domain::entity::request::Request;
+use crate::domain::entity::response::ResponseResult;
+use crate::domain::entity::Stringify;
 use crate::domain::repository::Repository;
 use crate::error::Error;
 use crate::{error, Logger, ProgramState};
@@ -32,7 +34,7 @@ impl Repository for RepositoryImpl {
         _program_state: &ProgramState,
         _logger: &Logger,
         params: Request,
-    ) -> Result<Response, Error> {
+    ) -> Result<ResponseResult, Error> {
         // SkyWay Crateからの戻り値を得るためのoneshot channelを生成
         let (channel_message_tx, channel_message_rx) = tokio::sync::oneshot::channel();
 
@@ -49,7 +51,7 @@ impl Repository for RepositoryImpl {
 
         // SkyWay Crateからのメッセージを処理する
         match channel_message_rx.await {
-            Ok(message) => Ok(Response::from_str(&message)?),
+            Ok(message) => Ok(ResponseResult::from_str(&message)?),
             Err(_) => Err(error::Error::create_local_error(
                 "could not receive response from skyway crate",
             )),
@@ -59,7 +61,7 @@ impl Repository for RepositoryImpl {
         &self,
         program_state: &ProgramState,
         _logger: &Logger,
-    ) -> Result<Response, error::Error> {
+    ) -> Result<ResponseResult, error::Error> {
         use std::time::Duration;
 
         use tokio::time;
@@ -68,7 +70,7 @@ impl Repository for RepositoryImpl {
 
             match time::timeout(Duration::from_millis(1000), rx.recv()).await {
                 Ok(Some(response_string)) => {
-                    return Response::from_str(&response_string);
+                    return ResponseResult::from_str(&response_string);
                 }
                 Ok(None) => {
                     // closed
@@ -89,10 +91,11 @@ impl Repository for RepositoryImpl {
 mod infra_send_message_test {
     use super::*;
     use crate::application::usecase::helper;
-    use crate::domain::entity::{CreatePeerParams, FromStr, PeerId, PeerRequestParams};
+    use crate::domain::entity::request::PeerRequest;
+    use crate::domain::entity::{CreatePeerParams, FromStr, PeerId};
 
     fn create_request() -> Request {
-        let inner = PeerRequestParams::Create {
+        let inner = PeerRequest::Create {
             params: CreatePeerParams {
                 key: "API_KEY".to_string(),
                 domain: "localhost".to_string(),
