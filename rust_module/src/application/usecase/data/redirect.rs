@@ -10,8 +10,8 @@ use async_trait::async_trait;
 use module::prelude::{DataIdWrapper, RedirectParams};
 
 use crate::application::dto::request::{DataRequestDto, RequestDto};
-use crate::application::dto::{
-    DataConnectionResponse, DataDtoResponseMessageBodyEnum, ResponseDto, ResponseDtoMessageBodyEnum,
+use crate::application::dto::response::{
+    DataConnectionResponse, DataResponseDto, ResponseDto, ResponseDtoResult,
 };
 use crate::application::usecase::data::create_data;
 use crate::application::usecase::{available_port, Service};
@@ -39,7 +39,7 @@ impl Service for Redirect {
         logger: &Logger,
         cb_functions: &Functions,
         message: RequestDto,
-    ) -> Result<ResponseDto, error::Error> {
+    ) -> Result<ResponseDtoResult, error::Error> {
         let log = format!(
             "Redirect Service starting. Parameter: {:?}",
             message.to_string()
@@ -112,8 +112,8 @@ impl Service for Redirect {
                     source_port: 10000,
                     destination_topic_name: redirect_params.destination_topic,
                 };
-                return Ok(ResponseDto::Success(ResponseDtoMessageBodyEnum::Data(
-                    DataDtoResponseMessageBodyEnum::Redirect(response_data),
+                return Ok(ResponseDtoResult::Success(ResponseDto::Data(
+                    DataResponseDto::Redirect(response_data),
                 )));
             }
         }
@@ -136,8 +136,8 @@ mod redirect_data_test {
     // eventとして異常な文字列を受信した場合
     async fn success() {
         // DataConnectionResponseを含むRedirectパラメータを受け取れるはずである
-        let answer = ResponseDto::Success(ResponseDtoMessageBodyEnum::Data(
-            DataDtoResponseMessageBodyEnum::Redirect(DataConnectionResponse {
+        let answer = ResponseDtoResult::Success(ResponseDto::Data(DataResponseDto::Redirect(
+            DataConnectionResponse {
                 data_connection_id: DataConnectionId::try_create(
                     "dc-8bdef7a1-65c8-46be-a82e-37d51c776309",
                 )
@@ -146,8 +146,8 @@ mod redirect_data_test {
                 source_ip: "127.0.0.1".to_string(),
                 source_port: 10000,
                 destination_topic_name: "destination_topic".to_string(),
-            }),
-        ));
+            },
+        )));
 
         let mut repository = MockRepository::new();
         repository

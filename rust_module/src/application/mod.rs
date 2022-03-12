@@ -8,6 +8,7 @@ use dto::request::{DataRequestDto, RequestDto};
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 
+use crate::application::dto::request::PeerRequestDto;
 use crate::application::dto::Command;
 use crate::application::usecase::Service;
 use crate::domain::entity::*;
@@ -206,7 +207,7 @@ fn peer_factory(dto: &RequestDto) -> Box<dyn Service> {
     );
     Logger::global().debug(message);
     match dto {
-        RequestDto::Peer(PeerRequestParams::Create {
+        RequestDto::Peer(PeerRequestDto::Create {
             params: ref _params,
         }) => Box::new(peer::create::Create {}),
         _ => Box::new(usecase::General {}),

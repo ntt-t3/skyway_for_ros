@@ -1,9 +1,7 @@
 use async_trait::async_trait;
 
 use crate::application::dto::request::RequestDto;
-use crate::application::dto::{
-    PeerDtoResponseMessageBodyEnum, ResponseDto, ResponseDtoMessageBodyEnum,
-};
+use crate::application::dto::response::{PeerResponseDto, ResponseDto, ResponseDtoResult};
 use crate::application::usecase::Service;
 use crate::application::Functions;
 use crate::domain::entity::{
@@ -23,7 +21,7 @@ impl Service for Create {
         logger: &Logger,
         _cb_functions: &Functions,
         message: RequestDto,
-    ) -> Result<ResponseDto, error::Error> {
+    ) -> Result<ResponseDtoResult, error::Error> {
         if let RequestDto::Peer(ref inner) = message {
             let request = Request::Peer(inner.clone());
             let message = repository.register(program_state, logger, request).await;
@@ -41,8 +39,8 @@ impl Service for Create {
                         functions.create_peer_callback(peer_id.as_str(), token.as_str())
                     });
 
-                return Ok(ResponseDto::Success(ResponseDtoMessageBodyEnum::Peer(
-                    PeerDtoResponseMessageBodyEnum::Create(peer_info.clone()),
+                return Ok(ResponseDtoResult::Success(ResponseDto::Peer(
+                    PeerResponseDto::Create(peer_info.clone()),
                 )));
             }
         }
@@ -71,7 +69,7 @@ mod create_peer_test {
                         "token":"pt-06cf1d26-0ef0-4b03-aca6-933027d434c2"
                     }
                 }"#;
-            ResponseDto::from_str(message).unwrap()
+            ResponseDtoResult::from_str(message).unwrap()
         };
 
         // CreatePeerのパラメータ生成

@@ -11,8 +11,8 @@ use std::ffi::CString;
 use async_trait::async_trait;
 
 use crate::application::dto::request::{DataRequestDto, RequestDto};
-use crate::application::dto::{
-    DataConnectionResponse, DataDtoResponseMessageBodyEnum, ResponseDto, ResponseDtoMessageBodyEnum,
+use crate::application::dto::response::{
+    DataConnectionResponse, DataResponseDto, ResponseDto, ResponseDtoResult,
 };
 use crate::application::usecase::data::create_data;
 use crate::application::usecase::{available_port, Service};
@@ -42,7 +42,7 @@ impl Service for Connect {
         logger: &Logger,
         cb_functions: &Functions,
         message: RequestDto,
-    ) -> Result<ResponseDto, error::Error> {
+    ) -> Result<ResponseDtoResult, error::Error> {
         let log = format!(
             "Connect Service starting. Parameter: {:?}",
             message.to_string()
@@ -122,8 +122,8 @@ impl Service for Connect {
                     source_port: port,
                     destination_topic_name: connect_params.destination_topic,
                 };
-                return Ok(ResponseDto::Success(ResponseDtoMessageBodyEnum::Data(
-                    DataDtoResponseMessageBodyEnum::Connect(response_data),
+                return Ok(ResponseDtoResult::Success(ResponseDto::Data(
+                    DataResponseDto::Connect(response_data),
                 )));
             }
         }
@@ -135,7 +135,7 @@ impl Service for Connect {
 #[cfg(test)]
 mod connect_data_test {
     use super::*;
-    use crate::application::dto::request::ConnectParams;
+    use crate::application::dto::request::ConnectDtoParams;
     use crate::application::usecase::helper;
     use crate::domain::entity::{
         DataConnectionId, DataConnectionIdWrapper, DataId, PeerId, SocketInfo, Token,
@@ -156,9 +156,7 @@ mod connect_data_test {
             source_port: 10000,
             destination_topic_name: "destination_topic".to_string(),
         };
-        let answer = ResponseDto::Success(ResponseDtoMessageBodyEnum::Data(
-            DataDtoResponseMessageBodyEnum::Connect(value),
-        ));
+        let answer = ResponseDtoResult::Success(ResponseDto::Data(DataResponseDto::Connect(value)));
 
         // repositoryのMockを生成
         // create_dataに失敗するケース
@@ -205,7 +203,7 @@ mod connect_data_test {
         let program_state = helper::create_program_state();
         let function = helper::create_functions();
         let param = RequestDto::Data(DataRequestDto::Connect {
-            params: ConnectParams {
+            params: ConnectDtoParams {
                 peer_id: PeerId::new("peer_id"),
                 token: Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap(),
                 target_id: PeerId::new("target_id"),
@@ -240,7 +238,7 @@ mod connect_data_test {
         let program_state = helper::create_program_state();
         let function = helper::create_functions();
         let param = RequestDto::Data(DataRequestDto::Connect {
-            params: ConnectParams {
+            params: ConnectDtoParams {
                 peer_id: PeerId::new("peer_id"),
                 token: Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap(),
                 target_id: PeerId::new("target_id"),

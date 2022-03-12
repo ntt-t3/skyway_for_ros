@@ -1,20 +1,38 @@
 use serde::{Deserialize, Serialize};
 
-use crate::application::dto::{Command, RedirectDtoParams};
+use crate::application::dto::Command;
 pub use crate::domain::entity::PeerRequestParams as PeerRequestDto;
-use crate::domain::entity::{DataConnectionIdWrapper, DataIdWrapper, PeerId, Token};
+use crate::domain::entity::{
+    DataConnectionId, DataConnectionIdWrapper, DataIdWrapper, PeerId, Token,
+};
 use crate::error;
 
 //========== Peer ==========
+impl Command for PeerRequestDto {
+    fn command(&self) -> String {
+        match self {
+            PeerRequestDto::Create { params: ref _p } => "CREATE".to_string(),
+            PeerRequestDto::Delete { params: ref _p } => "DELETE".to_string(),
+            PeerRequestDto::Status { params: ref _p } => "STATUS".to_string(),
+        }
+    }
+}
+
+//========== Data ==========
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub(crate) struct ConnectParams {
+pub(crate) struct ConnectDtoParams {
     pub peer_id: PeerId,
     pub token: Token,
     pub target_id: PeerId,
     pub destination_topic: String,
 }
 
-//========== Data ==========
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub(crate) struct RedirectDtoParams {
+    pub data_connection_id: DataConnectionId,
+    pub destination_topic: String,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "command")]
 pub(crate) enum DataRequestDto {
@@ -23,7 +41,7 @@ pub(crate) enum DataRequestDto {
     #[serde(rename = "DELETE")]
     Delete { params: DataIdWrapper },
     #[serde(rename = "CONNECT")]
-    Connect { params: ConnectParams },
+    Connect { params: ConnectDtoParams },
     #[serde(rename = "REDIRECT")]
     Redirect { params: RedirectDtoParams },
     #[serde(rename = "DISCONNECT")]

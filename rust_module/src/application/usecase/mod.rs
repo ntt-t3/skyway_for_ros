@@ -6,9 +6,8 @@ use std::net::TcpListener;
 use async_trait::async_trait;
 
 use crate::application::dto::request::RequestDto;
-use crate::application::dto::{
-    DataDtoResponseMessageBodyEnum, PeerDtoResponseMessageBodyEnum, ResponseDto,
-    ResponseDtoMessageBodyEnum,
+use crate::application::dto::response::{
+    DataResponseDto, PeerResponseDto, ResponseDto, ResponseDtoResult,
 };
 use crate::application::Functions;
 use crate::domain::entity::{Request, Response, ResponseMessageBodyEnum};
@@ -34,7 +33,7 @@ pub(crate) trait Service {
         logger: &Logger,
         cb_functions: &Functions,
         message: RequestDto,
-    ) -> Result<ResponseDto, error::Error>;
+    ) -> Result<ResponseDtoResult, error::Error>;
 }
 
 pub(crate) struct General {}
@@ -48,22 +47,22 @@ impl Service for General {
         logger: &Logger,
         _cb_functions: &Functions,
         message: RequestDto,
-    ) -> Result<ResponseDto, error::Error> {
+    ) -> Result<ResponseDtoResult, error::Error> {
         if let RequestDto::Peer(inner) = message {
             let request = Request::Peer(inner);
             let message = repository.register(program_state, logger, request).await?;
             return match message {
                 Response::Success(ResponseMessageBodyEnum::Peer(peer)) => {
-                    Ok(ResponseDto::Success(ResponseDtoMessageBodyEnum::Peer(
-                        PeerDtoResponseMessageBodyEnum::from_entity(peer),
+                    Ok(ResponseDtoResult::Success(ResponseDto::Peer(
+                        PeerResponseDto::from_entity(peer),
                     )))
                 }
                 Response::Success(ResponseMessageBodyEnum::Data(data)) => {
-                    Ok(ResponseDto::Success(ResponseDtoMessageBodyEnum::Data(
-                        DataDtoResponseMessageBodyEnum::from_entity(data),
+                    Ok(ResponseDtoResult::Success(ResponseDto::Data(
+                        DataResponseDto::from_entity(data),
                     )))
                 }
-                Response::Error(error) => Ok(ResponseDto::Error(error)),
+                Response::Error(error) => Ok(ResponseDtoResult::Error(error)),
             };
         }
 
@@ -122,7 +121,7 @@ pub(crate) mod helper {
 #[cfg(test)]
 mod general_service_test {
     use crate::application::dto::request::RequestDto;
-    use crate::application::dto::ResponseDto;
+    use crate::application::dto::response::ResponseDtoResult;
     use crate::application::usecase::Service;
     use crate::application::usecase::{helper, General};
     use crate::domain::entity::Response;
@@ -143,7 +142,7 @@ mod general_service_test {
                     "token":"pt-87b54b79-643b-4c60-9c64-ead4ab902dee"
                 }
             }"#;
-            ResponseDto::from_str(message).unwrap()
+            ResponseDtoResult::from_str(message).unwrap()
         };
 
         // DeletePeerのパラメータ生成
