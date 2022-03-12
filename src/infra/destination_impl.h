@@ -37,6 +37,7 @@ class DataChannelDestinationImpl : public Destination {
   boost::array<char, 1434> recv_buffer_;
   // start, stopメソッドの重複コールを避けるため利用するフラグ
   bool is_running_;
+  udp::endpoint local_endpoint_;
   // WebRTC GWのData Portの情報が格納される
   udp::endpoint remote_endpoint_;
 
@@ -46,9 +47,11 @@ class DataChannelDestinationImpl : public Destination {
  public:
   // デフォルトコンストラクタは削除
   DataChannelDestinationImpl() = delete;
-  INJECT(DataChannelDestinationImpl(ASSISTED(std::string) topic_name))
+  INJECT(DataChannelDestinationImpl(ASSISTED(std::string) topic_name,
+                                    ASSISTED(udp::endpoint) local_endpoint))
       : topic_name_(topic_name),
         io_service_(new io_service()),
+        local_endpoint_(local_endpoint),
         socket_(std::make_unique<udp::socket>(*io_service_.get())),
         is_running_(false) {}
   // デストラクタでは、PublisherとUDPポートの開放を行う

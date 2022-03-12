@@ -26,8 +26,8 @@ class Source {
   virtual std::string TopicName() { return ""; }
 };
 
-using SourceFactory = std::function<std::unique_ptr<Source>(
-    std::string, udp::endpoint, udp::endpoint)>;
+using SourceFactory =
+    std::function<std::unique_ptr<Source>(std::string, udp::endpoint)>;
 
 fruit::Component<SourceFactory> getSourceComponent();
 
@@ -51,8 +51,79 @@ class Destination {
 };
 
 using DestinationFactory =
-    std::function<std::unique_ptr<Destination>(std::string)>;
+    std::function<std::unique_ptr<Destination>(std::string, udp::endpoint)>;
 
 fruit::Component<DestinationFactory> getDestinationComponent();
+
+// ========== DataTopicContainer ==========
+
+// SourceとDestinationをDataConnectionIdと紐づけて管理するオブジェクト
+class DataTopicContainer {
+ private:
+  // DataConnectionIdとSourceの紐づけ
+  std::unordered_map<std::string, std::unique_ptr<Source>> source_map_{};
+  // DataConnectionIdとDestinationの紐づけ
+  std::unordered_map<std::string, std::unique_ptr<Destination>>
+      destination_map_{};
+
+ public:
+  virtual ~DataTopicContainer() = default;
+  // DataConnectionId, Source, Destinationを登録
+  // 登録成功時にSourceとDestinationをstartする
+  virtual bool CreateData(std::string data_connection_id,
+                          std::unique_ptr<Source> source,
+                          std::unique_ptr<Destination> destination) {
+    return false;
+  }
+  // DataConnectionIdに紐付いているSource, Destinationを破棄
+  virtual bool DeleteData(std::string data_connection_id) { return false; }
+  // DataConnectionIdに紐付いているDestinationのportを取得
+  virtual unsigned short DestinationPort(std::string data_connection_id) {
+    return 0;
+  }
+  // DataConnectionIdに紐付いているSourceのTopic名を取得
+  virtual std::string SourceTopicName(std::string data_connection_id) {
+    return "";
+  }
+  // DataConnectionIdに紐付いているDestinationのTopic名を取得
+  virtual std::string DestinationTopicName(std::string data_connection_id) {
+    return "";
+  }
+};
+
+class DataTopicContainerImpl : public DataTopicContainer {
+ private:
+  // DataConnectionIdとSourceの紐づけ
+  std::unordered_map<std::string, std::unique_ptr<Source>> source_map_{};
+  // DataConnectionIdとDestinationの紐づけ
+  std::unordered_map<std::string, std::unique_ptr<Destination>>
+      destination_map_{};
+
+ public:
+  INJECT(DataTopicContainerImpl()) {}
+  // DataConnectionId, Source, Destinationを登録
+  // 登録成功時にSourceとDestinationをstartする
+  virtual bool CreateData(std::string data_connection_id,
+                          std::unique_ptr<Source> source,
+                          std::unique_ptr<Destination> destination) override;
+  // DataConnectionIdに紐付いているSource, Destinationを破棄
+  virtual bool DeleteData(std::string data_connection_id) override;
+  // DataConnectionIdに紐付いているDestinationのportを取得
+  virtual unsigned short DestinationPort(
+      std::string data_connection_id) override {
+    return destination_map_.at(data_connection_id)->Port();
+  }
+  // DataConnectionIdに紐付いているSourceのTopic名を取得
+  virtual std::string SourceTopicName(std::string data_connection_id) override {
+    return source_map_.at(data_connection_id)->TopicName();
+  }
+  // DataConnectionIdに紐付いているDestinationのTopic名を取得
+  virtual std::string DestinationTopicName(
+      std::string data_connection_id) override {
+    return destination_map_.at(data_connection_id)->TopicName();
+  }
+};
+
+fruit::Component<DataTopicContainer> getDataTopicContainerComponent();
 
 #endif  // SKYWAY_ENTITY_H

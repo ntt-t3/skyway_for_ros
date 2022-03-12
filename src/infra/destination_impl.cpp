@@ -11,7 +11,7 @@ void DataChannelDestinationImpl::Start() {
 
   if (!recv_thread_) {
     socket_->open(udp::v4());
-    socket_->bind(udp::endpoint(address::from_string("0.0.0.0"), 0));
+    socket_->bind(local_endpoint_);
 
     ros::NodeHandle nh_;
     pub_ = nh_.advertise<std_msgs::UInt8MultiArray>(topic_name_, 10000);

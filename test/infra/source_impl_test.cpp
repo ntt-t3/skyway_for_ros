@@ -91,8 +91,7 @@ TEST(TestSuite, start_and_stop_many_times) {
   // source objectを作成
   Injector<SourceFactory> injector(getSourceComponent);
   SourceFactory sourceFactory(injector);
-  auto source = sourceFactory("/chatter", udp::endpoint(udp::v4(), 0),
-                              udp::endpoint(udp::v4(), port));
+  auto source = sourceFactory("/chatter", udp::endpoint(udp::v4(), port));
 
   // 間違えて5回startしてしまった場合
   source->Start();
@@ -141,8 +140,7 @@ TEST(TestSuite, datasource_in_map) {
   // source objectを作成
   Injector<SourceFactory> injector(getSourceComponent);
   SourceFactory sourceFactory(injector);
-  auto source = sourceFactory("/chatter", udp::endpoint(udp::v4(), 0),
-                              udp::endpoint(udp::v4(), port));
+  auto source = sourceFactory("/chatter", udp::endpoint(udp::v4(), port));
 
   // source objectをmapで管理
   std::unordered_map<std::string, std::unique_ptr<Source>> map;
@@ -186,8 +184,7 @@ TEST(TestSuite, datasource_insert_map_after_start) {
   // source objectを作成
   Injector<SourceFactory> injector(getSourceComponent);
   SourceFactory sourceFactory(injector);
-  auto source = sourceFactory("/chatter", udp::endpoint(udp::v4(), 0),
-                              udp::endpoint(udp::v4(), port));
+  auto source = sourceFactory("/chatter", udp::endpoint(udp::v4(), port));
   source->Start();
 
   // source objectをmapで管理
@@ -232,8 +229,7 @@ TEST(TestSuite, datachannel_early_exit) {
   // source objectを作成
   Injector<SourceFactory> injector(getSourceComponent);
   SourceFactory sourceFactory(injector);
-  auto source = sourceFactory("/chatter", udp::endpoint(udp::v4(), 0),
-                              udp::endpoint(udp::v4(), port));
+  auto source = sourceFactory("/chatter", udp::endpoint(udp::v4(), port));
 
   source->Start();
 

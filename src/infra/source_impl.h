@@ -42,10 +42,9 @@ class DataChannelSourceImpl : public Source {
  public:
   DataChannelSourceImpl() = delete;
   INJECT(DataChannelSourceImpl(ASSISTED(std::string) topic_name,
-                               ASSISTED(udp::endpoint) local_endpoint,
                                ASSISTED(udp::endpoint) remote_endpoint))
       : io_service_ptr_(new io_service()),
-        socket_(new udp::socket(*io_service_ptr_, local_endpoint)),
+        socket_(new udp::socket(*io_service_ptr_, udp::endpoint(udp::v4(), 0))),
         remote_endpoint_(remote_endpoint),
         is_running_(false) {
     // Topic名としてDataConnectionIdを利用する。

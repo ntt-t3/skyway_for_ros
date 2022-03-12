@@ -74,7 +74,8 @@ TEST(TestSuite, destination_start_and_stop_many_times) {
   // destination objectを作成
   Injector<DestinationFactory> injector(getDestinationComponent);
   DestinationFactory destinationFactory(injector);
-  auto destination = destinationFactory("/chatter");
+  auto destination =
+      destinationFactory("/chatter", udp::endpoint(udp::v4(), 0));
 
   // startを間違えて数回連続で呼んだ
   destination->Start();
@@ -129,7 +130,8 @@ TEST(TestSuite, destination_insert_map_after_start) {
   // destination objectを作成
   Injector<DestinationFactory> injector(getDestinationComponent);
   DestinationFactory destinationFactory(injector);
-  auto destination = destinationFactory("/chatter");
+  auto destination =
+      destinationFactory("/chatter", udp::endpoint(udp::v4(), 0));
   // destination objectをmapで管理
   std::unordered_map<std::string, std::unique_ptr<Destination>> map;
   destination->Start();
@@ -177,7 +179,8 @@ TEST(TestSuite, destination_in_map) {
   // destination objectを作成
   Injector<DestinationFactory> injector(getDestinationComponent);
   DestinationFactory destinationFactory(injector);
-  auto destination = destinationFactory("/chatter");
+  auto destination =
+      destinationFactory("/chatter", udp::endpoint(udp::v4(), 0));
   // destination objectをmapで管理
   std::unordered_map<std::string, std::unique_ptr<Destination>> map;
   map.emplace("hoge", std::move(destination));
@@ -226,7 +229,8 @@ TEST(TestSuite, destination_in_map_after_start) {
   // destination objectを作成
   Injector<DestinationFactory> injector(getDestinationComponent);
   DestinationFactory destinationFactory(injector);
-  auto destination = destinationFactory("/chatter");
+  auto destination =
+      destinationFactory("/chatter", udp::endpoint(udp::v4(), 0));
   destination->Start();
   // destination objectをmapで管理
   std::unordered_map<std::string, std::unique_ptr<Destination>> map;
@@ -274,7 +278,8 @@ TEST(TestSuite, destination_early_exit) {
   // destination objectを作成
   Injector<DestinationFactory> injector(getDestinationComponent);
   DestinationFactory destinationFactory(injector);
-  auto destination = destinationFactory("/chatter");
+  auto destination =
+      destinationFactory("/chatter", udp::endpoint(udp::v4(), 0));
 
   destination->Start();
 
@@ -308,6 +313,7 @@ TEST(TestSuite, destination_early_exit) {
 TEST(TestSuite, destination_get_port_before_bind) {
   Injector<DestinationFactory> injector(getDestinationComponent);
   DestinationFactory destinationFactory(injector);
-  auto destination = destinationFactory("/chatter");
+  auto destination =
+      destinationFactory("/chatter", udp::endpoint(udp::v4(), 0));
   ASSERT_EQ(destination->Port(), 0);
 }

@@ -86,14 +86,20 @@ target_link_libraries(${PROJECT_NAME}
         )
 
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test TESTS)
+aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/domain DOMAIN_TESTS)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/infra INFRA_TESTS)
+aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/stub STUB)
 
 if (CATKIN_ENABLE_TESTING)
     find_package(rostest REQUIRED)
     add_rostest_gtest(${PROJECT_NAME}_test_node test/unit_test.test
             ${TESTS}
+            ${DOMAIN_TESTS}
             ${INFRA_TESTS}
-            ${INFRA})
+            ${STUB}
+            ${DOMAIN}
+            ${INFRA}
+            )
     target_link_libraries(${PROJECT_NAME}_test_node
             ${catkin_LIBRARIES}
             ${FRUIT_LIB_FILE}

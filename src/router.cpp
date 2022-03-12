@@ -2,12 +2,6 @@
 
 #include <signal.h>
 
-namespace {
-std::function<void(int)> shutdown_handler;
-void signal_handler(int signal) { shutdown_handler(signal); }
-std::function<void(char*, char*)> create_peer_callback_handler;
-}  // namespace
-
 extern "C" {
 struct SourceParameters {
   char* source_topic_name;
@@ -26,6 +20,13 @@ struct TopicParameters {
   DestinationParameters destination_parameters;
 };
 }
+
+namespace {
+std::function<void(int)> shutdown_handler;
+void signal_handler(int signal) { shutdown_handler(signal); }
+std::function<void(char*, char*)> create_peer_callback_handler;
+std::function<void(TopicParameters parameters)> create_data_callback_handler;
+}  // namespace
 
 using void_char_char_func = void (*)(char*, char*);
 using void_char_func = void (*)(char*);
@@ -54,7 +55,7 @@ void create_peer_callback(char* peer_id, char* token) {
 void peer_deleted_callback() { ros::shutdown(); }
 
 void create_data_callback(TopicParameters parameter) {
-  // todo impl
+  create_data_callback_handler(parameter);
 }
 }
 
@@ -73,9 +74,18 @@ void RouterImpl::Start() {
   };
   signal(SIGINT, signal_handler);
 
+  // Peer Objectの生成に成功したら、peer_idとtokenを保持しておく
+  // これは終了時に開放するためだけに利用する
   create_peer_callback_handler = [&](char* peer_id, char* token) {
     peer_id_ = peer_id;
     token_ = token;
+    release_string(peer_id);
+    release_string(token);
+  };
+
+  // SourceTopic, Destination Topicの起動を行う
+  create_data_callback_handler = [&](TopicParameters parameter) {
+
   };
 
   // SkyWayControl ServiceをClientが利用した際に呼ばれるコールバック
