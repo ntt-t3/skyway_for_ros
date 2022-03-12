@@ -7,10 +7,11 @@ use crate::error;
 // module内のオブジェクトは、この場所と、crate::errorでError定義を参照するのみで、
 // その他の場所からは直接参照させない
 pub(crate) use module::prelude::{
-    ConnectQuery, CreatePeerParams, DataConnectionEventEnum, DataConnectionId,
-    DataConnectionIdWrapper, DataConnectionStatus, DataId, DataIdWrapper, PeerEventEnum, PeerId,
-    PeerInfo, PeerStatusMessage, PhantomId, RedirectParams, SerializableId, SerializableSocket,
-    SocketInfo, Token,
+    AnswerQuery, AnswerResult, CallQuery, ConnectQuery, CreatePeerParams, DataConnectionEventEnum,
+    DataConnectionId, DataConnectionIdWrapper, DataConnectionStatus, DataId, DataIdWrapper,
+    MediaConnectionEventEnum, MediaConnectionId, MediaConnectionIdWrapper, MediaConnectionStatus,
+    MediaId, MediaIdWrapper, PeerEventEnum, PeerId, PeerInfo, PeerStatusMessage, PhantomId,
+    RedirectParams, RtcpId, RtcpIdWrapper, SerializableId, SerializableSocket, SocketInfo, Token,
 };
 
 // メッセージを自然にStringに変換できるようにする

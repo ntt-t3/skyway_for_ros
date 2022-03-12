@@ -3,8 +3,10 @@ use serde::{Deserialize, Serialize, Serializer};
 use serde_json::Value;
 
 use crate::domain::entity::{
-    DataConnectionEventEnum, DataConnectionIdWrapper, DataConnectionStatus, DataId, DataIdWrapper,
-    FromStr, PeerEventEnum, PeerInfo, PeerStatusMessage, SocketInfo, Stringify,
+    AnswerResult, DataConnectionEventEnum, DataConnectionIdWrapper, DataConnectionStatus, DataId,
+    DataIdWrapper, FromStr, MediaConnectionEventEnum, MediaConnectionIdWrapper,
+    MediaConnectionStatus, MediaId, MediaIdWrapper, PeerEventEnum, PeerInfo, PeerStatusMessage,
+    RtcpId, RtcpIdWrapper, SocketInfo, Stringify,
 };
 use crate::error;
 
@@ -41,16 +43,39 @@ pub enum DataResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(tag = "command")]
+pub(crate) enum MediaResponse {
+    #[serde(rename = "CONTENT_CREATE")]
+    ContentCreate(SocketInfo<MediaId>),
+    #[serde(rename = "CONTENT_DELETE")]
+    ContentDelete(MediaIdWrapper),
+    #[serde(rename = "RTCP_CREATE")]
+    RtcpCreate(SocketInfo<RtcpId>),
+    #[serde(rename = "RTCP_DELETE")]
+    RtcpDelete(RtcpIdWrapper),
+    #[serde(rename = "CALL")]
+    Call(MediaConnectionIdWrapper),
+    #[serde(rename = "ANSWER")]
+    Answer(AnswerResult),
+    #[serde(rename = "EVENT")]
+    Event(MediaConnectionEventEnum),
+    #[serde(rename = "STATUS")]
+    Status(MediaConnectionStatus),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "type")]
-pub enum Response {
+pub(crate) enum Response {
     #[serde(rename = "PEER")]
     Peer(PeerResponse),
+    #[serde(rename = "MEDIA")]
+    Media(MediaResponse),
     #[serde(rename = "DATA")]
     Data(DataResponse),
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
-pub enum ResponseResult {
+pub(crate) enum ResponseResult {
     Success(Response),
     Error(String),
 }

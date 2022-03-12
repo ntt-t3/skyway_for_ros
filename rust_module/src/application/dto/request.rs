@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 use crate::application::dto::Command;
-pub use crate::domain::entity::request::PeerRequest as PeerRequestDto;
+pub(crate) use crate::domain::entity::request::PeerRequest as PeerRequestDto;
+use crate::domain::entity::request::{AnswerParameters, IsVideo};
 use crate::domain::entity::{
-    DataConnectionId, DataConnectionIdWrapper, DataIdWrapper, PeerId, Token,
+    CallQuery, DataConnectionId, DataConnectionIdWrapper, DataIdWrapper, MediaIdWrapper, PeerId,
+    Token,
 };
 use crate::error;
 
@@ -16,6 +18,22 @@ impl Command for PeerRequestDto {
             PeerRequestDto::Status { params: ref _p } => "STATUS".to_string(),
         }
     }
+}
+
+//========== Media ==========
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(tag = "command")]
+pub(crate) enum MediaDtoRequest {
+    #[serde(rename = "CONTENT_CREATE")]
+    ContentCreate { params: IsVideo },
+    #[serde(rename = "CONTENT_DELETE")]
+    ContentDelete { params: MediaIdWrapper },
+    #[serde(rename = "RTCP_CREATE")]
+    RtcpCreate { params: Option<()> },
+    #[serde(rename = "CALL")]
+    Call { params: CallQuery },
+    #[serde(rename = "ANSWER")]
+    Answer { params: AnswerParameters },
 }
 
 //========== Data ==========

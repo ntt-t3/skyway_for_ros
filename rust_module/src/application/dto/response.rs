@@ -1,16 +1,18 @@
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize, Serializer};
 
-use crate::domain::entity::response::{DataResponse, PeerResponse};
+use crate::domain::entity::response::{DataResponse, MediaResponse, PeerResponse};
 use crate::domain::entity::{
-    DataConnectionEventEnum, DataConnectionId, DataConnectionIdWrapper, DataConnectionStatus,
-    DataId, DataIdWrapper, PeerEventEnum, PeerInfo, PeerStatusMessage, SocketInfo,
+    AnswerResult, DataConnectionEventEnum, DataConnectionId, DataConnectionIdWrapper,
+    DataConnectionStatus, DataId, DataIdWrapper, MediaConnectionEventEnum,
+    MediaConnectionIdWrapper, MediaConnectionStatus, MediaId, MediaIdWrapper, PeerEventEnum,
+    PeerInfo, PeerStatusMessage, RtcpId, RtcpIdWrapper, SocketInfo,
 };
 use crate::error;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "command")]
-pub enum PeerResponseDto {
+pub(crate) enum PeerResponseDto {
     #[serde(rename = "CREATE")]
     Create(PeerInfo),
     #[serde(rename = "STATUS")]
@@ -22,7 +24,7 @@ pub enum PeerResponseDto {
 }
 
 impl PeerResponseDto {
-    pub fn from_entity(entity: PeerResponse) -> Self {
+    pub(crate) fn from_entity(entity: PeerResponse) -> Self {
         match entity {
             PeerResponse::Create(item) => PeerResponseDto::Create(item),
             PeerResponse::Delete(item) => PeerResponseDto::Delete(item),
@@ -33,17 +35,53 @@ impl PeerResponseDto {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct DataConnectionResponse {
-    pub data_connection_id: DataConnectionId,
-    pub source_topic_name: String,
-    pub source_ip: String,
-    pub source_port: u16,
-    pub destination_topic_name: String,
+#[serde(tag = "command")]
+pub(crate) enum MediaResponseDto {
+    #[serde(rename = "CONTENT_CREATE")]
+    ContentCreate(SocketInfo<MediaId>),
+    #[serde(rename = "CONTENT_DELETE")]
+    ContentDelete(MediaIdWrapper),
+    #[serde(rename = "RTCP_CREATE")]
+    RtcpCreate(SocketInfo<RtcpId>),
+    #[serde(rename = "RTCP_DELETE")]
+    RtcpDelete(RtcpIdWrapper),
+    #[serde(rename = "CALL")]
+    Call(MediaConnectionIdWrapper),
+    #[serde(rename = "ANSWER")]
+    Answer(AnswerResult),
+    #[serde(rename = "EVENT")]
+    Event(MediaConnectionEventEnum),
+    #[serde(rename = "STATUS")]
+    Status(MediaConnectionStatus),
+}
+
+impl MediaResponseDto {
+    pub(crate) fn from_entity(entity: MediaResponse) -> Self {
+        match entity {
+            MediaResponse::ContentCreate(item) => MediaResponseDto::ContentCreate(item),
+            MediaResponse::ContentDelete(item) => MediaResponseDto::ContentDelete(item),
+            MediaResponse::RtcpCreate(item) => MediaResponseDto::RtcpCreate(item),
+            MediaResponse::RtcpDelete(item) => MediaResponseDto::RtcpDelete(item),
+            MediaResponse::Call(item) => MediaResponseDto::Call(item),
+            MediaResponse::Answer(item) => MediaResponseDto::Answer(item),
+            MediaResponse::Event(item) => MediaResponseDto::Event(item),
+            MediaResponse::Status(item) => MediaResponseDto::Status(item),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub(crate) struct DataConnectionResponse {
+    pub(crate) data_connection_id: DataConnectionId,
+    pub(crate) source_topic_name: String,
+    pub(crate) source_ip: String,
+    pub(crate) source_port: u16,
+    pub(crate) destination_topic_name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "command")]
-pub enum DataResponseDto {
+pub(crate) enum DataResponseDto {
     #[serde(rename = "CREATE")]
     Create(SocketInfo<DataId>),
     #[serde(rename = "CONNECT")]
@@ -61,7 +99,7 @@ pub enum DataResponseDto {
 }
 
 impl DataResponseDto {
-    pub fn from_entity(entity: DataResponse) -> Self {
+    pub(crate) fn from_entity(entity: DataResponse) -> Self {
         match entity {
             DataResponse::Create(item) => DataResponseDto::Create(item),
             DataResponse::Connect(item) => {
@@ -94,21 +132,23 @@ impl DataResponseDto {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "type")]
-pub enum ResponseDto {
+pub(crate) enum ResponseDto {
     #[serde(rename = "PEER")]
     Peer(PeerResponseDto),
+    #[serde(rename = "MEDIA")]
+    Media(MediaResponseDto),
     #[serde(rename = "DATA")]
     Data(DataResponseDto),
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
-pub enum ResponseDtoResult {
+pub(crate) enum ResponseDtoResult {
     Success(ResponseDto),
     Error(String),
 }
 
 impl ResponseDtoResult {
-    pub fn from_str(json: &str) -> Result<ResponseDtoResult, error::Error> {
+    pub(crate) fn from_str(json: &str) -> Result<ResponseDtoResult, error::Error> {
         #[allow(dead_code)]
         #[derive(Deserialize)]
         struct ResponseMessageStruct {
@@ -131,7 +171,7 @@ impl ResponseDtoResult {
         }
     }
 
-    pub fn to_string(&self) -> Result<String, error::Error> {
+    pub(crate) fn to_string(&self) -> Result<String, error::Error> {
         serde_json::to_string(self).map_err(|e| error::Error::SerdeError { error: e })
     }
 }

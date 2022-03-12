@@ -7,7 +7,7 @@ use async_trait::async_trait;
 
 use crate::application::dto::request::RequestDto;
 use crate::application::dto::response::{
-    DataResponseDto, PeerResponseDto, ResponseDto, ResponseDtoResult,
+    DataResponseDto, MediaResponseDto, PeerResponseDto, ResponseDto, ResponseDtoResult,
 };
 use crate::application::Functions;
 use crate::domain::entity::request::Request;
@@ -55,6 +55,9 @@ impl Service for General {
             return match message {
                 ResponseResult::Success(Response::Peer(peer)) => Ok(ResponseDtoResult::Success(
                     ResponseDto::Peer(PeerResponseDto::from_entity(peer)),
+                )),
+                ResponseResult::Success(Response::Media(media)) => Ok(ResponseDtoResult::Success(
+                    ResponseDto::Media(MediaResponseDto::from_entity(media)),
                 )),
                 ResponseResult::Success(Response::Data(data)) => Ok(ResponseDtoResult::Success(
                     ResponseDto::Data(DataResponseDto::from_entity(data)),

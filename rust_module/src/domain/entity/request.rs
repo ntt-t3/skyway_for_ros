@@ -1,14 +1,15 @@
+use crate::domain::entity::CallQuery;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    ConnectQuery, CreatePeerParams, DataConnectionIdWrapper, DataIdWrapper, FromStr, PeerInfo,
-    RedirectParams, Stringify,
+    AnswerQuery, ConnectQuery, CreatePeerParams, DataConnectionIdWrapper, DataIdWrapper, FromStr,
+    MediaConnectionId, MediaIdWrapper, PeerInfo, RedirectParams, Stringify,
 };
 use crate::error;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "command")]
-pub enum PeerRequest {
+pub(crate) enum PeerRequest {
     #[serde(rename = "CREATE")]
     Create { params: CreatePeerParams },
     #[serde(rename = "STATUS")]
@@ -19,7 +20,7 @@ pub enum PeerRequest {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "command")]
-pub enum DataRequest {
+pub(crate) enum DataRequest {
     #[serde(rename = "CREATE")]
     Create { params: bool },
     #[serde(rename = "DELETE")]
@@ -32,11 +33,39 @@ pub enum DataRequest {
     Disconnect { params: DataConnectionIdWrapper },
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub(crate) struct IsVideo {
+    is_video: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub(crate) struct AnswerParameters {
+    media_connection_id: MediaConnectionId,
+    answer_query: AnswerQuery,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(tag = "command")]
+pub(crate) enum MediaRequest {
+    #[serde(rename = "CONTENT_CREATE")]
+    ContentCreate { params: IsVideo },
+    #[serde(rename = "CONTENT_DELETE")]
+    ContentDelete { params: MediaIdWrapper },
+    #[serde(rename = "RTCP_CREATE")]
+    RtcpCreate { params: Option<()> },
+    #[serde(rename = "CALL")]
+    Call { params: CallQuery },
+    #[serde(rename = "ANSWER")]
+    Answer { params: AnswerParameters },
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "type")]
-pub enum Request {
+pub(crate) enum Request {
     #[serde(rename = "PEER")]
     Peer(PeerRequest),
+    #[serde(rename = "MEDIA")]
+    Media(MediaRequest),
     #[serde(rename = "DATA")]
     Data(DataRequest),
 }
