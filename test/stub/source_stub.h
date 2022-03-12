@@ -10,6 +10,9 @@ using fruit::createComponent;
 using fruit::Injector;
 
 class SourceStub : public Source {
+ private:
+  bool flag_ = true;
+
  public:
   std::function<void(int)> callback_;
   SourceStub() = delete;
@@ -17,7 +20,10 @@ class SourceStub : public Source {
       : callback_(callback) {}
   ~SourceStub() { Stop(); }
   virtual void Start() override { callback_(1); }
-  virtual void Stop() override { callback_(2); }
+  virtual void Stop() override {
+    if (flag_) callback_(2);
+    flag_ = false;
+  }
 };
 
 using SourceStubFactory =

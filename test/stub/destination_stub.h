@@ -10,6 +10,9 @@ using fruit::createComponent;
 using fruit::Injector;
 
 class DestinationStub : public Destination {
+ private:
+  bool flag_ = true;
+
  public:
   std::function<void(int)> callback_;
   DestinationStub() = delete;
@@ -17,7 +20,10 @@ class DestinationStub : public Destination {
       : callback_(callback) {}
   ~DestinationStub() { Stop(); }
   virtual void Start() override { callback_(1); }
-  virtual void Stop() override { callback_(2); }
+  virtual void Stop() override {
+    if (flag_) callback_(2);
+    flag_ = false;
+  }
   virtual unsigned short Port() override { return 0; }
 };
 

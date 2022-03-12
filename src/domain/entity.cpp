@@ -27,7 +27,9 @@ bool DataTopicContainerImpl::DeleteData(std::string data_connection_id) {
     return false;
   }
 
+  source_map_.at(data_connection_id)->Stop();
   source_map_.erase(data_connection_id);
+  destination_map_.at(data_connection_id)->Stop();
   destination_map_.erase(data_connection_id);
   return true;
 }

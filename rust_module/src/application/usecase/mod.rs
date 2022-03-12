@@ -106,11 +106,14 @@ pub(crate) mod helper {
 
     extern "C" fn create_data(_param: TopicParameters) {}
 
+    extern "C" fn delete_data(_param: *mut c_char) {}
+
     pub(crate) fn create_functions() -> Functions {
         Functions {
             create_peer_callback_c: create_peer,
             peer_deleted_callback: peer_delete,
             data_callback_c: create_data,
+            data_connection_deleted_callback_c: delete_data,
         }
     }
 }

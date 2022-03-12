@@ -41,6 +41,7 @@ pub struct Functions {
     create_peer_callback_c: extern "C" fn(peer_id: *mut c_char, token: *mut c_char),
     peer_deleted_callback: extern "C" fn(),
     data_callback_c: extern "C" fn(param: TopicParameters),
+    data_connection_deleted_callback_c: extern "C" fn(data_connection_id: *mut c_char),
 }
 
 impl Functions {
@@ -48,11 +49,13 @@ impl Functions {
         create_peer_callback_c: extern "C" fn(peer_id: *mut c_char, token: *mut c_char),
         peer_deleted_callback: extern "C" fn(),
         data_callback_c: extern "C" fn(param: TopicParameters),
+        data_connection_deleted_callback_c: extern "C" fn(data_connection_id: *mut c_char),
     ) -> Self {
         Functions {
             create_peer_callback_c,
             peer_deleted_callback,
             data_callback_c,
+            data_connection_deleted_callback_c,
         }
     }
 
@@ -76,6 +79,12 @@ impl Functions {
     pub fn data_callback(&self, param: TopicParameters) {
         (self.data_callback_c)(param);
     }
+
+    pub fn data_connection_deleted_callback(&self, data_connection_id: &str) {
+        (self.data_connection_deleted_callback_c)(
+            CString::new(data_connection_id).unwrap().into_raw(),
+        );
+    }
 }
 
 #[no_mangle]
@@ -84,6 +93,7 @@ pub extern "C" fn setup_service(param: &Functions) {
         create_peer_callback_c: param.create_peer_callback_c,
         peer_deleted_callback: param.peer_deleted_callback,
         data_callback_c: param.data_callback_c,
+        data_connection_deleted_callback_c: param.data_connection_deleted_callback_c,
     };
 
     if FUNCTIONS_INSTANCE.set(functions).is_err() {
@@ -220,6 +230,7 @@ fn data_factory(dto: &RequestDto) -> Box<dyn Service> {
     }
 }
 
+// FIXME: should be service
 #[no_mangle]
 pub extern "C" fn receive_events() -> *mut c_char {
     let rt = tokio::runtime::Runtime::new().unwrap();
@@ -232,15 +243,30 @@ pub extern "C" fn receive_events() -> *mut c_char {
     });
 
     let response_message = match message {
+        Ok(Response::Success(ResponseMessageBodyEnum::Peer(
+            PeerResponseMessageBodyEnum::Event(PeerEventEnum::CLOSE(..)),
+        ))) => {
+            crate::application::FUNCTIONS_INSTANCE
+                .get()
+                .map(|functions| functions.peer_deleted_callback());
+            // messageはOkでmatch済みなのでunwrapしてよい
+            // to_stringはserde_jsonのSerializeしているだけで、型定義により確実に成功するのでunwrapしてよい
+            message.unwrap().to_string().unwrap()
+        }
+        Ok(Response::Success(ResponseMessageBodyEnum::Data(
+            DataResponseMessageBodyEnum::Event(DataConnectionEventEnum::CLOSE(
+                DataConnectionIdWrapper {
+                    ref data_connection_id,
+                },
+            )),
+        ))) => {
+            Functions::global().data_connection_deleted_callback(data_connection_id.as_str());
+            // messageはOkでmatch済みなのでunwrapしてよい
+            // to_stringはserde_jsonのSerializeしているだけで、型定義により確実に成功するのでunwrapしてよい
+            message.unwrap().to_string().unwrap()
+        }
         Ok(message) => {
-            if let Response::Success(ResponseMessageBodyEnum::Peer(
-                PeerResponseMessageBodyEnum::Event(PeerEventEnum::CLOSE(PeerCloseEvent { .. })),
-            )) = message
-            {
-                crate::application::FUNCTIONS_INSTANCE
-                    .get()
-                    .map(|functions| functions.peer_deleted_callback());
-            }
+            // to_stringはserde_jsonのSerializeしているだけで、型定義により確実に成功するのでunwrapしてよい
             message.to_string().unwrap()
         }
         Err(e) => {
@@ -253,6 +279,7 @@ pub extern "C" fn receive_events() -> *mut c_char {
                 is_success: false,
                 result: internal,
             };
+            // to_stringはserde_jsonのSerializeしているだけで、型定義により確実に成功するのでunwrapしてよい
             error_message.to_string().unwrap()
         }
     };

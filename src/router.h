@@ -76,13 +76,14 @@ using void_char_func = void (*)(char*);
 using void_void_func = void (*)();
 using void_topicparam_func = void (*)(TopicParameters);
 
-typedef struct {
+struct Function {
   void_char_char_func create_peer_callback;
   void_void_func peer_deleted_callback;
   void_topicparam_func create_data_callback;
-} callback_function_t;
+  void_char_func data_connection_deleted_callback;
+};
 
-void setup_service(callback_function_t& functions);
+void setup_service(Function& functions);
 char* call_service(const char* message);
 char* receive_events();
 void release_string(char* message);
@@ -90,6 +91,7 @@ void shutdown_service(const char* peer_id, const char* token);
 void create_peer_callback(char* peer_id, char* token);
 void peer_deleted_callback();
 void create_data_callback(TopicParameters parameter);
+void data_connection_close_event_callback(char* data_connection_id);
 }
 
 #endif  // SKYWAY_ROUTER_H

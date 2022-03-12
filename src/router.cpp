@@ -7,6 +7,7 @@ std::function<void(int)> shutdown_handler;
 void signal_handler(int signal) { shutdown_handler(signal); }
 std::function<void(char*, char*)> create_peer_callback_handler;
 std::function<void(TopicParameters parameters)> create_data_callback_handler;
+std::function<void(char*)> data_connection_close_event_callback_handler;
 }  // namespace
 
 extern "C" {
@@ -19,11 +20,16 @@ void peer_deleted_callback() { ros::shutdown(); }
 void create_data_callback(TopicParameters parameter) {
   create_data_callback_handler(parameter);
 }
+
+void data_connection_close_event_callback(char* data_connection_id) {
+  data_connection_close_event_callback_handler(data_connection_id);
+}
 }
 
 void RouterImpl::Start() {
-  callback_function_t functions{create_peer_callback, peer_deleted_callback,
-                                create_data_callback};
+  Function functions{create_peer_callback, peer_deleted_callback,
+                     create_data_callback,
+                     data_connection_close_event_callback};
   setup_service(functions);
 
   // 終了処理は全てここで行う
@@ -64,6 +70,13 @@ void RouterImpl::Start() {
     release_string(parameter.source_parameters.source_topic_name);
     release_string(parameter.destination_parameters.destination_topic_name);
     release_string(parameter.data_connection_id);
+  };
+
+  // Peer Objectの生成に成功したら、peer_idとtokenを保持しておく
+  // これは終了時に開放するためだけに利用する
+  data_connection_close_event_callback_handler = [&](char* data_connection_id) {
+    data_topic_container_->DeleteData(data_connection_id);
+    release_string(data_connection_id);
   };
 
   // SkyWayControl ServiceをClientが利用した際に呼ばれるコールバック
