@@ -262,7 +262,6 @@ pub extern "C" fn receive_events() -> *mut c_char {
 
 #[no_mangle]
 pub extern "C" fn shutdown_service(peer_id: *const c_char, token: *const c_char) {
-    println!("shutdown_service");
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async {
         let c_str: &CStr = unsafe { CStr::from_ptr(peer_id) };
@@ -285,7 +284,7 @@ pub extern "C" fn shutdown_service(peer_id: *const c_char, token: *const c_char)
         let param = RequestDto::from_str(&message).unwrap();
         let service = usecase::General {};
         let repository = crate::REPOSITORY_INSTANCE.get().unwrap();
-        let _ = service
+        if let Err(e) = service
             .execute(
                 &repository,
                 ProgramState::global(),
@@ -293,6 +292,12 @@ pub extern "C" fn shutdown_service(peer_id: *const c_char, token: *const c_char)
                 Functions::global(),
                 param,
             )
-            .await;
+            .await
+        {
+            let error_message = format!("peer close error: {:?}", e);
+            Logger::global().error(error_message);
+        }
+
+        Functions::global().peer_deleted_callback();
     });
 }

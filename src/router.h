@@ -51,4 +51,45 @@ class RouterImpl : public Router {
 
 fruit::Component<Router> getRouterComponent();
 
+// ========== Parameters for FFI ==========
+
+extern "C" {
+struct SourceParameters {
+  char* source_topic_name;
+  char* destination_address;
+  unsigned short destination_port;
+};
+
+struct DestinationParameters {
+  unsigned short source_port;
+  char* destination_topic_name;
+};
+
+struct TopicParameters {
+  char* data_connection_id;
+  SourceParameters source_parameters;
+  DestinationParameters destination_parameters;
+};
+
+using void_char_char_func = void (*)(char*, char*);
+using void_char_func = void (*)(char*);
+using void_void_func = void (*)();
+using void_topicparam_func = void (*)(TopicParameters);
+
+typedef struct {
+  void_char_char_func create_peer_callback;
+  void_void_func peer_deleted_callback;
+  void_topicparam_func create_data_callback;
+} callback_function_t;
+
+void setup_service(callback_function_t& functions);
+char* call_service(const char* message);
+char* receive_events();
+void release_string(char* message);
+void shutdown_service(const char* peer_id, const char* token);
+void create_peer_callback(char* peer_id, char* token);
+void peer_deleted_callback();
+void create_data_callback(TopicParameters parameter);
+}
+
 #endif  // SKYWAY_ROUTER_H

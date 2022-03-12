@@ -15,10 +15,22 @@ typedef struct {
 } run_response_t;
 
 // loggers
-void log_debug_c(char* message) { ROS_DEBUG("%s", message); }
-void log_info_c(char* message) { ROS_INFO("%s", message); }
-void log_warn_c(char* message) { ROS_WARN("%s", message); }
-void log_err_c(char* message) { ROS_ERROR("%s", message); }
+void log_debug_c(char* message) {
+  ROS_DEBUG("%s", message);
+  release_string(message);
+}
+void log_info_c(char* message) {
+  ROS_INFO("%s", message);
+  release_string(message);
+}
+void log_warn_c(char* message) {
+  ROS_WARN("%s", message);
+  release_string(message);
+}
+void log_err_c(char* message) {
+  ROS_ERROR("%s", message);
+  release_string(message);
+}
 
 // ros control functions
 bool is_ok_c() { return ros::ok(); }
