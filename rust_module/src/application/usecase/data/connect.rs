@@ -10,9 +10,9 @@ use std::ffi::CString;
 
 use async_trait::async_trait;
 
+use crate::application::dto::request::{DataRequestDto, RequestDto};
 use crate::application::dto::{
-    DataConnectionResponse, DataDtoResponseMessageBodyEnum, DataRequestDtoParams, RequestDto,
-    ResponseDto, ResponseDtoMessageBodyEnum,
+    DataConnectionResponse, DataDtoResponseMessageBodyEnum, ResponseDto, ResponseDtoMessageBodyEnum,
 };
 use crate::application::usecase::data::create_data;
 use crate::application::usecase::{available_port, Service};
@@ -49,7 +49,7 @@ impl Service for Connect {
         );
         logger.debug(log.as_str());
 
-        if let RequestDto::Data(DataRequestDtoParams::Connect {
+        if let RequestDto::Data(DataRequestDto::Connect {
             params: connect_params,
         }) = message
         {
@@ -135,7 +135,7 @@ impl Service for Connect {
 #[cfg(test)]
 mod connect_data_test {
     use super::*;
-    use crate::application::dto::ConnectParams;
+    use crate::application::dto::request::ConnectParams;
     use crate::application::usecase::helper;
     use crate::domain::entity::{
         DataConnectionId, DataConnectionIdWrapper, DataId, PeerId, SocketInfo, Token,
@@ -204,7 +204,7 @@ mod connect_data_test {
         let logger = helper::create_logger();
         let program_state = helper::create_program_state();
         let function = helper::create_functions();
-        let param = RequestDto::Data(DataRequestDtoParams::Connect {
+        let param = RequestDto::Data(DataRequestDto::Connect {
             params: ConnectParams {
                 peer_id: PeerId::new("peer_id"),
                 token: Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap(),
@@ -239,7 +239,7 @@ mod connect_data_test {
         let logger = helper::create_logger();
         let program_state = helper::create_program_state();
         let function = helper::create_functions();
-        let param = RequestDto::Data(DataRequestDtoParams::Connect {
+        let param = RequestDto::Data(DataRequestDto::Connect {
             params: ConnectParams {
                 peer_id: PeerId::new("peer_id"),
                 token: Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap(),

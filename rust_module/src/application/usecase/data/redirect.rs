@@ -9,9 +9,9 @@ use std::ffi::CString;
 use async_trait::async_trait;
 use module::prelude::{DataIdWrapper, RedirectParams};
 
+use crate::application::dto::request::{DataRequestDto, RequestDto};
 use crate::application::dto::{
-    DataConnectionResponse, DataDtoResponseMessageBodyEnum, DataRequestDtoParams, RequestDto,
-    ResponseDto, ResponseDtoMessageBodyEnum,
+    DataConnectionResponse, DataDtoResponseMessageBodyEnum, ResponseDto, ResponseDtoMessageBodyEnum,
 };
 use crate::application::usecase::data::create_data;
 use crate::application::usecase::{available_port, Service};
@@ -46,7 +46,7 @@ impl Service for Redirect {
         );
         logger.debug(log.as_str());
 
-        if let RequestDto::Data(DataRequestDtoParams::Redirect {
+        if let RequestDto::Data(DataRequestDto::Redirect {
             params: redirect_params,
         }) = message
         {

@@ -4,10 +4,11 @@ pub(crate) mod usecase;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 
+use dto::request::{DataRequestDto, RequestDto};
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 
-use crate::application::dto::{Command, DataRequestDtoParams, RequestDto};
+use crate::application::dto::Command;
 use crate::application::usecase::Service;
 use crate::domain::entity::*;
 use crate::error::Error;
@@ -220,10 +221,10 @@ fn data_factory(dto: &RequestDto) -> Box<dyn Service> {
     );
     Logger::global().debug(message);
     match dto {
-        RequestDto::Data(DataRequestDtoParams::Connect { .. }) => {
+        RequestDto::Data(DataRequestDto::Connect { .. }) => {
             Box::new(usecase::data::connect::Connect::default())
         }
-        RequestDto::Data(DataRequestDtoParams::Redirect { .. }) => {
+        RequestDto::Data(DataRequestDto::Redirect { .. }) => {
             Box::new(usecase::data::redirect::Redirect::default())
         }
         _ => Box::new(usecase::General {}),

@@ -1,7 +1,8 @@
 use async_trait::async_trait;
 
+use crate::application::dto::request::RequestDto;
 use crate::application::dto::{
-    PeerDtoResponseMessageBodyEnum, RequestDto, ResponseDto, ResponseDtoMessageBodyEnum,
+    PeerDtoResponseMessageBodyEnum, ResponseDto, ResponseDtoMessageBodyEnum,
 };
 use crate::application::usecase::Service;
 use crate::application::Functions;

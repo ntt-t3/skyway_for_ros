@@ -5,8 +5,9 @@ use std::net::TcpListener;
 
 use async_trait::async_trait;
 
+use crate::application::dto::request::RequestDto;
 use crate::application::dto::{
-    DataDtoResponseMessageBodyEnum, PeerDtoResponseMessageBodyEnum, RequestDto, ResponseDto,
+    DataDtoResponseMessageBodyEnum, PeerDtoResponseMessageBodyEnum, ResponseDto,
     ResponseDtoMessageBodyEnum,
 };
 use crate::application::Functions;
@@ -120,7 +121,8 @@ pub(crate) mod helper {
 
 #[cfg(test)]
 mod general_service_test {
-    use crate::application::dto::{RequestDto, ResponseDto};
+    use crate::application::dto::request::RequestDto;
+    use crate::application::dto::ResponseDto;
     use crate::application::usecase::Service;
     use crate::application::usecase::{helper, General};
     use crate::domain::entity::Response;
