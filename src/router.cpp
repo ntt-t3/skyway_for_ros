@@ -48,8 +48,6 @@ void shutdown_service(const char* peer_id, const char* token);
 
 void create_peer_callback(char* peer_id, char* token) {
   create_peer_callback_handler(peer_id, token);
-  release_string(peer_id);
-  release_string(token);
 }
 
 void peer_deleted_callback() { ros::shutdown(); }
@@ -85,7 +83,21 @@ void RouterImpl::Start() {
 
   // SourceTopic, Destination Topicの起動を行う
   create_data_callback_handler = [&](TopicParameters parameter) {
-
+    auto source = source_factory_(
+        parameter.source_parameters.source_topic_name,
+        udp::endpoint(boost::asio::ip::address::from_string(
+                          parameter.source_parameters.destination_address),
+                      parameter.source_parameters.destination_port));
+    auto destination = destination_factory_(
+        parameter.destination_parameters.destination_topic_name,
+        udp::endpoint(udp::v4(), parameter.destination_parameters.source_port));
+    data_topic_container_->CreateData(parameter.data_connection_id,
+                                      std::move(source),
+                                      std::move(destination));
+    release_string(parameter.source_parameters.destination_address);
+    release_string(parameter.source_parameters.source_topic_name);
+    release_string(parameter.destination_parameters.destination_topic_name);
+    release_string(parameter.data_connection_id);
   };
 
   // SkyWayControl ServiceをClientが利用した際に呼ばれるコールバック
