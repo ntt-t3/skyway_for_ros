@@ -125,7 +125,7 @@ mod redirect_data_test {
     use super::*;
     use crate::application::usecase::helper;
     use crate::domain::entity::request::{DataRequest, Request};
-    use crate::domain::entity::response::{DataResponse, Response, ResponseResult};
+    use crate::domain::entity::response::{DataResponse, ResponseResult};
     use crate::domain::entity::{DataConnectionId, DataConnectionIdWrapper, DataId, SocketInfo};
     use crate::domain::repository::MockRepository;
 
