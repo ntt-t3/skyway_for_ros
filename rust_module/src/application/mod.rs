@@ -262,6 +262,7 @@ pub extern "C" fn receive_events() -> *mut c_char {
 
 #[no_mangle]
 pub extern "C" fn shutdown_service(peer_id: *const c_char, token: *const c_char) {
+    println!("shutdown_service");
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async {
         let c_str: &CStr = unsafe { CStr::from_ptr(peer_id) };
