@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="skyway" type="skyway" name="skyway"/>
+    <test pkg="skyway" type="skyway_test_node" test-name="test_node"/>
+</launch>
