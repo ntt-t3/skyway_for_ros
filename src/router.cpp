@@ -67,7 +67,9 @@ void RouterImpl::Start() {
   shutdown_handler = [&](int signal) {
     control_service_->Shutdown();
     events_observe_action_->Shutdown();
-    shutdown_service(peer_id_.c_str(), token_.c_str());
+    // shutdown処理の中身はPeer Objectの開放なので、生成前であれば呼ぶ必要がない
+    if (peer_id_ != "" && token_ != "")
+      shutdown_service(peer_id_.c_str(), token_.c_str());
   };
   signal(SIGINT, signal_handler);
 
