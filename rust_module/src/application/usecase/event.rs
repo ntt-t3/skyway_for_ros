@@ -113,6 +113,10 @@ fn data_event(
             }
             DataConnectionEventEnum::CLOSE(close) => {
                 cb_functions.data_connection_deleted_callback(close.data_connection_id.as_str());
+                let _ = get_data_connection_state()
+                    .lock()
+                    .unwrap()
+                    .remove(&close.data_connection_id);
                 ResponseDtoResult::Success(ResponseDto::Data(DataResponseDto::Event(
                     DataConnectionEventDto::CLOSE(close),
                 )))
@@ -128,6 +132,7 @@ fn data_event(
     }
 }
 
+// TODO: Unit Test
 impl Event {
     pub async fn execute(
         &self,
