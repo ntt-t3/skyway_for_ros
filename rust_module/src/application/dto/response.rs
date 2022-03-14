@@ -85,13 +85,13 @@ pub(crate) enum DataResponseDto {
     #[serde(rename = "CREATE")]
     Create(SocketInfo<DataId>),
     #[serde(rename = "CONNECT")]
-    Connect(DataConnectionResponse),
+    Connect(DataConnectionIdWrapper),
     #[serde(rename = "DELETE")]
     Delete(DataIdWrapper),
     #[serde(rename = "DISCONNECT")]
     Disconnect(DataConnectionIdWrapper),
     #[serde(rename = "REDIRECT")]
-    Redirect(DataConnectionResponse),
+    Redirect(DataConnectionIdWrapper),
     #[serde(rename = "EVENT")]
     Event(DataConnectionEventEnum),
     #[serde(rename = "STATUS")]
@@ -102,28 +102,10 @@ impl DataResponseDto {
     pub(crate) fn from_entity(entity: DataResponse) -> Self {
         match entity {
             DataResponse::Create(item) => DataResponseDto::Create(item),
-            DataResponse::Connect(item) => {
-                let data = DataConnectionResponse {
-                    data_connection_id: item.data_connection_id,
-                    source_topic_name: "".to_string(),
-                    source_ip: "".to_string(),
-                    source_port: 0,
-                    destination_topic_name: "".to_string(),
-                };
-                DataResponseDto::Connect(data)
-            }
+            DataResponse::Connect(item) => DataResponseDto::Connect(item),
             DataResponse::Delete(item) => DataResponseDto::Delete(item),
             DataResponse::Disconnect(item) => DataResponseDto::Disconnect(item),
-            DataResponse::Redirect(item) => {
-                let data = DataConnectionResponse {
-                    data_connection_id: item.data_connection_id,
-                    source_topic_name: "".to_string(),
-                    source_ip: "".to_string(),
-                    source_port: 0,
-                    destination_topic_name: "".to_string(),
-                };
-                DataResponseDto::Redirect(data)
-            }
+            DataResponse::Redirect(item) => DataResponseDto::Redirect(item),
             DataResponse::Event(item) => DataResponseDto::Event(item),
             DataResponse::Status(item) => DataResponseDto::Status(item),
         }

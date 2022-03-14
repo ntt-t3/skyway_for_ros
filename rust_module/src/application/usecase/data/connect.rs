@@ -11,9 +11,7 @@ use std::ffi::CString;
 use async_trait::async_trait;
 
 use crate::application::dto::request::{DataRequestDto, RequestDto};
-use crate::application::dto::response::{
-    DataConnectionResponse, DataResponseDto, ResponseDto, ResponseDtoResult,
-};
+use crate::application::dto::response::{DataResponseDto, ResponseDto, ResponseDtoResult};
 use crate::application::usecase::data::create_data;
 use crate::application::usecase::{available_port, Service};
 use crate::application::CallbackFunctions;
@@ -22,7 +20,9 @@ use crate::domain::entity::request::{DataRequest, Request};
 use crate::domain::entity::response::{DataResponse, Response, ResponseResult};
 use crate::domain::entity::{ConnectQuery, DataIdWrapper, PhantomId, SocketInfo};
 use crate::domain::entity::{SerializableId, SerializableSocket};
-use crate::{error, Logger, ProgramState, Repository};
+use crate::{
+    error, get_data_connection_state, DataConnectionResponse, Logger, ProgramState, Repository,
+};
 
 pub(crate) struct Connect {}
 
@@ -111,15 +111,19 @@ impl Service for Connect {
                 // 5. 4.で確立に成功した場合は、C++側の機能を利用し、Src, Dest Topic生成、保存する
                 cb_functions.data_callback(topic_parameters);
 
-                let response_data = DataConnectionResponse {
-                    data_connection_id: params.data_connection_id,
-                    source_topic_name: source_topic_name,
-                    source_ip: address,
-                    source_port: port,
-                    destination_topic_name: connect_params.destination_topic,
-                };
+                let hash_mutex = get_data_connection_state();
+                hash_mutex.lock().unwrap().insert(
+                    params.data_connection_id.clone(),
+                    DataConnectionResponse {
+                        source_topic_name,
+                        source_ip: address,
+                        source_port: port,
+                        destination_topic_name: connect_params.destination_topic,
+                    },
+                );
+
                 return Ok(ResponseDtoResult::Success(ResponseDto::Data(
-                    DataResponseDto::Connect(response_data),
+                    DataResponseDto::Connect(params),
                 )));
             }
         }
@@ -130,6 +134,9 @@ impl Service for Connect {
 
 #[cfg(test)]
 mod connect_data_test {
+    use std::collections::HashMap;
+    use std::sync::Mutex;
+
     use super::*;
     use crate::application::dto::request::ConnectDtoParams;
     use crate::application::usecase::helper;
@@ -141,16 +148,14 @@ mod connect_data_test {
     #[tokio::test]
     // eventとして異常な文字列を受信した場合
     async fn success() {
+        let _ = crate::DATA_CONNECTION_STATE_INSTANCE.set(Mutex::new(HashMap::new()));
+
         // 成功するケースの結果を生成
-        let value = DataConnectionResponse {
+        let value = DataConnectionIdWrapper {
             data_connection_id: DataConnectionId::try_create(
                 "dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
             )
             .unwrap(),
-            source_topic_name: "da_50a32bab_b3d9_4913_8e20_f79c90a6a211".to_string(),
-            source_ip: "127.0.0.1".to_string(),
-            source_port: 10000,
-            destination_topic_name: "destination_topic".to_string(),
         };
         let answer = ResponseDtoResult::Success(ResponseDto::Data(DataResponseDto::Connect(value)));
 

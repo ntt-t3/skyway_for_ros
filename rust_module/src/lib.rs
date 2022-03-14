@@ -9,13 +9,16 @@ mod error;
 mod infra;
 mod utils;
 
+use std::collections::HashMap;
 use std::ffi::{c_void, CString};
 use std::os::raw::{c_char, c_double};
+use std::sync::Mutex;
 use std::thread::JoinHandle;
 
 use once_cell::sync::OnceCell;
 
 use crate::application::TopicParameters;
+use crate::domain::entity::DataConnectionId;
 use crate::domain::repository::Repository;
 use crate::infra::RepositoryImpl;
 
@@ -29,6 +32,10 @@ static LOGGER_INSTANCE: OnceCell<Logger> = OnceCell::new();
 static PROGRAM_STATE_INSTANCE: OnceCell<ProgramState> = OnceCell::new();
 // RepositoryとしてWebRTC Crateを利用しているが、生成されたSender, Receiverを破棄すると通信できなくなるので、保持し続ける
 static REPOSITORY_INSTANCE: OnceCell<Box<dyn Repository>> = OnceCell::new();
+// OPENイベント時に返すため、DataConnection確立時に情報を集めておく
+static DATA_CONNECTION_STATE_INSTANCE: OnceCell<
+    Mutex<HashMap<DataConnectionId, DataConnectionResponse>>,
+> = OnceCell::new();
 
 #[repr(C)]
 pub struct CallbackFunctions {
@@ -234,6 +241,20 @@ pub extern "C" fn register_program_state(
         .unwrap();
 }
 
+pub(crate) fn get_data_connection_state(
+) -> &'static Mutex<HashMap<DataConnectionId, DataConnectionResponse>> {
+    DATA_CONNECTION_STATE_INSTANCE
+        .get()
+        .expect("data_connection_state_instance is not initialized")
+}
+
+pub(crate) struct DataConnectionResponse {
+    pub source_topic_name: String,
+    pub source_ip: String,
+    pub source_port: u16,
+    pub destination_topic_name: String,
+}
+
 //========== ↑ OnceCell ↑ ==========
 
 #[repr(C)]
@@ -260,6 +281,8 @@ pub extern "C" fn run() -> RunResponse {
             handler: std::ptr::null_mut(),
         };
     }
+
+    let _ = DATA_CONNECTION_STATE_INSTANCE.set(Mutex::new(HashMap::new()));
 
     // SkyWay Crateを開始する
     let handle: JoinHandle<()> = std::thread::spawn(|| {
