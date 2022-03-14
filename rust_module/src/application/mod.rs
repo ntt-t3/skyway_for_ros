@@ -9,12 +9,32 @@ use serde::{Deserialize, Serialize};
 
 use crate::application::dto::request::PeerRequestDto;
 use crate::application::dto::Command;
+use crate::application::usecase::event::Event;
 use crate::application::usecase::Service;
 use crate::domain::entity::response::{DataResponse, PeerResponse, Response, ResponseResult};
 use crate::domain::entity::*;
 use crate::error::Error;
 use crate::{error, CallbackFunctions, Logger, ProgramState};
 use usecase::peer;
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+struct ErrorMessage {
+    is_success: bool,
+    result: ErrorMessageInternal,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+struct ErrorMessageInternal {
+    r#type: Option<String>,
+    command: Option<String>,
+    error: String,
+}
+
+impl Stringify for ErrorMessage {
+    fn to_string(&self) -> Result<String, error::Error> {
+        serde_json::to_string(self).map_err(|e| error::Error::SerdeError { error: e })
+    }
+}
 
 #[repr(C)]
 pub struct SourceParameters {
@@ -34,25 +54,6 @@ pub struct TopicParameters {
     data_connection_id: *mut c_char,
     source_parameters: SourceParameters,
     destination_parameters: DestinationParameters,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-struct ErrorMessage {
-    is_success: bool,
-    result: ErrorMessageInternal,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-struct ErrorMessageInternal {
-    r#type: Option<String>,
-    command: Option<String>,
-    error: String,
-}
-
-impl Stringify for ErrorMessage {
-    fn to_string(&self) -> Result<String, Error> {
-        serde_json::to_string(self).map_err(|e| error::Error::SerdeError { error: e })
-    }
 }
 
 // 当面はユニットテストは行わず、結合試験だけ行うことにする
@@ -169,56 +170,20 @@ fn data_factory(dto: &RequestDto) -> Box<dyn Service> {
 #[no_mangle]
 pub extern "C" fn receive_events() -> *mut c_char {
     let rt = tokio::runtime::Runtime::new().unwrap();
-    let message = rt.block_on(async {
-        crate::REPOSITORY_INSTANCE
-            .get()
-            .unwrap()
-            .receive_event(ProgramState::global(), Logger::global())
+    let repository = crate::REPOSITORY_INSTANCE.get().unwrap();
+    let result = rt.block_on(async {
+        let event = Event::default();
+        event
+            .execute(
+                repository,
+                ProgramState::global(),
+                Logger::global(),
+                CallbackFunctions::global(),
+            )
             .await
     });
 
-    let response_message = match message {
-        Ok(ResponseResult::Success(Response::Peer(PeerResponse::Event(PeerEventEnum::CLOSE(
-            ..,
-        ))))) => {
-            crate::CALLBACK_FUNCTIONS
-                .get()
-                .map(|functions| functions.peer_deleted_callback());
-            // messageはOkでmatch済みなのでunwrapしてよい
-            // to_stringはserde_jsonのSerializeしているだけで、型定義により確実に成功するのでunwrapしてよい
-            message.unwrap().to_string().unwrap()
-        }
-        Ok(ResponseResult::Success(Response::Data(DataResponse::Event(
-            DataConnectionEventEnum::CLOSE(DataConnectionIdWrapper {
-                ref data_connection_id,
-            }),
-        )))) => {
-            CallbackFunctions::global()
-                .data_connection_deleted_callback(data_connection_id.as_str());
-            // messageはOkでmatch済みなのでunwrapしてよい
-            // to_stringはserde_jsonのSerializeしているだけで、型定義により確実に成功するのでunwrapしてよい
-            message.unwrap().to_string().unwrap()
-        }
-        Ok(message) => {
-            // to_stringはserde_jsonのSerializeしているだけで、型定義により確実に成功するのでunwrapしてよい
-            message.to_string().unwrap()
-        }
-        Err(e) => {
-            let internal = ErrorMessageInternal {
-                r#type: Some("EVENT".to_string()),
-                command: Some("LISTEN".to_string()),
-                error: e.to_string(),
-            };
-            let error_message = ErrorMessage {
-                is_success: false,
-                result: internal,
-            };
-            // to_stringはserde_jsonのSerializeしているだけで、型定義により確実に成功するのでunwrapしてよい
-            error_message.to_string().unwrap()
-        }
-    };
-
-    return CString::new(response_message.as_str()).unwrap().into_raw();
+    return CString::new(result).unwrap().into_raw();
 }
 
 #[no_mangle]

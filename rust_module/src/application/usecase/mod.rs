@@ -1,4 +1,5 @@
 pub(crate) mod data;
+pub(crate) mod event;
 pub(crate) mod peer;
 
 use std::net::TcpListener;
