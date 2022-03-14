@@ -11,7 +11,7 @@ use async_trait::async_trait;
 
 use crate::application::dto::request::{MediaRequestDto, RequestDto};
 use crate::application::dto::response::{
-    MediaInfo, MediaPair, MediaResponseDto, ResponseDto, ResponseDtoResult,
+    CallResponseDto, MediaInfo, MediaPair, MediaResponseDto, ResponseDto, ResponseDtoResult,
 };
 use crate::application::usecase::Service;
 use crate::domain::entity::request::{IsVideo, MediaRequest, Request};
@@ -20,8 +20,7 @@ use crate::domain::entity::{
     MediaConnectionIdWrapper, MediaId, PhantomId, RtcpId, SerializableSocket, SocketInfo,
 };
 use crate::{
-    error, get_media_connection_state, CallResponseDto, CallbackFunctions, Logger, ProgramState,
-    Repository,
+    error, get_media_connection_state, CallbackFunctions, Logger, ProgramState, Repository,
 };
 
 pub(crate) struct Call {}
@@ -164,7 +163,7 @@ mod call_media_test {
     use std::sync::Mutex;
 
     use super::*;
-    use crate::application::dto::request::{CallResponseDto, MediaRequestDto};
+    use crate::application::dto::request::MediaRequestDto;
     use crate::application::usecase::helper;
     use crate::domain::entity::request::{MediaRequest, Request};
     use crate::domain::entity::response::ResponseResult;

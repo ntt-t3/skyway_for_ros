@@ -18,7 +18,7 @@ use std::thread::JoinHandle;
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 
-use crate::application::dto::request::CallResponseDto;
+use crate::application::dto::response::CallResponseDto;
 use crate::application::TopicParameters;
 use crate::domain::entity::{DataConnectionId, MediaConnectionId};
 use crate::domain::repository::Repository;

@@ -1,12 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-use crate::application::dto::response::MediaInfo;
 use crate::application::dto::Command;
 pub(crate) use crate::domain::entity::request::PeerRequest as PeerRequestDto;
 use crate::domain::entity::request::{AnswerParameters, IsVideo};
 use crate::domain::entity::{
-    CallQuery, DataConnectionId, DataConnectionIdWrapper, DataIdWrapper, MediaConnectionId,
-    MediaIdWrapper, PeerId, Token,
+    CallQuery, DataConnectionId, DataConnectionIdWrapper, DataIdWrapper, MediaIdWrapper, PeerId,
+    Token,
 };
 use crate::error;
 
@@ -22,13 +21,6 @@ impl Command for PeerRequestDto {
 }
 
 //========== Media ==========
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub(crate) struct CallResponseDto {
-    pub video: MediaInfo,
-    pub audio: MediaInfo,
-    pub media_connection_id: MediaConnectionId,
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "command")]

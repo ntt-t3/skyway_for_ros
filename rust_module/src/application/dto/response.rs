@@ -8,7 +8,9 @@ use crate::domain::entity::{
     MediaId, MediaIdWrapper, PeerEventEnum, PeerInfo, PeerStatusMessage, PhantomId, RtcpId,
     RtcpIdWrapper, SerializableId, SocketInfo,
 };
-use crate::{error, DataConnectionResponse};
+use crate::{error, DataConnectionResponse, MediaConnectionId};
+
+//========== Peer ==========
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "command")]
@@ -32,6 +34,15 @@ impl PeerResponseDto {
             PeerResponse::Event(item) => PeerResponseDto::Event(item),
         }
     }
+}
+
+//========== Media ==========
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub(crate) struct CallResponseDto {
+    pub video: MediaInfo,
+    pub audio: MediaInfo,
+    pub media_connection_id: MediaConnectionId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -81,6 +92,8 @@ impl MediaResponseDto {
         }
     }
 }
+
+//========== Data ==========
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "event")]
