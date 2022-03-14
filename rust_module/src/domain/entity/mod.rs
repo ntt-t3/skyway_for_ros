@@ -12,8 +12,8 @@ pub(crate) use module::prelude::{
     DataConnectionEventEnum, DataConnectionId, DataConnectionIdWrapper, DataConnectionStatus,
     DataId, DataIdWrapper, MediaConnectionEventEnum, MediaConnectionId, MediaConnectionIdWrapper,
     MediaConnectionStatus, MediaId, MediaIdWrapper, PeerEventEnum, PeerId, PeerInfo,
-    PeerStatusMessage, PhantomId, RedirectParams, RtcpId, RtcpIdWrapper, SerializableId,
-    SerializableSocket, SocketInfo, Token,
+    PeerStatusMessage, PhantomId, RedirectParameters, RedirectParams, RtcpId, RtcpIdWrapper,
+    SerializableId, SerializableSocket, SocketInfo, Token,
 };
 
 // メッセージを自然にStringに変換できるようにする

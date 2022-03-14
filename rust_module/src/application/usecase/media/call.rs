@@ -8,16 +8,18 @@
 // 実際にMediaConnectionが確立されたかどうか知るために、End-User-ProgramはCONNECT Eventを監視する必要がある
 
 use async_trait::async_trait;
+use module::prelude::MediaParams;
 
-use crate::application::dto::request::{MediaRequestDto, RequestDto};
+use crate::application::dto::request::{ConstraintsDto, MediaRequestDto, RequestDto};
 use crate::application::dto::response::{
-    CallResponseDto, MediaInfo, MediaPair, MediaResponseDto, ResponseDto, ResponseDtoResult,
+    CallResponseDto, MediaPair, MediaResponseDto, ResponseDto, ResponseDtoResult, SendParams,
 };
 use crate::application::usecase::Service;
 use crate::domain::entity::request::{IsVideo, MediaRequest, Request};
 use crate::domain::entity::response::{MediaResponse, Response, ResponseResult};
 use crate::domain::entity::{
-    MediaConnectionIdWrapper, MediaId, PhantomId, RtcpId, SerializableSocket, SocketInfo,
+    CallQuery, Constraints, MediaConnectionIdWrapper, MediaId, RedirectParameters, RtcpId,
+    SerializableSocket, SocketInfo,
 };
 use crate::{
     error, get_media_connection_state, CallbackFunctions, Logger, ProgramState, Repository,
@@ -69,6 +71,89 @@ async fn create_rtcp(
     }
 }
 
+pub(crate) fn create_constraint(
+    video_id: MediaId,
+    video_rtcp_id: RtcpId,
+    audio_id: MediaId,
+    audio_rtcp_id: RtcpId,
+    constraint_dto: &Option<ConstraintsDto>,
+    redirect_params: &Option<RedirectParameters>,
+) -> Constraints {
+    let video_receive_enabled = if let Some(RedirectParameters {
+        video: Some(ref _video),
+        ..
+    }) = redirect_params
+    {
+        Some(true)
+    } else {
+        None
+    };
+
+    let audio_receive_enabled = if let Some(RedirectParameters {
+        audio: Some(ref _audio),
+        ..
+    }) = redirect_params
+    {
+        Some(true)
+    } else {
+        None
+    };
+
+    let video_params = if let Some(ConstraintsDto {
+        video_params: Some(ref params),
+        ..
+    }) = constraint_dto
+    {
+        Some(MediaParams {
+            band_width: params.band_width,
+            codec: params.codec.clone(),
+            media_id: video_id,
+            rtcp_id: Some(video_rtcp_id),
+            payload_type: params.payload_type,
+            sampling_rate: params.sampling_rate,
+        })
+    } else {
+        None
+    };
+
+    let audio_params = if let Some(ConstraintsDto {
+        audio_params: Some(ref params),
+        ..
+    }) = constraint_dto
+    {
+        Some(MediaParams {
+            band_width: params.band_width,
+            codec: params.codec.clone(),
+            media_id: audio_id,
+            rtcp_id: Some(audio_rtcp_id),
+            payload_type: params.payload_type,
+            sampling_rate: params.sampling_rate,
+        })
+    } else {
+        None
+    };
+
+    let metadata = if let Some(ConstraintsDto {
+        metadata: Some(ref metadata),
+        ..
+    }) = constraint_dto
+    {
+        Some(metadata.clone())
+    } else {
+        None
+    };
+
+    Constraints {
+        video: true,
+        videoReceiveEnabled: video_receive_enabled,
+        audio: true,
+        audioReceiveEnabled: audio_receive_enabled,
+        video_params: video_params,
+        audio_params: audio_params,
+        metadata: metadata,
+    }
+}
+
 #[async_trait]
 impl Service for Call {
     async fn execute(
@@ -86,47 +171,37 @@ impl Service for Call {
         logger.debug(log.as_str());
 
         if let RequestDto::Media(MediaRequestDto::Call { params }) = message {
-            let video_send_socket = create_media(repository, program_state, logger, true).await?;
-            let video_rtcp_send_socket =
+            let video_socket = create_media(repository, program_state, logger, true).await?;
+            let video_rtcp_socket =
                 create_rtcp(repository, program_state, logger, Some(())).await?;
-            let audio_send_socket = create_media(repository, program_state, logger, false).await?;
-            let audio_rtcp_send_socket =
-                create_rtcp(repository, program_state, logger, None).await?;
-
-            let video = {
-                let send = {
-                    let media = video_send_socket;
-                    let rtcp = video_rtcp_send_socket;
-                    MediaPair { media, rtcp }
-                };
-
-                let recv = {
-                    let media =
-                        SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", 20000).unwrap();
-                    let rtcp =
-                        SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", 20001).unwrap();
-                    MediaPair { media, rtcp }
-                };
-
-                MediaInfo { send, recv }
+            let audio_socket = create_media(repository, program_state, logger, false).await?;
+            let audio_rtcp_socket = create_rtcp(repository, program_state, logger, None).await?;
+            // Readyイベントでユーザに返すために保持
+            let send_params = SendParams {
+                video: MediaPair {
+                    media: video_socket.clone(),
+                    rtcp: video_rtcp_socket.clone(),
+                },
+                audio: MediaPair {
+                    media: audio_socket.clone(),
+                    rtcp: audio_rtcp_socket.clone(),
+                },
             };
-
-            let audio = {
-                let send = {
-                    let media = audio_send_socket;
-                    let rtcp = audio_rtcp_send_socket;
-                    MediaPair { media, rtcp }
-                };
-
-                let recv = {
-                    let media =
-                        SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", 20010).unwrap();
-                    let rtcp =
-                        SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", 20011).unwrap();
-                    MediaPair { media, rtcp }
-                };
-
-                MediaInfo { send, recv }
+            let redirect_params = params.redirect_params.clone();
+            let constraints = create_constraint(
+                video_socket.get_id().unwrap(),
+                video_rtcp_socket.get_id().unwrap(),
+                audio_socket.get_id().unwrap(),
+                audio_rtcp_socket.get_id().unwrap(),
+                &params.constraints,
+                &params.redirect_params,
+            );
+            let params = CallQuery {
+                peer_id: params.peer_id,
+                token: params.token,
+                target_id: params.target_id,
+                constraints: Some(constraints),
+                redirect_params: redirect_params.clone(),
             };
 
             let request = Request::Media(MediaRequest::Call { params });
@@ -134,8 +209,8 @@ impl Service for Call {
                 repository.register(program_state, logger, request).await?
             {
                 let call_response = CallResponseDto {
-                    video,
-                    audio,
+                    send_params,
+                    redirect_params,
                     media_connection_id: wrapper.media_connection_id.clone(),
                 };
                 get_media_connection_state()
@@ -163,11 +238,11 @@ mod call_media_test {
     use std::sync::Mutex;
 
     use super::*;
-    use crate::application::dto::request::MediaRequestDto;
+    use crate::application::dto::request::{CallQueryDto, MediaRequestDto};
     use crate::application::usecase::helper;
     use crate::domain::entity::request::{MediaRequest, Request};
     use crate::domain::entity::response::ResponseResult;
-    use crate::domain::entity::{CallQuery, MediaConnectionId, PeerId, SocketInfo, Token};
+    use crate::domain::entity::{MediaConnectionId, PeerId, SocketInfo, Token};
     use crate::domain::repository::MockRepository;
 
     #[tokio::test]
@@ -178,8 +253,8 @@ mod call_media_test {
         // 正解データの生成
         let dto = {
             //CallResponseDtoはVideo, Audio, MediaConnectionIdの情報が必要なので生成する
-            let video = {
-                let send = {
+            let send = {
+                let video = {
                     let media = SocketInfo::<MediaId>::try_create(
                         Some("vi-4d053831-5dc2-461b-a358-d062d6115216".to_string()),
                         "127.0.0.1",
@@ -195,19 +270,7 @@ mod call_media_test {
                     MediaPair { media, rtcp }
                 };
 
-                let recv = {
-                    let media =
-                        SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", 20000).unwrap();
-                    let rtcp =
-                        SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", 20001).unwrap();
-                    MediaPair { media, rtcp }
-                };
-
-                MediaInfo { send, recv }
-            };
-
-            let audio = {
-                let send = {
+                let audio = {
                     let media = SocketInfo::<MediaId>::try_create(
                         Some("au-4d053831-5dc2-461b-a358-d062d6115216".to_string()),
                         "127.0.0.1",
@@ -223,23 +286,15 @@ mod call_media_test {
                     MediaPair { media, rtcp }
                 };
 
-                let recv = {
-                    let media =
-                        SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", 20010).unwrap();
-                    let rtcp =
-                        SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", 20011).unwrap();
-                    MediaPair { media, rtcp }
-                };
-
-                MediaInfo { send, recv }
+                SendParams { video, audio }
             };
 
             let media_connection_id =
                 MediaConnectionId::try_create("mc-102127d9-30de-413b-93f7-41a33e39d82b").unwrap();
 
             CallResponseDto {
-                video,
-                audio,
+                send_params: send,
+                redirect_params: None,
                 media_connection_id,
             }
         };
@@ -260,11 +315,11 @@ mod call_media_test {
                 Request::Media(MediaRequest::ContentCreate { params }) => {
                     if params.is_video {
                         Ok(ResponseResult::Success(Response::Media(
-                            MediaResponse::ContentCreate(dto.video.send.media.clone()),
+                            MediaResponse::ContentCreate(dto.send_params.video.media.clone()),
                         )))
                     } else {
                         Ok(ResponseResult::Success(Response::Media(
-                            MediaResponse::ContentCreate(dto.audio.send.media.clone()),
+                            MediaResponse::ContentCreate(dto.send_params.audio.media.clone()),
                         )))
                     }
                 }
@@ -272,11 +327,11 @@ mod call_media_test {
                     // 本来paramsとしてはNoneが飛ぶが、テストの便宜上Some(())が来たらVideo用の情報を返している
                     if params.is_some() {
                         Ok(ResponseResult::Success(Response::Media(
-                            MediaResponse::RtcpCreate(dto.video.send.rtcp.clone()),
+                            MediaResponse::RtcpCreate(dto.send_params.video.rtcp.clone()),
                         )))
                     } else {
                         Ok(ResponseResult::Success(Response::Media(
-                            MediaResponse::RtcpCreate(dto.audio.send.rtcp.clone()),
+                            MediaResponse::RtcpCreate(dto.send_params.audio.rtcp.clone()),
                         )))
                     }
                 }
@@ -294,7 +349,7 @@ mod call_media_test {
         let program_state = helper::create_program_state();
         let function = helper::create_functions();
         let param = RequestDto::Media(MediaRequestDto::Call {
-            params: CallQuery {
+            params: CallQueryDto {
                 peer_id: PeerId::new("peer_id"),
                 token: Token::try_create("pt-9749250e-d157-4f80-9ee2-359ce8524308").unwrap(),
                 target_id: PeerId::new("target_id"),

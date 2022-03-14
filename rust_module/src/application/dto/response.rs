@@ -5,8 +5,8 @@ use crate::domain::entity::response::{DataResponse, MediaResponse, PeerResponse}
 use crate::domain::entity::{
     AnswerResult, DataConnectionId, DataConnectionIdWrapper, DataConnectionStatus, DataId,
     DataIdWrapper, MediaConnectionEventEnum, MediaConnectionIdWrapper, MediaConnectionStatus,
-    MediaId, MediaIdWrapper, PeerEventEnum, PeerInfo, PeerStatusMessage, PhantomId, RtcpId,
-    RtcpIdWrapper, SerializableId, SocketInfo,
+    MediaId, MediaIdWrapper, PeerEventEnum, PeerInfo, PeerStatusMessage, RedirectParameters,
+    RtcpId, RtcpIdWrapper, SerializableId, SocketInfo,
 };
 use crate::{error, DataConnectionResponse, MediaConnectionId};
 
@@ -40,8 +40,9 @@ impl PeerResponseDto {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub(crate) struct CallResponseDto {
-    pub video: MediaInfo,
-    pub audio: MediaInfo,
+    pub send_params: SendParams,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub redirect_params: Option<RedirectParameters>,
     pub media_connection_id: MediaConnectionId,
 }
 
@@ -52,9 +53,9 @@ pub(crate) struct MediaPair<M: SerializableId, R: SerializableId> {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub(crate) struct MediaInfo {
-    pub send: MediaPair<MediaId, RtcpId>,
-    pub recv: MediaPair<PhantomId, PhantomId>,
+pub(crate) struct SendParams {
+    pub video: MediaPair<MediaId, RtcpId>,
+    pub audio: MediaPair<MediaId, RtcpId>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
