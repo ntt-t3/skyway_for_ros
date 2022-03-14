@@ -11,9 +11,7 @@ use crate::application::dto::request::PeerRequestDto;
 use crate::application::dto::Command;
 use crate::application::usecase::event::Event;
 use crate::application::usecase::Service;
-use crate::domain::entity::response::{DataResponse, PeerResponse, Response, ResponseResult};
 use crate::domain::entity::*;
-use crate::error::Error;
 use crate::{error, CallbackFunctions, Logger, ProgramState};
 use usecase::peer;
 

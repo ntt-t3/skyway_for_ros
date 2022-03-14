@@ -115,6 +115,7 @@ impl Service for Connect {
                 hash_mutex.lock().unwrap().insert(
                     params.data_connection_id.clone(),
                     DataConnectionResponse {
+                        data_connection_id: params.data_connection_id.clone(),
                         source_topic_name,
                         source_ip: address,
                         source_port: port,

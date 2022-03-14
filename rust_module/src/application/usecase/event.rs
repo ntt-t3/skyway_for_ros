@@ -1,22 +1,16 @@
-use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
-
-use crate::application::dto::request::RequestDto;
 use crate::application::dto::response::{
-    DataResponseDto, MediaResponseDto, PeerResponseDto, ResponseDto, ResponseDtoResult,
+    DataConnectionEventDto, DataResponseDto, MediaResponseDto, PeerResponseDto, ResponseDto,
+    ResponseDtoResult,
 };
-use crate::application::usecase::Service;
 use crate::application::{CallbackFunctions, ErrorMessage, ErrorMessageInternal};
-use crate::domain::entity::request::Request;
 use crate::domain::entity::response::{
     DataResponse, MediaResponse, PeerResponse, Response, ResponseResult,
 };
 use crate::domain::entity::{
-    DataConnectionEventEnum, DataConnectionIdWrapper, MediaConnectionEventEnum, PeerEventEnum,
-    Stringify,
+    DataConnectionEventEnum, MediaConnectionEventEnum, PeerEventEnum, Stringify,
 };
-use crate::Repository;
-use crate::{error, Logger, ProgramState};
+use crate::{get_data_connection_state, Repository};
+use crate::{Logger, ProgramState};
 
 pub(crate) struct Event {}
 
@@ -105,17 +99,26 @@ fn data_event(
 ) -> ResponseDtoResult {
     match result {
         ResponseResult::Success(Response::Data(DataResponse::Event(event))) => match event {
-            DataConnectionEventEnum::OPEN(open) => ResponseDtoResult::Success(ResponseDto::Data(
-                DataResponseDto::Event(DataConnectionEventEnum::OPEN(open)),
-            )),
+            DataConnectionEventEnum::OPEN(open) => {
+                match get_data_connection_state()
+                    .lock()
+                    .unwrap()
+                    .get(&open.data_connection_id)
+                {
+                    Some(item) => ResponseDtoResult::Success(ResponseDto::Data(
+                        DataResponseDto::Event(DataConnectionEventDto::OPEN(item.clone())),
+                    )),
+                    None => ResponseDtoResult::Error("unknown dataconnection".to_string()),
+                }
+            }
             DataConnectionEventEnum::CLOSE(close) => {
                 cb_functions.data_connection_deleted_callback(close.data_connection_id.as_str());
                 ResponseDtoResult::Success(ResponseDto::Data(DataResponseDto::Event(
-                    DataConnectionEventEnum::CLOSE(close),
+                    DataConnectionEventDto::CLOSE(close),
                 )))
             }
             DataConnectionEventEnum::ERROR(error) => ResponseDtoResult::Success(ResponseDto::Data(
-                DataResponseDto::Event(DataConnectionEventEnum::ERROR(error)),
+                DataResponseDto::Event(DataConnectionEventDto::ERROR(error)),
             )),
             DataConnectionEventEnum::TIMEOUT => {
                 unreachable!()

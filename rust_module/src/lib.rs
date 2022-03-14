@@ -16,6 +16,7 @@ use std::sync::Mutex;
 use std::thread::JoinHandle;
 
 use once_cell::sync::OnceCell;
+use serde::{Deserialize, Serialize};
 
 use crate::application::TopicParameters;
 use crate::domain::entity::DataConnectionId;
@@ -248,7 +249,9 @@ pub(crate) fn get_data_connection_state(
         .expect("data_connection_state_instance is not initialized")
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub(crate) struct DataConnectionResponse {
+    pub data_connection_id: DataConnectionId,
     pub source_topic_name: String,
     pub source_ip: String,
     pub source_port: u16,

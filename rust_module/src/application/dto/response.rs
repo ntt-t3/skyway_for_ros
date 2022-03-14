@@ -8,7 +8,7 @@ use crate::domain::entity::{
     MediaConnectionIdWrapper, MediaConnectionStatus, MediaId, MediaIdWrapper, PeerEventEnum,
     PeerInfo, PeerStatusMessage, RtcpId, RtcpIdWrapper, SocketInfo,
 };
-use crate::error;
+use crate::{error, DataConnectionResponse};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "command")]
@@ -71,12 +71,11 @@ impl MediaResponseDto {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub(crate) struct DataConnectionResponse {
-    pub(crate) data_connection_id: DataConnectionId,
-    pub(crate) source_topic_name: String,
-    pub(crate) source_ip: String,
-    pub(crate) source_port: u16,
-    pub(crate) destination_topic_name: String,
+#[serde(tag = "event")]
+pub(crate) enum DataConnectionEventDto {
+    OPEN(DataConnectionResponse),
+    CLOSE(DataConnectionIdWrapper),
+    ERROR((DataConnectionId, String)),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -93,7 +92,7 @@ pub(crate) enum DataResponseDto {
     #[serde(rename = "REDIRECT")]
     Redirect(DataConnectionIdWrapper),
     #[serde(rename = "EVENT")]
-    Event(DataConnectionEventEnum),
+    Event(DataConnectionEventDto),
     #[serde(rename = "STATUS")]
     Status(DataConnectionStatus),
 }
@@ -106,7 +105,7 @@ impl DataResponseDto {
             DataResponse::Delete(item) => DataResponseDto::Delete(item),
             DataResponse::Disconnect(item) => DataResponseDto::Disconnect(item),
             DataResponse::Redirect(item) => DataResponseDto::Redirect(item),
-            DataResponse::Event(item) => DataResponseDto::Event(item),
+            DataResponse::Event(_) => unreachable!(),
             DataResponse::Status(item) => DataResponseDto::Status(item),
         }
     }
