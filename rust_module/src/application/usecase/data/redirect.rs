@@ -14,7 +14,9 @@ use crate::application::dto::response::{
 };
 use crate::application::usecase::data::create_data;
 use crate::application::usecase::{available_port, Service};
-use crate::application::{DestinationParameters, Functions, SourceParameters, TopicParameters};
+use crate::application::{
+    CallbackFunctions, DestinationParameters, SourceParameters, TopicParameters,
+};
 use crate::domain::entity::request::{DataRequest, Request};
 use crate::domain::entity::response::{DataResponse, Response, ResponseResult};
 use crate::domain::entity::{
@@ -37,7 +39,7 @@ impl Service for Redirect {
         repository: &Box<dyn Repository>,
         program_state: &ProgramState,
         logger: &Logger,
-        cb_functions: &Functions,
+        cb_functions: &CallbackFunctions,
         message: RequestDto,
     ) -> Result<ResponseDtoResult, error::Error> {
         let log = format!(

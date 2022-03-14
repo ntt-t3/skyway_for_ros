@@ -16,7 +16,7 @@ use crate::application::dto::response::{
 };
 use crate::application::usecase::data::create_data;
 use crate::application::usecase::{available_port, Service};
-use crate::application::Functions;
+use crate::application::CallbackFunctions;
 use crate::application::{DestinationParameters, SourceParameters, TopicParameters};
 use crate::domain::entity::request::{DataRequest, Request};
 use crate::domain::entity::response::{DataResponse, Response, ResponseResult};
@@ -39,7 +39,7 @@ impl Service for Connect {
         repository: &Box<dyn Repository>,
         program_state: &ProgramState,
         logger: &Logger,
-        cb_functions: &Functions,
+        cb_functions: &CallbackFunctions,
         message: RequestDto,
     ) -> Result<ResponseDtoResult, error::Error> {
         let log = format!(

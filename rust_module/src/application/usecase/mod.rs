@@ -9,7 +9,7 @@ use crate::application::dto::request::RequestDto;
 use crate::application::dto::response::{
     DataResponseDto, MediaResponseDto, PeerResponseDto, ResponseDto, ResponseDtoResult,
 };
-use crate::application::Functions;
+use crate::application::CallbackFunctions;
 use crate::domain::entity::request::Request;
 use crate::domain::entity::response::{Response, ResponseResult};
 use crate::Repository;
@@ -32,7 +32,7 @@ pub(crate) trait Service {
         repository: &Box<dyn Repository>,
         program_state: &ProgramState,
         logger: &Logger,
-        cb_functions: &Functions,
+        cb_functions: &CallbackFunctions,
         message: RequestDto,
     ) -> Result<ResponseDtoResult, error::Error>;
 }
@@ -46,7 +46,7 @@ impl Service for General {
         repository: &Box<dyn Repository>,
         program_state: &ProgramState,
         logger: &Logger,
-        _cb_functions: &Functions,
+        _cb_functions: &CallbackFunctions,
         message: RequestDto,
     ) -> Result<ResponseDtoResult, error::Error> {
         if let RequestDto::Peer(inner) = message {
@@ -75,7 +75,7 @@ impl Service for General {
 pub(crate) mod helper {
     use std::os::raw::{c_char, c_double};
 
-    use crate::application::{Functions, TopicParameters};
+    use crate::application::{CallbackFunctions, TopicParameters};
     use crate::{Logger, ProgramState};
 
     extern "C" fn log(_message: *const c_char) {}
@@ -108,8 +108,8 @@ pub(crate) mod helper {
 
     extern "C" fn delete_data(_param: *mut c_char) {}
 
-    pub(crate) fn create_functions() -> Functions {
-        Functions {
+    pub(crate) fn create_functions() -> CallbackFunctions {
+        CallbackFunctions {
             create_peer_callback_c: create_peer,
             peer_deleted_callback: peer_delete,
             data_callback_c: create_data,

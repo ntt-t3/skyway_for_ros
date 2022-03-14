@@ -83,7 +83,7 @@ struct Function {
   void_char_func data_connection_deleted_callback;
 };
 
-void setup_service(Function& functions);
+void register_callbacks(Function& functions);
 char* call_service(const char* message);
 char* receive_events();
 void release_string(char* message);

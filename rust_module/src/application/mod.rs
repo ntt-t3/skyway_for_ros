@@ -5,7 +5,6 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 
 use dto::request::{DataRequestDto, RequestDto};
-use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 
 use crate::application::dto::request::PeerRequestDto;
@@ -14,7 +13,7 @@ use crate::application::usecase::Service;
 use crate::domain::entity::response::{DataResponse, PeerResponse, Response, ResponseResult};
 use crate::domain::entity::*;
 use crate::error::Error;
-use crate::{error, Logger, ProgramState};
+use crate::{error, CallbackFunctions, Logger, ProgramState};
 use usecase::peer;
 
 #[repr(C)]
@@ -35,73 +34,6 @@ pub struct TopicParameters {
     data_connection_id: *mut c_char,
     source_parameters: SourceParameters,
     destination_parameters: DestinationParameters,
-}
-
-static FUNCTIONS_INSTANCE: OnceCell<Functions> = OnceCell::new();
-
-#[repr(C)]
-pub struct Functions {
-    create_peer_callback_c: extern "C" fn(peer_id: *mut c_char, token: *mut c_char),
-    peer_deleted_callback: extern "C" fn(),
-    data_callback_c: extern "C" fn(param: TopicParameters),
-    data_connection_deleted_callback_c: extern "C" fn(data_connection_id: *mut c_char),
-}
-
-impl Functions {
-    pub fn new(
-        create_peer_callback_c: extern "C" fn(peer_id: *mut c_char, token: *mut c_char),
-        peer_deleted_callback: extern "C" fn(),
-        data_callback_c: extern "C" fn(param: TopicParameters),
-        data_connection_deleted_callback_c: extern "C" fn(data_connection_id: *mut c_char),
-    ) -> Self {
-        Functions {
-            create_peer_callback_c,
-            peer_deleted_callback,
-            data_callback_c,
-            data_connection_deleted_callback_c,
-        }
-    }
-
-    pub fn global() -> &'static Functions {
-        FUNCTIONS_INSTANCE
-            .get()
-            .expect("functions is not initialized")
-    }
-
-    pub fn create_peer_callback(&self, peer_id: &str, token: &str) {
-        (self.create_peer_callback_c)(
-            CString::new(peer_id).unwrap().into_raw(),
-            CString::new(token).unwrap().into_raw(),
-        );
-    }
-
-    pub fn peer_deleted_callback(&self) {
-        (self.peer_deleted_callback)();
-    }
-
-    pub fn data_callback(&self, param: TopicParameters) {
-        (self.data_callback_c)(param);
-    }
-
-    pub fn data_connection_deleted_callback(&self, data_connection_id: &str) {
-        (self.data_connection_deleted_callback_c)(
-            CString::new(data_connection_id).unwrap().into_raw(),
-        );
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn setup_service(param: &Functions) {
-    let functions = Functions {
-        create_peer_callback_c: param.create_peer_callback_c,
-        peer_deleted_callback: param.peer_deleted_callback,
-        data_callback_c: param.data_callback_c,
-        data_connection_deleted_callback_c: param.data_connection_deleted_callback_c,
-    };
-
-    if FUNCTIONS_INSTANCE.set(functions).is_err() {
-        return;
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -143,7 +75,7 @@ pub extern "C" fn call_service(message_char: *const c_char) -> *mut c_char {
                         &repository,
                         ProgramState::global(),
                         Logger::global(),
-                        Functions::global(),
+                        CallbackFunctions::global(),
                         dto,
                     )
                     .await
@@ -249,7 +181,7 @@ pub extern "C" fn receive_events() -> *mut c_char {
         Ok(ResponseResult::Success(Response::Peer(PeerResponse::Event(PeerEventEnum::CLOSE(
             ..,
         ))))) => {
-            crate::application::FUNCTIONS_INSTANCE
+            crate::CALLBACK_FUNCTIONS
                 .get()
                 .map(|functions| functions.peer_deleted_callback());
             // messageはOkでmatch済みなのでunwrapしてよい
@@ -261,7 +193,8 @@ pub extern "C" fn receive_events() -> *mut c_char {
                 ref data_connection_id,
             }),
         )))) => {
-            Functions::global().data_connection_deleted_callback(data_connection_id.as_str());
+            CallbackFunctions::global()
+                .data_connection_deleted_callback(data_connection_id.as_str());
             // messageはOkでmatch済みなのでunwrapしてよい
             // to_stringはserde_jsonのSerializeしているだけで、型定義により確実に成功するのでunwrapしてよい
             message.unwrap().to_string().unwrap()
@@ -317,7 +250,7 @@ pub extern "C" fn shutdown_service(peer_id: *const c_char, token: *const c_char)
                 &repository,
                 ProgramState::global(),
                 Logger::global(),
-                Functions::global(),
+                CallbackFunctions::global(),
                 param,
             )
             .await
@@ -326,6 +259,6 @@ pub extern "C" fn shutdown_service(peer_id: *const c_char, token: *const c_char)
             Logger::global().error(error_message);
         }
 
-        Functions::global().peer_deleted_callback();
+        CallbackFunctions::global().peer_deleted_callback();
     });
 }

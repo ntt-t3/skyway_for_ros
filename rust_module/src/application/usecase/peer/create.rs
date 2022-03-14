@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use crate::application::dto::request::RequestDto;
 use crate::application::dto::response::{PeerResponseDto, ResponseDto, ResponseDtoResult};
 use crate::application::usecase::Service;
-use crate::application::Functions;
+use crate::application::CallbackFunctions;
 use crate::domain::entity::request::Request;
 use crate::domain::entity::response::{PeerResponse, Response, ResponseResult};
 use crate::Repository;
@@ -18,7 +18,7 @@ impl Service for Create {
         repository: &Box<dyn Repository>,
         program_state: &ProgramState,
         logger: &Logger,
-        _cb_functions: &Functions,
+        _cb_functions: &CallbackFunctions,
         message: RequestDto,
     ) -> Result<ResponseDtoResult, error::Error> {
         if let RequestDto::Peer(ref inner) = message {
@@ -32,11 +32,9 @@ impl Service for Create {
             {
                 let peer_id = peer_info.peer_id();
                 let token = peer_info.token();
-                crate::application::FUNCTIONS_INSTANCE
-                    .get()
-                    .map(|functions| {
-                        functions.create_peer_callback(peer_id.as_str(), token.as_str())
-                    });
+                crate::CALLBACK_FUNCTIONS.get().map(|functions| {
+                    functions.create_peer_callback(peer_id.as_str(), token.as_str())
+                });
 
                 return Ok(ResponseDtoResult::Success(ResponseDto::Peer(
                     PeerResponseDto::Create(peer_info.clone()),

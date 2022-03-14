@@ -30,7 +30,7 @@ void RouterImpl::Start() {
   Function functions{create_peer_callback, peer_deleted_callback,
                      create_data_callback,
                      data_connection_close_event_callback};
-  setup_service(functions);
+  register_callbacks(functions);
 
   // 終了処理は全てここで行う
   shutdown_handler = [&](int signal) {
