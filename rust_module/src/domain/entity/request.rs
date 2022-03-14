@@ -40,8 +40,8 @@ pub(crate) struct IsVideo {
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub(crate) struct AnswerParameters {
-    media_connection_id: MediaConnectionId,
-    answer_query: AnswerQuery,
+    pub media_connection_id: MediaConnectionId,
+    pub answer_query: AnswerQuery,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
