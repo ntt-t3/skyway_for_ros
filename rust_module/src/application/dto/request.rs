@@ -1,11 +1,12 @@
 use serde::{Deserialize, Serialize};
 
+use crate::application::dto::response::MediaInfo;
 use crate::application::dto::Command;
 pub(crate) use crate::domain::entity::request::PeerRequest as PeerRequestDto;
 use crate::domain::entity::request::{AnswerParameters, IsVideo};
 use crate::domain::entity::{
-    CallQuery, DataConnectionId, DataConnectionIdWrapper, DataIdWrapper, MediaIdWrapper, PeerId,
-    Token,
+    CallQuery, DataConnectionId, DataConnectionIdWrapper, DataIdWrapper, MediaConnectionId,
+    MediaIdWrapper, PeerId, Token,
 };
 use crate::error;
 
@@ -21,9 +22,17 @@ impl Command for PeerRequestDto {
 }
 
 //========== Media ==========
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub(crate) struct CallResponseDto {
+    pub video: MediaInfo,
+    pub audio: MediaInfo,
+    pub media_connection_id: MediaConnectionId,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "command")]
-pub(crate) enum MediaDtoRequest {
+pub(crate) enum MediaRequestDto {
     #[serde(rename = "CONTENT_CREATE")]
     ContentCreate { params: IsVideo },
     #[serde(rename = "CONTENT_DELETE")]
@@ -87,7 +96,8 @@ pub(crate) enum RequestDto {
     Peer(PeerRequestDto),
     #[serde(rename = "DATA")]
     Data(DataRequestDto),
-    Media,
+    #[serde(rename = "MEDIA")]
+    Media(MediaRequestDto),
     #[cfg(test)]
     Test,
 }
@@ -101,7 +111,7 @@ impl RequestDto {
         match self {
             RequestDto::Peer(ref _p) => "PEER".to_string(),
             RequestDto::Data(ref _d) => "DATA".to_string(),
-            RequestDto::Media => "MEDIA".to_string(),
+            RequestDto::Media(ref _m) => "MEDIA".to_string(),
             #[cfg(test)]
             _ => "TEST".to_string(),
         }

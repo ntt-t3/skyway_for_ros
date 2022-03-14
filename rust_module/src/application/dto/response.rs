@@ -3,10 +3,10 @@ use serde::{Deserialize, Serialize, Serializer};
 
 use crate::domain::entity::response::{DataResponse, MediaResponse, PeerResponse};
 use crate::domain::entity::{
-    AnswerResult, DataConnectionEventEnum, DataConnectionId, DataConnectionIdWrapper,
-    DataConnectionStatus, DataId, DataIdWrapper, MediaConnectionEventEnum,
-    MediaConnectionIdWrapper, MediaConnectionStatus, MediaId, MediaIdWrapper, PeerEventEnum,
-    PeerInfo, PeerStatusMessage, RtcpId, RtcpIdWrapper, SocketInfo,
+    AnswerResult, DataConnectionId, DataConnectionIdWrapper, DataConnectionStatus, DataId,
+    DataIdWrapper, MediaConnectionEventEnum, MediaConnectionIdWrapper, MediaConnectionStatus,
+    MediaId, MediaIdWrapper, PeerEventEnum, PeerInfo, PeerStatusMessage, PhantomId, RtcpId,
+    RtcpIdWrapper, SerializableId, SocketInfo,
 };
 use crate::{error, DataConnectionResponse};
 
@@ -32,6 +32,18 @@ impl PeerResponseDto {
             PeerResponse::Event(item) => PeerResponseDto::Event(item),
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub(crate) struct MediaPair<M: SerializableId, R: SerializableId> {
+    pub media: SocketInfo<M>,
+    pub rtcp: SocketInfo<R>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub(crate) struct MediaInfo {
+    pub send: MediaPair<MediaId, RtcpId>,
+    pub recv: MediaPair<PhantomId, PhantomId>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

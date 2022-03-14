@@ -35,7 +35,7 @@ pub(crate) enum DataRequest {
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub(crate) struct IsVideo {
-    is_video: bool,
+    pub(crate) is_video: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]

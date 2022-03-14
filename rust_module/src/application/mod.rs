@@ -1,4 +1,4 @@
-mod dto;
+pub(crate) mod dto;
 pub(crate) mod usecase;
 
 use std::ffi::{CStr, CString};

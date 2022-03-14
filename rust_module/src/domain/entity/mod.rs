@@ -6,6 +6,7 @@ use crate::error;
 // WebRTC Crateの中のこれらのオブジェクトをentityとして再定義
 // module内のオブジェクトは、この場所と、crate::errorでError定義を参照するのみで、
 // その他の場所からは直接参照させない
+#[allow(dead_code)]
 pub(crate) use module::prelude::{
     AnswerQuery, AnswerResult, CallQuery, ConnectQuery, CreatePeerParams, DataConnectionEventEnum,
     DataConnectionId, DataConnectionIdWrapper, DataConnectionStatus, DataId, DataIdWrapper,

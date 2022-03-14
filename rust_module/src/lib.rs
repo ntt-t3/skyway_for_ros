@@ -18,8 +18,9 @@ use std::thread::JoinHandle;
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 
+use crate::application::dto::request::CallResponseDto;
 use crate::application::TopicParameters;
-use crate::domain::entity::DataConnectionId;
+use crate::domain::entity::{DataConnectionId, MediaConnectionId};
 use crate::domain::repository::Repository;
 use crate::infra::RepositoryImpl;
 
@@ -33,6 +34,10 @@ static LOGGER_INSTANCE: OnceCell<Logger> = OnceCell::new();
 static PROGRAM_STATE_INSTANCE: OnceCell<ProgramState> = OnceCell::new();
 // RepositoryとしてWebRTC Crateを利用しているが、生成されたSender, Receiverを破棄すると通信できなくなるので、保持し続ける
 static REPOSITORY_INSTANCE: OnceCell<Box<dyn Repository>> = OnceCell::new();
+// OPENイベント時に返すため、MediaConnection確立時に情報を集めておく
+static MEDIA_CONNECTION_STATE_INSTANCE: OnceCell<
+    Mutex<HashMap<MediaConnectionId, CallResponseDto>>,
+> = OnceCell::new();
 // OPENイベント時に返すため、DataConnection確立時に情報を集めておく
 static DATA_CONNECTION_STATE_INSTANCE: OnceCell<
     Mutex<HashMap<DataConnectionId, DataConnectionResponse>>,
@@ -242,6 +247,13 @@ pub extern "C" fn register_program_state(
         .unwrap();
 }
 
+pub(crate) fn get_media_connection_state(
+) -> &'static Mutex<HashMap<MediaConnectionId, CallResponseDto>> {
+    MEDIA_CONNECTION_STATE_INSTANCE
+        .get()
+        .expect("media_connection_state_instance is not initialized")
+}
+
 pub(crate) fn get_data_connection_state(
 ) -> &'static Mutex<HashMap<DataConnectionId, DataConnectionResponse>> {
     DATA_CONNECTION_STATE_INSTANCE
@@ -285,6 +297,7 @@ pub extern "C" fn run() -> RunResponse {
         };
     }
 
+    let _ = MEDIA_CONNECTION_STATE_INSTANCE.set(Mutex::new(HashMap::new()));
     let _ = DATA_CONNECTION_STATE_INSTANCE.set(Mutex::new(HashMap::new()));
 
     // SkyWay Crateを開始する
