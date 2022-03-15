@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize, Serializer};
 use crate::domain::entity::response::{DataResponse, MediaResponse, PeerResponse};
 use crate::domain::entity::{
     AnswerResult, DataConnectionId, DataConnectionIdWrapper, DataConnectionStatus, DataId,
-    DataIdWrapper, MediaConnectionEventEnum, MediaConnectionIdWrapper, MediaConnectionStatus,
-    MediaId, MediaIdWrapper, PeerEventEnum, PeerInfo, PeerStatusMessage, RedirectParameters,
-    RtcpId, RtcpIdWrapper, SerializableId, SocketInfo,
+    DataIdWrapper, MediaConnectionIdWrapper, MediaConnectionStatus, MediaId, MediaIdWrapper,
+    PeerEventEnum, PeerInfo, PeerStatusMessage, RedirectParameters, RtcpId, RtcpIdWrapper,
+    SerializableId, SocketInfo,
 };
 use crate::{error, DataConnectionResponse, MediaConnectionId};
 
@@ -87,6 +87,8 @@ pub(crate) enum MediaResponseDto {
     Answer(AnswerResult),
     #[serde(rename = "EVENT")]
     Event(MediaConnectionEventEnumDto),
+    #[serde(rename = "DISCONNECT")]
+    Disconnect(Option<()>),
     #[serde(rename = "STATUS")]
     Status(MediaConnectionStatus),
 }
@@ -100,7 +102,8 @@ impl MediaResponseDto {
             MediaResponse::RtcpDelete(item) => MediaResponseDto::RtcpDelete(item),
             MediaResponse::Call(item) => MediaResponseDto::Call(item),
             MediaResponse::Answer(item) => MediaResponseDto::Answer(item),
-            MediaResponse::Event(item) => unreachable!(),
+            MediaResponse::Disconnect(item) => MediaResponseDto::Disconnect(item),
+            MediaResponse::Event(_item) => unreachable!(),
             MediaResponse::Status(item) => MediaResponseDto::Status(item),
         }
     }
