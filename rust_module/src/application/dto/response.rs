@@ -39,6 +39,18 @@ impl PeerResponseDto {
 //========== Media ==========
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub(crate) enum MediaConnectionEventEnumDto {
+    #[serde(rename = "READY")]
+    Ready(CallResponseDto),
+    #[serde(rename = "STREAM")]
+    Stream(CallResponseDto),
+    #[serde(rename = "CLOSE")]
+    Close(MediaConnectionIdWrapper),
+    #[serde(rename = "ERROR")]
+    Error((MediaConnectionId, String)),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub(crate) struct CallResponseDto {
     pub send_params: SendParams,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -74,7 +86,7 @@ pub(crate) enum MediaResponseDto {
     #[serde(rename = "ANSWER")]
     Answer(AnswerResult),
     #[serde(rename = "EVENT")]
-    Event(MediaConnectionEventEnum),
+    Event(MediaConnectionEventEnumDto),
     #[serde(rename = "STATUS")]
     Status(MediaConnectionStatus),
 }
@@ -88,7 +100,7 @@ impl MediaResponseDto {
             MediaResponse::RtcpDelete(item) => MediaResponseDto::RtcpDelete(item),
             MediaResponse::Call(item) => MediaResponseDto::Call(item),
             MediaResponse::Answer(item) => MediaResponseDto::Answer(item),
-            MediaResponse::Event(item) => MediaResponseDto::Event(item),
+            MediaResponse::Event(item) => unreachable!(),
             MediaResponse::Status(item) => MediaResponseDto::Status(item),
         }
     }

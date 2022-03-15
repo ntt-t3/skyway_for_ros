@@ -1,6 +1,6 @@
 use crate::application::dto::response::{
-    DataConnectionEventDto, DataResponseDto, MediaResponseDto, PeerResponseDto, ResponseDto,
-    ResponseDtoResult,
+    DataConnectionEventDto, DataResponseDto, MediaConnectionEventEnumDto, MediaResponseDto,
+    PeerResponseDto, ResponseDto, ResponseDtoResult,
 };
 use crate::application::{CallbackFunctions, ErrorMessage, ErrorMessageInternal};
 use crate::domain::entity::response::{
@@ -9,7 +9,7 @@ use crate::domain::entity::response::{
 use crate::domain::entity::{
     DataConnectionEventEnum, MediaConnectionEventEnum, PeerEventEnum, Stringify,
 };
-use crate::{get_data_connection_state, Repository};
+use crate::{get_data_connection_state, get_media_connection_state, Repository};
 use crate::{Logger, ProgramState};
 
 pub(crate) struct Event {}
@@ -63,23 +63,41 @@ fn media_event(
     match result {
         ResponseResult::Success(Response::Media(MediaResponse::Event(event))) => match event {
             MediaConnectionEventEnum::READY(ready) => {
-                ResponseDtoResult::Success(ResponseDto::Media(MediaResponseDto::Event(
-                    MediaConnectionEventEnum::READY(ready),
-                )))
+                match get_media_connection_state()
+                    .lock()
+                    .unwrap()
+                    .get(&ready.media_connection_id)
+                {
+                    Some(call_response) => {
+                        ResponseDtoResult::Success(ResponseDto::Media(MediaResponseDto::Event(
+                            MediaConnectionEventEnumDto::Ready(call_response.clone()),
+                        )))
+                    }
+                    None => unreachable!(),
+                }
             }
             MediaConnectionEventEnum::STREAM(stream) => {
-                ResponseDtoResult::Success(ResponseDto::Media(MediaResponseDto::Event(
-                    MediaConnectionEventEnum::STREAM(stream),
-                )))
+                match get_media_connection_state()
+                    .lock()
+                    .unwrap()
+                    .get(&stream.media_connection_id)
+                {
+                    Some(call_response) => {
+                        ResponseDtoResult::Success(ResponseDto::Media(MediaResponseDto::Event(
+                            MediaConnectionEventEnumDto::Stream(call_response.clone()),
+                        )))
+                    }
+                    None => unreachable!(),
+                }
             }
             MediaConnectionEventEnum::CLOSE(close) => {
                 ResponseDtoResult::Success(ResponseDto::Media(MediaResponseDto::Event(
-                    MediaConnectionEventEnum::CLOSE(close),
+                    MediaConnectionEventEnumDto::Close(close),
                 )))
             }
             MediaConnectionEventEnum::ERROR(error) => {
                 ResponseDtoResult::Success(ResponseDto::Media(MediaResponseDto::Event(
-                    MediaConnectionEventEnum::ERROR(error),
+                    MediaConnectionEventEnumDto::Error(error),
                 )))
             }
             MediaConnectionEventEnum::TIMEOUT => {
