@@ -7,14 +7,13 @@ use crate::error;
 // module内のオブジェクトは、この場所と、crate::errorでError定義を参照するのみで、
 // その他の場所からは直接参照させない
 #[allow(unused_imports)]
-pub(crate) use module::prelude::{
-    AnswerQuery, AnswerResult, CallQuery, ConnectQuery, Constraints, CreatePeerParams,
-    DataConnectionEventEnum, DataConnectionId, DataConnectionIdWrapper, DataConnectionStatus,
-    DataId, DataIdWrapper, MediaConnectionEventEnum, MediaConnectionId, MediaConnectionIdWrapper,
-    MediaConnectionStatus, MediaId, MediaIdWrapper, PeerEventEnum, PeerId, PeerInfo,
-    PeerStatusMessage, PhantomId, RedirectParameters, RedirectParams, RtcpId, RtcpIdWrapper,
-    SerializableId, SerializableSocket, SocketInfo, Token,
-};
+pub(crate) use skyway_webrtc_gateway_caller::prelude::common::*;
+#[allow(unused_imports)]
+pub(crate) use skyway_webrtc_gateway_caller::prelude::data::*;
+#[allow(unused_imports)]
+pub(crate) use skyway_webrtc_gateway_caller::prelude::media::*;
+#[allow(unused_imports)]
+pub(crate) use skyway_webrtc_gateway_caller::prelude::peer::*;
 
 // メッセージを自然にStringに変換できるようにする
 pub(crate) trait Stringify {

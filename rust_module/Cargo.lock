@@ -28,9 +28,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.55"
+version = "1.0.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "159bb86af3a200e19a068f4224eae4c8bb2d0fa054c7e5d1cacd5cef95e684cd"
+checksum = "4361135be9122e0870de935d7c439aef945b9f9ddd4199a553b5270b49c82a27"
 
 [[package]]
 name = "anymap"
@@ -185,9 +185,9 @@ dependencies = [
 
 [[package]]
 name = "env_logger"
-version = "0.8.4"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a19187fea3ac7e84da7dacf48de0c45d63c6a76f9490dae389aead16c243fce3"
+checksum = "0b2cf0344971ee6c64c31be0d530793fba457d322dfec2810c453d0ef228f9c3"
 dependencies = [
  "atty",
  "humantime",
@@ -638,20 +638,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "module"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "futures",
- "serde",
- "serde_json",
- "shaku",
- "skyway-webrtc-gateway-api",
- "tokio",
- "tokio-stream",
-]
-
-[[package]]
 name = "native-tls"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -888,9 +874,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.11.9"
+version = "0.11.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87f242f1488a539a79bac6dbe7c8609ae43b7914b7736210f239a37cccb32525"
+checksum = "46a1f7aa4f35e5e8b4160449f51afc758f0ce6454315a9fa7d0d113e958c41eb"
 dependencies = [
  "base64",
  "bytes",
@@ -929,11 +915,11 @@ dependencies = [
  "async-trait",
  "futures",
  "mockall",
- "module",
  "once_cell",
  "serde",
  "serde_json",
  "shaku",
+ "skyway-webrtc-gateway-caller",
  "tokio",
 ]
 
@@ -1064,7 +1050,9 @@ dependencies = [
 
 [[package]]
 name = "skyway-webrtc-gateway-api"
-version = "0.0.3"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7cdd0b56cdc1de15d047c19ea1db0a75ea36cc3d5fb9c3fe4f4645336b591ab"
 dependencies = [
  "anyhow",
  "dotenv_codegen",
@@ -1078,6 +1066,22 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tokio",
+]
+
+[[package]]
+name = "skyway-webrtc-gateway-caller"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24bb3d73834538b30a739d3ffb9cba1a1ad45af273ab284b41ebff6981840bd5"
+dependencies = [
+ "async-trait",
+ "futures",
+ "serde",
+ "serde_json",
+ "shaku",
+ "skyway-webrtc-gateway-api",
+ "tokio",
+ "tokio-stream",
 ]
 
 [[package]]
@@ -1488,9 +1492,9 @@ checksum = "504a2476202769977a040c6364301a3f65d0cc9e3fb08600b2bda150a0488316"
 
 [[package]]
 name = "winreg"
-version = "0.7.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0120db82e8a1e0b9fb3345a539c478767c0048d842860994d96113d5b667bd69"
+checksum = "80d0f4e272c85def139476380b12f9ac60926689dd2e01d4923222f40580869d"
 dependencies = [
  "winapi",
 ]

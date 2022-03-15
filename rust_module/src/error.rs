@@ -1,1 +1,1 @@
-pub(crate) use module::error::Error;
+pub(crate) use skyway_webrtc_gateway_caller::error::Error;

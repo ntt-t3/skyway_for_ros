@@ -8,7 +8,6 @@
 // 実際にMediaConnectionが確立されたかどうか知るために、End-User-ProgramはCONNECT Eventを監視する必要がある
 
 use async_trait::async_trait;
-use module::prelude::MediaParams;
 
 use crate::application::dto::request::{ConstraintsDto, MediaRequestDto, RequestDto};
 use crate::application::dto::response::{
@@ -18,8 +17,8 @@ use crate::application::usecase::Service;
 use crate::domain::entity::request::{IsVideo, MediaRequest, Request};
 use crate::domain::entity::response::{MediaResponse, Response, ResponseResult};
 use crate::domain::entity::{
-    CallQuery, Constraints, MediaConnectionIdWrapper, MediaId, RedirectParameters, RtcpId,
-    SerializableSocket, SocketInfo,
+    CallQuery, Constraints, MediaConnectionIdWrapper, MediaId, MediaParams, RedirectParameters,
+    RtcpId, SerializableSocket, SocketInfo,
 };
 use crate::{
     error, get_media_connection_state, CallbackFunctions, Logger, ProgramState, Repository,

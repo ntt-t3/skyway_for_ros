@@ -304,7 +304,8 @@ pub extern "C" fn run() -> RunResponse {
     let handle: JoinHandle<()> = std::thread::spawn(|| {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
-            let (sender, receiver) = module::run("http://localhost:8000").await;
+            let (sender, receiver) =
+                skyway_webrtc_gateway_caller::run("http://localhost:8000").await;
             // SkyWay Crateにアクセスするためのsender, receiverはRepositoryの中で保持する
             // Repositoryはonce_cellでglobalで確保される
             let repository = RepositoryImpl::new(sender, receiver);
