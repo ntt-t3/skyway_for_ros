@@ -60,8 +60,10 @@ pub struct TopicParameters {
 pub extern "C" fn call_service(message_char: *const c_char) -> *mut c_char {
     let rt = tokio::runtime::Runtime::new().unwrap();
     let message: String = rt.block_on(async {
+        println!("call_service");
         let c_str: &CStr = unsafe { CStr::from_ptr(message_char) };
         let message = c_str.to_str().unwrap().to_string();
+        println!("call_service {}", message);
         match RequestDto::from_str(&message) {
             Ok(dto) => {
                 let repository = crate::REPOSITORY_INSTANCE.get().unwrap();
@@ -97,11 +99,11 @@ pub extern "C" fn call_service(message_char: *const c_char) -> *mut c_char {
                     }
                 }
             }
-            Err(e) => {
+            Err(_e) => {
                 let internal = ErrorMessageInternal {
                     r#type: None,
                     command: None,
-                    error: e.to_string(),
+                    error: format!("invalid message: {}", message),
                 };
                 let error_message = ErrorMessage {
                     is_success: false,

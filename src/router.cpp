@@ -35,7 +35,7 @@ void RouterImpl::Start() {
   // 終了処理は全てここで行う
   shutdown_handler = [&](int signal) {
     control_service_->Shutdown();
-    events_observe_action_->Shutdown();
+    event_service_->Shutdown();
     // shutdown処理の中身はPeer Objectの開放なので、生成前であれば呼ぶ必要がない
     if (peer_id_ != "" && token_ != "")
       shutdown_service(peer_id_.c_str(), token_.c_str());
@@ -101,7 +101,6 @@ void RouterImpl::Start() {
     release_string(message);
     return event;
   };
-  // SkyWayEvents Actionを起動
-  events_observe_action_ =
-      events_observe_action_factory_("skyway_events", events_lambda);
+  // SkyWayEvents Serviceを起動
+  event_service_ = event_service_factory_("skyway_events", events_lambda);
 }

@@ -9,30 +9,22 @@ SET(VENDOR_DIR ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/vendor)
 SET(SKYWAY_LIB_FILE ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/rust_module/target/release/libskyway.a)
 
 find_package(catkin REQUIRED COMPONENTS
-        actionlib
-        actionlib_msgs
         message_generation
         roscpp
         std_msgs
         )
 
-add_action_files(
-        DIRECTORY action
-        FILES SkyWayEvents.action
-)
-
 add_service_files(
         DIRECTORY srv
-        FILES SkyWayControl.srv
+        FILES SkyWayControl.srv SkyWayEvents.srv
 )
 
 generate_messages(
-        DEPENDENCIES
-        actionlib_msgs std_msgs
+        DEPENDENCIES std_msgs
 )
 
 catkin_package(
-        CATKIN_DEPENDS actionlib_msgs std_msgs message_runtime
+        CATKIN_DEPENDS std_msgs message_runtime
 )
 
 

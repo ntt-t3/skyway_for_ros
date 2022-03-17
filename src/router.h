@@ -9,7 +9,7 @@
 
 #include "domain/entity.h"
 #include "presentation/control_service.h"
-#include "presentation/events_observe_action.h"
+#include "presentation/events_service.h"
 
 using fruit::Component;
 using fruit::Injector;
@@ -23,23 +23,23 @@ class Router {
 class RouterImpl : public Router {
  private:
   ControlServiceFactory control_service_factory_;
-  EventsObserveActionFactory events_observe_action_factory_;
+  EventsServiceFactory event_service_factory_;
   SourceFactory source_factory_;
   DestinationFactory destination_factory_;
   std::shared_ptr<DataTopicContainer> data_topic_container_;
   std::unique_ptr<ControlService> control_service_;
-  std::unique_ptr<EventsObserveAction> events_observe_action_;
+  std::unique_ptr<EventsService> event_service_;
   std::string peer_id_ = "";
   std::string token_ = "";
 
  public:
   INJECT(RouterImpl(ControlServiceFactory control_service_factory,
-                    EventsObserveActionFactory events_observe_action_factory,
+                    EventsServiceFactory event_service_factory,
                     SourceFactory source_factory,
                     DestinationFactory destination_factory,
                     std::shared_ptr<DataTopicContainer> data_topic_container))
       : control_service_factory_(control_service_factory),
-        events_observe_action_factory_(events_observe_action_factory),
+        event_service_factory_(event_service_factory),
         source_factory_(source_factory),
         destination_factory_(destination_factory),
         data_topic_container_(data_topic_container) {}

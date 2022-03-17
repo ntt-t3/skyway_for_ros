@@ -21,6 +21,8 @@ impl Service for Create {
         _cb_functions: &CallbackFunctions,
         message: RequestDto,
     ) -> Result<ResponseDtoResult, error::Error> {
+        println!("execute create peer");
+        println!("{:?}", message);
         if let RequestDto::Peer(ref inner) = message {
             let request = Request::Peer(inner.clone());
             let message = repository.register(program_state, logger, request).await;
@@ -36,6 +38,7 @@ impl Service for Create {
                     functions.create_peer_callback(peer_id.as_str(), token.as_str())
                 });
 
+                println!("peer_info {:?}", peer_info);
                 return Ok(ResponseDtoResult::Success(ResponseDto::Peer(
                     PeerResponseDto::Create(peer_info.clone()),
                 )));
