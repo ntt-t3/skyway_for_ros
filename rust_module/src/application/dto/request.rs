@@ -100,6 +100,18 @@ pub(crate) enum MediaRequestDto {
     Answer { params: AnswerParametersDto },
 }
 
+impl Command for MediaRequestDto {
+    fn command(&self) -> String {
+        match self {
+            MediaRequestDto::ContentCreate { .. } => "CONTENT_CREATE".to_string(),
+            MediaRequestDto::ContentDelete { .. } => "CONTENT_DELETE".to_string(),
+            MediaRequestDto::RtcpCreate { .. } => "RTCP_CREATE".to_string(),
+            MediaRequestDto::Call { .. } => "CALL".to_string(),
+            MediaRequestDto::Answer { .. } => "ANSWER".to_string(),
+        }
+    }
+}
+
 //========== Data ==========
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub(crate) struct ConnectDtoParams {
@@ -182,8 +194,10 @@ impl Command for RequestDto {
         match self {
             RequestDto::Peer(ref peer) => peer.command(),
             RequestDto::Data(ref data) => data.command(),
-            _ => {
-                todo!()
+            RequestDto::Media(ref media) => media.command(),
+            #[cfg(test)]
+            RequestDto::Test => {
+                unreachable!()
             }
         }
     }

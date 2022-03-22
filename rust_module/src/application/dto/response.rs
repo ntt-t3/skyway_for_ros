@@ -39,6 +39,7 @@ impl PeerResponseDto {
 //========== Media ==========
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(tag = "event")]
 pub(crate) enum MediaConnectionEventEnumDto {
     #[serde(rename = "READY")]
     Ready(CallResponseDto),

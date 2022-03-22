@@ -7,10 +7,10 @@ use std::os::raw::c_char;
 use dto::request::{DataRequestDto, RequestDto};
 use serde::{Deserialize, Serialize};
 
-use crate::application::dto::request::PeerRequestDto;
+use crate::application::dto::request::{MediaRequestDto, PeerRequestDto};
 use crate::application::dto::Command;
 use crate::application::usecase::event::Event;
-use crate::application::usecase::Service;
+use crate::application::usecase::{media, Service};
 use crate::domain::entity::*;
 use crate::{error, CallbackFunctions, Logger, ProgramState};
 use usecase::peer;
@@ -66,6 +66,7 @@ pub extern "C" fn call_service(message_char: *const c_char) -> *mut c_char {
         println!("call_service {}", message);
         match RequestDto::from_str(&message) {
             Ok(dto) => {
+                println!("{:?}", dto);
                 let repository = crate::REPOSITORY_INSTANCE.get().unwrap();
                 let service = factory(&dto);
                 // errorメッセージを生成する際に必要なので確保しておく
@@ -86,13 +87,11 @@ pub extern "C" fn call_service(message_char: *const c_char) -> *mut c_char {
                         response.to_string().unwrap()
                     }
                     Err(e) => {
-                        println!("erro here");
                         println!("{:?}", e);
-
                         let internal = ErrorMessageInternal {
                             r#type: Some(dto_type),
                             command: Some(command),
-                            error: e.to_string(),
+                            error: format!("{:?}", e),
                         };
                         let error_message = ErrorMessage {
                             is_success: false,
@@ -132,7 +131,7 @@ fn factory(dto: &RequestDto) -> Box<dyn Service> {
     match dto {
         RequestDto::Peer(..) => peer_factory(dto),
         RequestDto::Data(..) => data_factory(dto),
-        _ => Box::new(usecase::General {}),
+        RequestDto::Media(..) => media_factory(dto),
     }
 }
 
@@ -147,6 +146,24 @@ fn peer_factory(dto: &RequestDto) -> Box<dyn Service> {
         RequestDto::Peer(PeerRequestDto::Create {
             params: ref _params,
         }) => Box::new(peer::create::Create {}),
+        _ => Box::new(usecase::General {}),
+    }
+}
+
+fn media_factory(dto: &RequestDto) -> Box<dyn Service> {
+    let message = format!(
+        "creating service in media_factory {}:{}",
+        dto.dto_type(),
+        dto.command()
+    );
+    Logger::global().debug(message);
+    match dto {
+        RequestDto::Media(MediaRequestDto::Call {
+            params: ref _params,
+        }) => Box::new(media::call::Call::default()),
+        RequestDto::Media(MediaRequestDto::Answer {
+            params: ref _params,
+        }) => Box::new(media::answer::Answer::default()),
         _ => Box::new(usecase::General {}),
     }
 }
