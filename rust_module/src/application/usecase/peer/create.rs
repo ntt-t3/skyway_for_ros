@@ -25,13 +25,11 @@ impl Service for Create {
         println!("{:?}", message);
         if let RequestDto::Peer(ref inner) = message {
             let request = Request::Peer(inner.clone());
-            let message = repository.register(program_state, logger, request).await;
+            let result = repository.register(program_state, logger, request).await?;
 
             // 成功した場合はC++側にpeer_id, tokenを渡す
-            match message {
-                Ok(ResponseResult::Success(Response::Peer(PeerResponse::Create(
-                    ref peer_info,
-                )))) => {
+            match result {
+                ResponseResult::Success(Response::Peer(PeerResponse::Create(ref peer_info))) => {
                     let peer_id = peer_info.peer_id();
                     let token = peer_info.token();
                     crate::CALLBACK_FUNCTIONS.get().map(|functions| {
@@ -43,12 +41,8 @@ impl Service for Create {
                     )));
                 }
                 // API Callには成功したが、内部処理に失敗したケース
-                Ok(ResponseResult::Error(message)) => {
+                ResponseResult::Error(message) => {
                     return Ok(ResponseDtoResult::Error(message));
-                }
-                // API Call自体に失敗したケース
-                Err(e) => {
-                    return Err(e);
                 }
                 _ => {
                     unreachable!()
@@ -159,7 +153,7 @@ mod create_peer_test {
             .execute(&repository, &program_state, &logger, &function, dto)
             .await
         {
-            assert_eq!(message, "wrong parameter Peer(Create { params: CreatePeerParams { key: \"pt-9749250e-d157-4f80-9ee2-359ce8524308\", domain: \"localhost\", peer_id: PeerId(\"peer_id\"), turn: true } })");
+            assert_eq!(message, "error");
         }
     }
 

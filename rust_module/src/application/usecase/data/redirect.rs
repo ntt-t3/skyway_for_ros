@@ -75,51 +75,58 @@ impl Service for Redirect {
 
             // 5.でSrc, Dest Topicを保存する際には、DataConnection IDをキーにしたhashで管理するため、
             // 4.の実施後である必要がある
-            if let ResponseResult::Success(Response::Data(DataResponse::Redirect(params))) = result
-            {
-                // 2.はData Port開放時に得られるData IDをTopic Nameにするので、1.の後に実施する
-                let source_parameters = SourceParameters {
-                    source_topic_name: CString::new(source_topic_name.as_str()).unwrap().into_raw(),
-                    destination_address: CString::new(address.as_str()).unwrap().into_raw(),
-                    destination_port: port,
-                };
+            match result {
+                ResponseResult::Success(Response::Data(DataResponse::Redirect(params))) => {
+                    // 2.はData Port開放時に得られるData IDをTopic Nameにするので、1.の後に実施する
+                    let source_parameters = SourceParameters {
+                        source_topic_name: CString::new(source_topic_name.as_str())
+                            .unwrap()
+                            .into_raw(),
+                        destination_address: CString::new(address.as_str()).unwrap().into_raw(),
+                        destination_port: port,
+                    };
 
-                // 3.はDto内に含まれるEnd-User-ProgramのTopic Nameがあればいつでも実施可能である
-                let destination_parameters = DestinationParameters {
-                    source_port: available_port,
-                    destination_topic_name: CString::new(
-                        redirect_params.destination_topic.as_str(),
-                    )
-                    .unwrap()
-                    .into_raw(),
-                };
-
-                let topic_parameters = TopicParameters {
-                    data_connection_id: CString::new(params.data_connection_id.as_str())
+                    // 3.はDto内に含まれるEnd-User-ProgramのTopic Nameがあればいつでも実施可能である
+                    let destination_parameters = DestinationParameters {
+                        source_port: available_port,
+                        destination_topic_name: CString::new(
+                            redirect_params.destination_topic.as_str(),
+                        )
                         .unwrap()
                         .into_raw(),
-                    source_parameters,
-                    destination_parameters,
-                };
+                    };
 
-                // 5. 4.で確立に成功した場合は、C++側の機能を利用し、Src, Dest Topic生成、保存する
-                cb_functions.data_callback(topic_parameters);
+                    let topic_parameters = TopicParameters {
+                        data_connection_id: CString::new(params.data_connection_id.as_str())
+                            .unwrap()
+                            .into_raw(),
+                        source_parameters,
+                        destination_parameters,
+                    };
 
-                let hash_mutex = get_data_connection_state();
-                hash_mutex.lock().unwrap().insert(
-                    params.data_connection_id.clone(),
-                    DataConnectionResponse {
-                        data_connection_id: params.data_connection_id.clone(),
-                        source_topic_name,
-                        source_ip: address,
-                        source_port: port,
-                        destination_topic_name: redirect_params.destination_topic,
-                    },
-                );
+                    // 5. 4.で確立に成功した場合は、C++側の機能を利用し、Src, Dest Topic生成、保存する
+                    cb_functions.data_callback(topic_parameters);
 
-                return Ok(ResponseDtoResult::Success(ResponseDto::Data(
-                    DataResponseDto::Redirect(params),
-                )));
+                    let hash_mutex = get_data_connection_state();
+                    hash_mutex.lock().unwrap().insert(
+                        params.data_connection_id.clone(),
+                        DataConnectionResponse {
+                            data_connection_id: params.data_connection_id.clone(),
+                            source_topic_name,
+                            source_ip: address,
+                            source_port: port,
+                            destination_topic_name: redirect_params.destination_topic,
+                        },
+                    );
+
+                    return Ok(ResponseDtoResult::Success(ResponseDto::Data(
+                        DataResponseDto::Redirect(params),
+                    )));
+                }
+                ResponseResult::Error(message) => return Ok(ResponseDtoResult::Error(message)),
+                _ => {
+                    unreachable!()
+                }
             }
         }
 
