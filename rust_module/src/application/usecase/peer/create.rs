@@ -28,20 +28,31 @@ impl Service for Create {
             let message = repository.register(program_state, logger, request).await;
 
             // 成功した場合はC++側にpeer_id, tokenを渡す
-            if let Ok(ResponseResult::Success(Response::Peer(PeerResponse::Create(
-                ref peer_info,
-            )))) = message
-            {
-                let peer_id = peer_info.peer_id();
-                let token = peer_info.token();
-                crate::CALLBACK_FUNCTIONS.get().map(|functions| {
-                    functions.create_peer_callback(peer_id.as_str(), token.as_str())
-                });
+            match message {
+                Ok(ResponseResult::Success(Response::Peer(PeerResponse::Create(
+                    ref peer_info,
+                )))) => {
+                    let peer_id = peer_info.peer_id();
+                    let token = peer_info.token();
+                    crate::CALLBACK_FUNCTIONS.get().map(|functions| {
+                        functions.create_peer_callback(peer_id.as_str(), token.as_str())
+                    });
 
-                println!("peer_info {:?}", peer_info);
-                return Ok(ResponseDtoResult::Success(ResponseDto::Peer(
-                    PeerResponseDto::Create(peer_info.clone()),
-                )));
+                    return Ok(ResponseDtoResult::Success(ResponseDto::Peer(
+                        PeerResponseDto::Create(peer_info.clone()),
+                    )));
+                }
+                // API Callには成功したが、内部処理に失敗したケース
+                Ok(ResponseResult::Error(message)) => {
+                    return Ok(ResponseDtoResult::Error(message));
+                }
+                // API Call自体に失敗したケース
+                Err(e) => {
+                    return Err(e);
+                }
+                _ => {
+                    unreachable!()
+                }
             }
         }
 

@@ -86,6 +86,9 @@ pub extern "C" fn call_service(message_char: *const c_char) -> *mut c_char {
                         response.to_string().unwrap()
                     }
                     Err(e) => {
+                        println!("erro here");
+                        println!("{:?}", e);
+
                         let internal = ErrorMessageInternal {
                             r#type: Some(dto_type),
                             command: Some(command),
