@@ -13,12 +13,13 @@ use crate::application::dto::request::{ConstraintsDto, MediaRequestDto, RequestD
 use crate::application::dto::response::{
     CallResponseDto, MediaPair, MediaResponseDto, ResponseDto, ResponseDtoResult, SendParams,
 };
+use crate::application::usecase::media::*;
 use crate::application::usecase::Service;
-use crate::domain::entity::request::{IsVideo, MediaRequest, Request};
+use crate::domain::entity::request::{MediaRequest, Request};
 use crate::domain::entity::response::{MediaResponse, Response, ResponseResult};
 use crate::domain::entity::{
     CallQuery, Constraints, MediaConnectionIdWrapper, MediaId, MediaParams, RedirectParameters,
-    RtcpId, SerializableSocket, SocketInfo,
+    RtcpId, SerializableSocket,
 };
 use crate::{
     error, get_media_connection_state, CallbackFunctions, Logger, ProgramState, Repository,
@@ -29,44 +30,6 @@ pub(crate) struct Call {}
 impl Default for Call {
     fn default() -> Self {
         Call {}
-    }
-}
-
-async fn create_media(
-    repository: &Box<dyn Repository>,
-    program_state: &ProgramState,
-    logger: &Logger,
-    is_video: bool,
-) -> Result<SocketInfo<MediaId>, error::Error> {
-    let message = Request::Media(MediaRequest::ContentCreate {
-        params: IsVideo { is_video },
-    });
-    match repository.register(program_state, logger, message).await {
-        Ok(ResponseResult::Success(Response::Media(MediaResponse::ContentCreate(socket)))) => {
-            Ok(socket)
-        }
-        Err(e) => Err(e),
-        _ => Err(error::Error::create_local_error(
-            "error in create Video Object",
-        )),
-    }
-}
-
-async fn create_rtcp(
-    repository: &Box<dyn Repository>,
-    program_state: &ProgramState,
-    logger: &Logger,
-    param: Option<()>,
-) -> Result<SocketInfo<RtcpId>, error::Error> {
-    let message = Request::Media(MediaRequest::RtcpCreate { params: param });
-    match repository.register(program_state, logger, message).await {
-        Ok(ResponseResult::Success(Response::Media(MediaResponse::RtcpCreate(socket)))) => {
-            Ok(socket)
-        }
-        Err(e) => Err(e),
-        _ => Err(error::Error::create_local_error(
-            "error in create Video Object",
-        )),
     }
 }
 
@@ -204,24 +167,30 @@ impl Service for Call {
             };
 
             let request = Request::Media(MediaRequest::Call { params });
-            if let ResponseResult::Success(Response::Media(MediaResponse::Call(wrapper))) =
-                repository.register(program_state, logger, request).await?
-            {
-                let call_response = CallResponseDto {
-                    send_params,
-                    redirect_params,
-                    media_connection_id: wrapper.media_connection_id.clone(),
-                };
-                get_media_connection_state()
-                    .lock()
-                    .unwrap()
-                    .insert(wrapper.media_connection_id.clone(), call_response);
+            let result = repository.register(program_state, logger, request).await?;
 
-                return Ok(ResponseDtoResult::Success(ResponseDto::Media(
-                    MediaResponseDto::Call(MediaConnectionIdWrapper {
-                        media_connection_id: wrapper.media_connection_id,
-                    }),
-                )));
+            match result {
+                ResponseResult::Success(Response::Media(MediaResponse::Call(wrapper))) => {
+                    let call_response = CallResponseDto {
+                        send_params,
+                        redirect_params,
+                        media_connection_id: wrapper.media_connection_id.clone(),
+                    };
+                    get_media_connection_state()
+                        .lock()
+                        .unwrap()
+                        .insert(wrapper.media_connection_id.clone(), call_response);
+
+                    return Ok(ResponseDtoResult::Success(ResponseDto::Media(
+                        MediaResponseDto::Call(MediaConnectionIdWrapper {
+                            media_connection_id: wrapper.media_connection_id,
+                        }),
+                    )));
+                }
+                ResponseResult::Error(message) => return Ok(ResponseDtoResult::Error(message)),
+                _ => {
+                    unreachable!()
+                }
             }
         }
 
