@@ -1,4 +1,4 @@
-use crate::domain::entity::CallQuery;
+use crate::domain::entity::{CallQuery, MediaConnectionIdWrapper};
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -57,6 +57,8 @@ pub(crate) enum MediaRequest {
     Call { params: CallQuery },
     #[serde(rename = "ANSWER")]
     Answer { params: AnswerParameters },
+    #[serde(rename = "DISCONNECT")]
+    Disconnect { params: MediaConnectionIdWrapper },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
