@@ -37,6 +37,7 @@ bool is_ok_c() { return ros::ok(); }
 bool is_shutting_down_c() { return ros::isShuttingDown(); }
 void ros_sleep_c(double dur) { ros::Duration(dur).sleep(); }
 void wait_for_shutdown_c() { ros::waitForShutdown(); }
+void shutdown_c() { ros::shutdown(); }
 
 // in rust_module
 void register_logger(void_char_func debug, void_char_func info,
@@ -44,7 +45,8 @@ void register_logger(void_char_func debug, void_char_func info,
 void register_program_state(bool_void_func is_running_c,
                             bool_void_func is_shutting_down_c,
                             void_double_func sleep_c,
-                            void_void_func wait_for_shutdown_c);
+                            void_void_func wait_for_shutdown_c,
+                            void_void_func shutdown_c);
 run_response_t run();
 void join_handler(void* handler);
 }
@@ -57,7 +59,7 @@ int main(int argc, char** argv) {
   // Rust側からC++側の関数を呼び出すためのセッティング
   register_logger(log_debug_c, log_info_c, log_warn_c, log_err_c);
   register_program_state(is_ok_c, is_shutting_down_c, ros_sleep_c,
-                         wait_for_shutdown_c);
+                         wait_for_shutdown_c, shutdown_c);
   // Rust側の処理開始
   run_response_t response = run();
 

@@ -308,6 +308,7 @@ mod infra_receive_event_test {
             helper::is_shutting_down,
             helper::sleep,
             helper::wait_for_shutdown,
+            helper::shutdown,
         ));
 
         // GlobalStateのMockを生成
@@ -367,6 +368,7 @@ mod infra_receive_event_test {
             helper::is_shutting_down,
             helper::sleep,
             helper::wait_for_shutdown,
+            helper::shutdown,
         ));
 
         // GlobalStateのMockを生成

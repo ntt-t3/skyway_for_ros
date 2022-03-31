@@ -157,6 +157,7 @@ pub(crate) mod global_params {
         is_shutting_down_c: extern "C" fn() -> bool,
         sleep_c: extern "C" fn(c_double) -> (),
         wait_for_shutdown_c: extern "C" fn() -> (),
+        shutdown_c: extern "C" fn() -> (),
     }
 
     #[allow(dead_code)]
@@ -166,12 +167,14 @@ pub(crate) mod global_params {
             is_shutting_down_c: extern "C" fn() -> bool,
             sleep_c: extern "C" fn(c_double) -> (),
             wait_for_shutdown_c: extern "C" fn() -> (),
+            shutdown_c: extern "C" fn() -> (),
         ) -> Self {
             ProgramState {
                 is_running_c,
                 is_shutting_down_c,
                 sleep_c,
                 wait_for_shutdown_c,
+                shutdown_c,
             }
         }
 
@@ -200,6 +203,10 @@ pub(crate) mod global_params {
         pub fn wait_for_shutdown(&self) {
             (self.wait_for_shutdown_c)();
         }
+
+        pub fn shutdown(&self) {
+            (self.shutdown_c)();
+        }
     }
 
     #[no_mangle]
@@ -208,6 +215,7 @@ pub(crate) mod global_params {
         is_shutting_down_c: extern "C" fn() -> bool,
         sleep_c: extern "C" fn(c_double) -> (),
         wait_for_shutdown_c: extern "C" fn() -> (),
+        shutdown_c: extern "C" fn() -> (),
     ) {
         PROGRAM_STATE_INSTANCE
             .set(ProgramState {
@@ -215,6 +223,7 @@ pub(crate) mod global_params {
                 is_shutting_down_c,
                 sleep_c,
                 wait_for_shutdown_c,
+                shutdown_c,
             })
             .unwrap();
     }
@@ -258,19 +267,7 @@ pub extern "C" fn run() -> RunResponse {
     let handle: JoinHandle<()> = std::thread::spawn(|| {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
-            /*
-            let (sender, receiver) =
-                skyway_webrtc_gateway_caller::run("http://localhost:8000").await;
-            // SkyWay Crateにアクセスするためのsender, receiverはRepositoryの中で保持する
-            // Repositoryはonce_cellでglobalで確保される
-            let repository = RepositoryImpl::new(sender, receiver);
-
-            if REPOSITORY_INSTANCE.set(Box::new(repository)).is_err() {
-                return;
-            }
-
-             */
-            ProgramState::global().wait_for_shutdown();
+            crate::rust_main().await;
         });
     });
 
@@ -302,6 +299,25 @@ pub struct TopicParameters {
     destination_parameters: DestinationParameters,
 }
 
+// ========== application methods ==========
+
+// 当面はユニットテストは行わず、結合試験だけ行うことにする
+// Fixme: Unit Test
+#[no_mangle]
+pub extern "C" fn call_service(message_char: *const c_char) -> *mut c_char {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn receive_events() -> *mut c_char {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn shutdown_service(peer_id: *const c_char, token: *const c_char) {
+    todo!()
+}
+
 #[cfg(test)]
 pub(crate) mod helper {
     use std::os::raw::c_double;
@@ -317,4 +333,6 @@ pub(crate) mod helper {
     pub extern "C" fn sleep(_param: c_double) {}
 
     pub extern "C" fn wait_for_shutdown() {}
+
+    pub extern "C" fn shutdown() {}
 }

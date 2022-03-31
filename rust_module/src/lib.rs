@@ -78,3 +78,22 @@ impl GlobalState for GlobalStateImpl {
 }
 
 //========== ↑ OnceCell ↑ ==========
+
+pub(crate) async fn rust_main() {
+    let (sender, receiver) = skyway_webrtc_gateway_caller::run("http://localhost:8000").await;
+    // SkyWay Crateにアクセスするためのsender, receiverを保持する
+    // Channels objectに入れた上でOnceCellで保持する
+    let channels = ChannelsImpl {
+        sender,
+        receiver: tokio::sync::Mutex::new(receiver),
+    };
+    let result = CHANNELS.set(Arc::new(channels));
+    if result.is_err() {
+        Logger::global().error("CHANNELS set error");
+        ProgramState::global().shutdown();
+    }
+
+    // ROS Serviceからの操作を別スレッドで受け付ける。
+    // ROSが終了するまで待機する
+    ProgramState::global().wait_for_shutdown();
+}
