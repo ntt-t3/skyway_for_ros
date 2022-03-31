@@ -1,19 +1,11 @@
-use std::collections::HashMap;
 use std::ffi::{c_void, CString};
 use std::os::raw::{c_char, c_double};
-use std::sync::Mutex;
 use std::thread::JoinHandle;
 
 use serde::{Deserialize, Serialize};
 
-use crate::application::dto::response::CallResponseDto;
-use crate::application::TopicParameters;
-use crate::domain::entity::{DataConnectionId, MediaConnectionId};
-use crate::infra::RepositoryImpl;
-use crate::{
-    CALLBACK_FUNCTIONS, DATA_CONNECTION_STATE_INSTANCE, LOGGER_INSTANCE,
-    MEDIA_CONNECTION_STATE_INSTANCE, PROGRAM_STATE_INSTANCE, REPOSITORY_INSTANCE,
-};
+use crate::domain::entity::DataConnectionId;
+use crate::{CALLBACK_FUNCTIONS, LOGGER_INSTANCE, PROGRAM_STATE_INSTANCE};
 
 #[repr(C)]
 pub struct CallbackFunctions {
@@ -219,20 +211,6 @@ pub extern "C" fn register_program_state(
         .unwrap();
 }
 
-pub(crate) fn get_media_connection_state(
-) -> &'static Mutex<HashMap<MediaConnectionId, CallResponseDto>> {
-    MEDIA_CONNECTION_STATE_INSTANCE
-        .get()
-        .expect("media_connection_state_instance is not initialized")
-}
-
-pub(crate) fn get_data_connection_state(
-) -> &'static Mutex<HashMap<DataConnectionId, DataConnectionResponse>> {
-    DATA_CONNECTION_STATE_INSTANCE
-        .get()
-        .expect("data_connection_state_instance is not initialized")
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub(crate) struct DataConnectionResponse {
     pub data_connection_id: DataConnectionId,
@@ -267,13 +245,11 @@ pub extern "C" fn run() -> RunResponse {
         };
     }
 
-    let _ = MEDIA_CONNECTION_STATE_INSTANCE.set(Mutex::new(HashMap::new()));
-    let _ = DATA_CONNECTION_STATE_INSTANCE.set(Mutex::new(HashMap::new()));
-
     // SkyWay Crateを開始する
     let handle: JoinHandle<()> = std::thread::spawn(|| {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
+            /*
             let (sender, receiver) =
                 skyway_webrtc_gateway_caller::run("http://localhost:8000").await;
             // SkyWay Crateにアクセスするためのsender, receiverはRepositoryの中で保持する
@@ -283,6 +259,8 @@ pub extern "C" fn run() -> RunResponse {
             if REPOSITORY_INSTANCE.set(Box::new(repository)).is_err() {
                 return;
             }
+
+             */
             ProgramState::global().wait_for_shutdown();
         });
     });
@@ -293,4 +271,41 @@ pub extern "C" fn run() -> RunResponse {
         flag: true,
         handler: thread_handle,
     };
+}
+
+#[repr(C)]
+pub struct SourceParameters {
+    source_topic_name: *mut c_char,
+    destination_address: *mut c_char,
+    destination_port: u16,
+}
+
+#[repr(C)]
+pub struct DestinationParameters {
+    source_port: u16,
+    destination_topic_name: *mut c_char,
+}
+
+#[repr(C)]
+pub struct TopicParameters {
+    data_connection_id: *mut c_char,
+    source_parameters: SourceParameters,
+    destination_parameters: DestinationParameters,
+}
+
+#[cfg(test)]
+pub(crate) mod helper {
+    use super::*;
+
+    pub extern "C" fn is_running() -> bool {
+        true
+    }
+
+    pub extern "C" fn is_shutting_down() -> bool {
+        false
+    }
+
+    pub extern "C" fn sleep(_param: c_double) {}
+
+    pub extern "C" fn wait_for_shutdown() {}
 }

@@ -4,21 +4,25 @@
 // ROS側で持つべきDomain知識を定義し、サービスを提供するのが主な目的である
 
 mod application;
+mod di;
 mod domain;
 mod error;
 mod ffi;
 mod infra;
 mod utils;
 
-use std::collections::HashMap;
-use std::sync::Mutex;
+use std::sync::Arc;
 
 use once_cell::sync::OnceCell;
+use shaku::{Component, Interface};
+use tokio::sync::Mutex;
+use tokio::sync::{mpsc, oneshot};
 
-use crate::application::dto::response::CallResponseDto;
-use crate::domain::entity::{DataConnectionId, MediaConnectionId};
-use crate::domain::repository::Repository;
+use crate::domain::entity::MediaConnectionId;
 use crate::ffi::*;
+
+#[cfg(test)]
+use mockall::automock;
 
 // C++側とオブジェクトのやり取りをする回数を最低限にするため、C++側のモジュールで本来所持するべきオブジェクトはOnceCellで保持する
 //========== ↓ OnceCell ↓ ==========
@@ -28,15 +32,49 @@ static CALLBACK_FUNCTIONS: OnceCell<CallbackFunctions> = OnceCell::new();
 static LOGGER_INSTANCE: OnceCell<Logger> = OnceCell::new();
 // Programの状態を取得・操作するために必要なC++側の関数を保持する
 static PROGRAM_STATE_INSTANCE: OnceCell<ProgramState> = OnceCell::new();
-// RepositoryとしてWebRTC Crateを利用しているが、生成されたSender, Receiverを破棄すると通信できなくなるので、保持し続ける
-static REPOSITORY_INSTANCE: OnceCell<Box<dyn Repository>> = OnceCell::new();
-// OPENイベント時に返すため、MediaConnection確立時に情報を集めておく
-static MEDIA_CONNECTION_STATE_INSTANCE: OnceCell<
-    Mutex<HashMap<MediaConnectionId, CallResponseDto>>,
-> = OnceCell::new();
-// OPENイベント時に返すため、DataConnection確立時に情報を集めておく
-static DATA_CONNECTION_STATE_INSTANCE: OnceCell<
-    Mutex<HashMap<DataConnectionId, DataConnectionResponse>>,
-> = OnceCell::new();
+// WebRTC Crate起動時に生成されたSender, Receiverを破棄すると通信できなくなるので、保持し続ける
+static CHANNELS: OnceCell<Arc<dyn Channels>> = OnceCell::new();
+
+pub(crate) trait Channels: Interface {
+    fn sender(&self) -> &mpsc::Sender<(oneshot::Sender<String>, String)>;
+    fn receiver(&self) -> &Mutex<mpsc::Receiver<String>>;
+}
+
+pub(crate) struct ChannelsImpl {
+    sender: mpsc::Sender<(oneshot::Sender<String>, String)>,
+    receiver: Mutex<mpsc::Receiver<String>>,
+}
+
+impl Channels for ChannelsImpl {
+    fn sender(&self) -> &mpsc::Sender<(oneshot::Sender<String>, String)> {
+        &self.sender
+    }
+
+    fn receiver(&self) -> &Mutex<mpsc::Receiver<String>> {
+        &self.receiver
+    }
+}
+
+#[cfg_attr(test, automock)]
+pub(crate) trait GlobalState: Interface {
+    fn channels(&self) -> &'static Arc<dyn Channels>;
+    fn program_state(&self) -> &'static ProgramState;
+}
+
+#[derive(Component)]
+#[shaku(interface = GlobalState)]
+pub(crate) struct GlobalStateImpl {}
+
+impl GlobalState for GlobalStateImpl {
+    fn channels(&self) -> &'static Arc<dyn Channels> {
+        CHANNELS.get().expect("CHANNELS is not initialized")
+    }
+
+    fn program_state(&self) -> &'static ProgramState {
+        PROGRAM_STATE_INSTANCE
+            .get()
+            .expect("PROGRAM_STATE is not initialized")
+    }
+}
 
 //========== ↑ OnceCell ↑ ==========

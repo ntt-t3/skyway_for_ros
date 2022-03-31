@@ -1,49 +1,36 @@
+use std::sync::Arc;
+
 use async_trait::async_trait;
-use tokio::sync::Mutex;
-use tokio::sync::{mpsc, oneshot};
+use shaku::Component;
 
 use crate::domain::entity::request::Request;
 use crate::domain::entity::response::ResponseResult;
 use crate::domain::entity::Stringify;
 use crate::domain::repository::Repository;
-use crate::error::Error;
-use crate::{error, Logger, ProgramState};
+use crate::error;
+use crate::GlobalState;
 
-#[derive(Debug)]
+#[derive(Component)]
+#[shaku(interface = Repository)]
 pub(crate) struct RepositoryImpl {
-    sender: mpsc::Sender<(oneshot::Sender<String>, String)>,
-    receiver: Mutex<mpsc::Receiver<String>>,
-}
-
-impl RepositoryImpl {
-    pub fn new(
-        sender: mpsc::Sender<(oneshot::Sender<String>, String)>,
-        receiver: mpsc::Receiver<String>,
-    ) -> Self {
-        RepositoryImpl {
-            sender,
-            receiver: Mutex::new(receiver),
-        }
-    }
+    #[shaku(inject)]
+    state: Arc<dyn GlobalState>,
 }
 
 #[async_trait]
 impl Repository for RepositoryImpl {
-    async fn register(
-        &self,
-        _program_state: &ProgramState,
-        _logger: &Logger,
-        params: Request,
-    ) -> Result<ResponseResult, Error> {
+    async fn register(&self, params: Request) -> Result<ResponseResult, error::Error> {
         // SkyWay Crateからの戻り値を得るためのoneshot channelを生成
         let (channel_message_tx, channel_message_rx) = tokio::sync::oneshot::channel();
 
         // Request型である時点でto_stringには失敗しない
         let message = params.to_string().unwrap();
 
+        let sender = self.state.channels().sender();
+
         // SkyWay Crateへメッセージを送る
         // 失敗した場合はエラーメッセージを返す
-        if let Err(_) = self.sender.send((channel_message_tx, message)).await {
+        if let Err(_) = sender.send((channel_message_tx, message)).await {
             return Err(error::Error::create_local_error(
                 "could not send request to skyway crate",
             ));
@@ -57,17 +44,17 @@ impl Repository for RepositoryImpl {
             )),
         }
     }
-    async fn receive_event(
-        &self,
-        program_state: &ProgramState,
-        _logger: &Logger,
-    ) -> Result<ResponseResult, error::Error> {
+
+    async fn receive_event(&self) -> Result<ResponseResult, error::Error> {
         use std::time::Duration;
 
         use tokio::time;
-        while !program_state.is_shutting_down() {
-            let mut rx = self.receiver.lock().await;
+        let state = self.state.program_state();
+        let channels = self.state.channels();
+        let receiver = channels.receiver();
 
+        while !state.is_shutting_down() {
+            let mut rx = receiver.lock().await;
             match time::timeout(Duration::from_millis(1000), rx.recv()).await {
                 Ok(Some(response_string)) => {
                     return ResponseResult::from_str(&response_string);
@@ -89,10 +76,15 @@ impl Repository for RepositoryImpl {
 
 #[cfg(test)]
 mod infra_send_message_test {
+    use once_cell::sync::OnceCell;
+    use shaku::HasComponent;
+    use tokio::sync::{mpsc, oneshot, Mutex};
+
     use super::*;
-    use crate::application::usecase::helper;
+    use crate::di::RepositoryModule;
     use crate::domain::entity::request::PeerRequest;
     use crate::domain::entity::{CreatePeerParams, FromStr, PeerId};
+    use crate::{Channels, ChannelsImpl, MockGlobalState};
 
     fn create_request() -> Request {
         let inner = PeerRequest::Create {
@@ -111,11 +103,31 @@ mod infra_send_message_test {
         // 送信メッセージの生成
         let message = create_request();
 
-        // Repository Implの生成
         let (message_tx, mut message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
+        // eventのtestは他でやるので、txは使わない
         let (_event_tx, event_rx) = mpsc::channel::<String>(1000);
-        let repository_impl = RepositoryImpl::new(message_tx, event_rx);
+        static CHANNELS: OnceCell<Arc<dyn Channels>> = OnceCell::new();
+        let _ = CHANNELS.set(Arc::new(ChannelsImpl {
+            sender: message_tx,
+            receiver: Mutex::new(event_rx),
+        }));
 
+        // GlobalStateのMockを生成
+        // message_txを返すために使う
+        let mut state = MockGlobalState::new();
+        state
+            .expect_channels()
+            .times(1)
+            .returning(move || CHANNELS.get().unwrap());
+
+        // サービスを生成
+        let module = RepositoryModule::builder()
+            .with_component_override::<dyn GlobalState>(Box::new(state))
+            .build();
+        let repository_impl: &dyn Repository = module.resolve_ref();
+
+        // WebRTC Gatewayから値を返してくる動きのmock
+        // 成功して正常な値を返してくる
         tokio::spawn(async move {
             let (response_message_tx, request_message) = message_rx.recv().await.unwrap();
 
@@ -141,12 +153,8 @@ mod infra_send_message_test {
             let _ = response_message_tx.send(response_str.into());
         });
 
-        let logger = helper::create_logger();
-        let program_state = helper::create_program_state();
         // 実行
-        let result = repository_impl
-            .register(&program_state, &logger, message)
-            .await;
+        let result = repository_impl.register(message).await;
         assert!(result.is_ok());
     }
 
@@ -156,11 +164,31 @@ mod infra_send_message_test {
         // 送信メッセージの生成
         let message = create_request();
 
-        // Repository Implの生成
+        // WebRTC Gatewayが生成するSenderとReceiver相当のものを作成
         let (message_tx, mut message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
+        // eventのtestは他でやるので、txは使わない
         let (_event_tx, event_rx) = mpsc::channel::<String>(1000);
-        let repository_impl = RepositoryImpl::new(message_tx, event_rx);
+        static CHANNELS: OnceCell<Arc<dyn Channels>> = OnceCell::new();
+        let _ = CHANNELS.set(Arc::new(ChannelsImpl {
+            sender: message_tx,
+            receiver: Mutex::new(event_rx),
+        }));
 
+        // GlobalStateのMockを生成
+        // message_txを返すために使う
+        let mut state = MockGlobalState::new();
+        state
+            .expect_channels()
+            .times(1)
+            .returning(move || CHANNELS.get().unwrap());
+
+        // サービスを生成
+        let module = RepositoryModule::builder()
+            .with_component_override::<dyn GlobalState>(Box::new(state))
+            .build();
+        let repository_impl: &dyn Repository = module.resolve_ref();
+
+        // WebRTC Gatewayが値を返さないケース
         tokio::spawn(async move {
             let (_response_message_tx, request_message) = message_rx.recv().await.unwrap();
 
@@ -175,12 +203,8 @@ mod infra_send_message_test {
             }
         });
 
-        let logger = helper::create_logger();
-        let program_state = helper::create_program_state();
         // 実行
-        let result = repository_impl
-            .register(&program_state, &logger, message)
-            .await;
+        let result = repository_impl.register(message).await;
         match result {
             Err(error::Error::LocalError(message)) => {
                 assert_eq!(message, "could not receive response from skyway crate");
@@ -195,10 +219,29 @@ mod infra_send_message_test {
         // 送信メッセージの生成
         let message = create_request();
 
-        // Repository Implの生成
+        // WebRTC Gatewayが生成するSenderとReceiver相当のものを作成
         let (message_tx, mut message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
+        // eventのtestは他でやるので、txは使わない
         let (_event_tx, event_rx) = mpsc::channel::<String>(1000);
-        let repository_impl = RepositoryImpl::new(message_tx, event_rx);
+        static CHANNELS: OnceCell<Arc<dyn Channels>> = OnceCell::new();
+        let _ = CHANNELS.set(Arc::new(ChannelsImpl {
+            sender: message_tx,
+            receiver: Mutex::new(event_rx),
+        }));
+
+        // GlobalStateのMockを生成
+        // message_txを返すために使う
+        let mut state = MockGlobalState::new();
+        state
+            .expect_channels()
+            .times(1)
+            .returning(move || CHANNELS.get().unwrap());
+
+        // サービスを生成
+        let module = RepositoryModule::builder()
+            .with_component_override::<dyn GlobalState>(Box::new(state))
+            .build();
+        let repository_impl: &dyn Repository = module.resolve_ref();
 
         tokio::spawn(async move {
             let (response_message_tx, request_message) = message_rx.recv().await.unwrap();
@@ -224,12 +267,8 @@ mod infra_send_message_test {
             let _ = response_message_tx.send(response_str.into());
         });
 
-        let logger = helper::create_logger();
-        let program_state = helper::create_program_state();
         // 実行
-        let result = repository_impl
-            .register(&program_state, &logger, message)
-            .await;
+        let result = repository_impl.register(message).await;
         match result {
             Err(error::Error::SerdeError { error: _ }) => {
                 assert!(true)
@@ -241,18 +280,52 @@ mod infra_send_message_test {
 
 #[cfg(test)]
 mod infra_receive_event_test {
+    use once_cell::sync::OnceCell;
+    use shaku::HasComponent;
+    use tokio::sync::{mpsc, oneshot, Mutex};
+
     use super::*;
-    use crate::application::usecase::helper;
+    use crate::di::RepositoryModule;
+    use crate::ffi::helper;
+    use crate::{Channels, ChannelsImpl, MockGlobalState, ProgramState};
 
     #[tokio::test]
-    // eventとして異常な文字列を受信した場合
+    // eventを正常に受信するケース
     async fn success() {
-        // Repository Implの生成
+        // WebRTC Gatewayが生成するSenderとReceiver相当のものを作成
         let (message_tx, _message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
+        // eventのtestは他でやるので、txは使わない
         let (event_tx, event_rx) = mpsc::channel::<String>(1000);
-        let repository_impl = RepositoryImpl::new(message_tx, event_rx);
+        static CHANNELS: OnceCell<Arc<dyn Channels>> = OnceCell::new();
+        let _ = CHANNELS.set(Arc::new(ChannelsImpl {
+            sender: message_tx,
+            receiver: Mutex::new(event_rx),
+        }));
 
-        let (_close_tx, close_rx) = oneshot::channel::<()>();
+        static PROGRAM_STATE_INSTANCE: OnceCell<ProgramState> = OnceCell::new();
+        let _ = PROGRAM_STATE_INSTANCE.set(ProgramState::new(
+            helper::is_running,
+            helper::is_shutting_down,
+            helper::sleep,
+            helper::wait_for_shutdown,
+        ));
+
+        // GlobalStateのMockを生成
+        let mut state = MockGlobalState::new();
+        state
+            .expect_channels()
+            .times(1)
+            .returning(move || CHANNELS.get().unwrap());
+        state
+            .expect_program_state()
+            .times(1)
+            .returning(move || PROGRAM_STATE_INSTANCE.get().unwrap());
+
+        // サービスを生成
+        let module = RepositoryModule::builder()
+            .with_component_override::<dyn GlobalState>(Box::new(state))
+            .build();
+        let repository_impl: &dyn Repository = module.resolve_ref();
 
         tokio::spawn(async move {
             let response_str = r#"{
@@ -265,13 +338,10 @@ mod infra_receive_event_test {
                 }
             }"#;
             let _ = event_tx.send(response_str.to_string()).await;
-            let _ = close_rx.await;
         });
 
-        let logger = helper::create_logger();
-        let program_state = helper::create_program_state();
         // 実行
-        let result = repository_impl.receive_event(&program_state, &logger).await;
+        let result = repository_impl.receive_event().await;
         match result {
             Ok(_) => assert!(true),
             _ => assert!(false),
@@ -281,22 +351,47 @@ mod infra_receive_event_test {
     #[tokio::test]
     // eventとして異常な文字列を受信した場合
     async fn recv_invalid_json() {
-        // Repository Implの生成
+        // WebRTC Gatewayが生成するSenderとReceiver相当のものを作成
         let (message_tx, _message_rx) = mpsc::channel::<(oneshot::Sender<String>, String)>(10);
+        // eventのtestは他でやるので、txは使わない
         let (event_tx, event_rx) = mpsc::channel::<String>(1000);
-        let repository_impl = RepositoryImpl::new(message_tx, event_rx);
+        static CHANNELS: OnceCell<Arc<dyn Channels>> = OnceCell::new();
+        let _ = CHANNELS.set(Arc::new(ChannelsImpl {
+            sender: message_tx,
+            receiver: Mutex::new(event_rx),
+        }));
 
-        let (_close_tx, close_rx) = oneshot::channel::<()>();
+        static PROGRAM_STATE_INSTANCE: OnceCell<ProgramState> = OnceCell::new();
+        let _ = PROGRAM_STATE_INSTANCE.set(ProgramState::new(
+            helper::is_running,
+            helper::is_shutting_down,
+            helper::sleep,
+            helper::wait_for_shutdown,
+        ));
+
+        // GlobalStateのMockを生成
+        let mut state = MockGlobalState::new();
+        state
+            .expect_channels()
+            .times(1)
+            .returning(move || CHANNELS.get().unwrap());
+        state
+            .expect_program_state()
+            .times(1)
+            .returning(move || PROGRAM_STATE_INSTANCE.get().unwrap());
+
+        // サービスを生成
+        let module = RepositoryModule::builder()
+            .with_component_override::<dyn GlobalState>(Box::new(state))
+            .build();
+        let repository_impl: &dyn Repository = module.resolve_ref();
 
         tokio::spawn(async move {
             let _ = event_tx.send("invalid json".to_string()).await;
-            let _ = close_rx.await;
         });
 
-        let logger = helper::create_logger();
-        let program_state = helper::create_program_state();
         // 実行
-        let result = repository_impl.receive_event(&program_state, &logger).await;
+        let result = repository_impl.receive_event().await;
         match result {
             Err(error::Error::SerdeError { error: _ }) => {
                 assert!(true)

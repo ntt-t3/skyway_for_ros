@@ -1,12 +1,13 @@
 use crate::error;
 
-#[allow(dead_code)]
+#[allow(unused_imports)]
+pub(crate) use skyway_webrtc_gateway_caller::prelude::response_parser::ResponseMessage as Response;
+#[allow(unused_imports)]
 pub(crate) use skyway_webrtc_gateway_caller::prelude::response_parser::{
     DataResponse, MediaResponse, PeerResponse, ResponseResult,
 };
 
 use crate::domain::entity::{FromStr, Stringify};
-pub(crate) use skyway_webrtc_gateway_caller::prelude::response_parser::ResponseMessage as Response;
 
 impl Stringify for ResponseResult {
     fn to_string(&self) -> Result<String, error::Error> {
