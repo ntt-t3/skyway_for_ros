@@ -1,15 +1,17 @@
 pub(crate) mod peer;
 
-use shaku::{Component, Interface};
+use async_trait::async_trait;
+use shaku::Interface;
+
+use crate::application::dto::request::RequestDto;
+use crate::application::dto::response::ResponseDtoResult;
+use crate::error;
 
 #[cfg(test)]
 use mockall::automock;
 
+#[async_trait]
 #[cfg_attr(test, automock)]
-pub(crate) trait Service: Interface {}
-
-#[derive(Component)]
-#[shaku(interface = Service)]
-pub(crate) struct ServiceImpl {}
-
-impl Service for ServiceImpl {}
+pub(crate) trait Service: Interface {
+    async fn execute(&self, request: RequestDto) -> Result<ResponseDtoResult, error::Error>;
+}
