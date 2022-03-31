@@ -4,6 +4,7 @@ use std::thread::JoinHandle;
 
 use crate::ffi::global_params::{Logger, ProgramState};
 
+#[allow(dead_code)]
 pub(crate) mod global_params {
     use std::ffi::CString;
     use std::os::raw::{c_char, c_double};

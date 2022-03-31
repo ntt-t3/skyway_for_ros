@@ -171,6 +171,7 @@ pub(crate) enum ResponseDtoResult {
     Error(String),
 }
 
+#[allow(dead_code)]
 impl ResponseDtoResult {
     pub(crate) fn from_str(json: &str) -> Result<ResponseDtoResult, error::Error> {
         #[allow(dead_code)]
@@ -200,6 +201,7 @@ impl ResponseDtoResult {
     }
 }
 
+#[allow(dead_code)]
 impl Serialize for ResponseDtoResult {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
     where
