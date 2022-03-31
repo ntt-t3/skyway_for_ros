@@ -19,7 +19,7 @@ use tokio::sync::Mutex;
 use tokio::sync::{mpsc, oneshot};
 
 use crate::domain::entity::MediaConnectionId;
-use crate::ffi::*;
+use crate::ffi::global_params::{CallbackFunctions, Logger, ProgramState};
 
 #[cfg(test)]
 use mockall::automock;

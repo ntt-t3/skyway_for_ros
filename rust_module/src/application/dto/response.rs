@@ -4,11 +4,12 @@ use serde::{Deserialize, Serialize, Serializer};
 use crate::domain::entity::response::{DataResponse, MediaResponse, PeerResponse};
 use crate::domain::entity::{
     AnswerResult, DataConnectionId, DataConnectionIdWrapper, DataConnectionStatus, DataId,
-    DataIdWrapper, MediaConnectionIdWrapper, MediaConnectionStatus, MediaId, MediaIdWrapper,
-    PeerEventEnum, PeerInfo, PeerStatusMessage, RedirectParameters, RtcpId, RtcpIdWrapper,
-    SerializableId, SocketInfo,
+    DataIdWrapper, MediaConnectionId, MediaConnectionIdWrapper, MediaConnectionStatus, MediaId,
+    MediaIdWrapper, PeerEventEnum, PeerInfo, PeerStatusMessage, RedirectParameters, RtcpId,
+    RtcpIdWrapper, SerializableId, SocketInfo,
 };
-use crate::{error, DataConnectionResponse, MediaConnectionId};
+use crate::error;
+use crate::ffi::global_params::DataConnectionResponse;
 
 //========== Peer ==========
 
