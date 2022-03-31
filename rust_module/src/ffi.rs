@@ -1,4 +1,4 @@
-use std::ffi::c_void;
+use std::ffi::{c_void, CStr, CString};
 use std::os::raw::c_char;
 use std::thread::JoinHandle;
 
@@ -305,12 +305,23 @@ pub struct TopicParameters {
 // Fixme: Unit Test
 #[no_mangle]
 pub extern "C" fn call_service(message_char: *const c_char) -> *mut c_char {
-    todo!()
+    // C文字列とRust文字列の変換だけ行って、中身の処理はapplicationメソッドに任せる
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let message: String = rt.block_on(async {
+        let c_str: &CStr = unsafe { CStr::from_ptr(message_char) };
+        let message = c_str.to_str().unwrap().to_string();
+
+        crate::application::call_service(message).await
+    });
+    return CString::new(message.as_str()).unwrap().into_raw();
 }
 
 #[no_mangle]
 pub extern "C" fn receive_events() -> *mut c_char {
-    todo!()
+    // C文字列とRust文字列の変換だけ行って、中身の処理はapplicationメソッドに任せる
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let result = rt.block_on(async { crate::application::receive_events().await });
+    return CString::new(result).unwrap().into_raw();
 }
 
 #[no_mangle]
