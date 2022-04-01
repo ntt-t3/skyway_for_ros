@@ -3,9 +3,12 @@ pub(crate) mod factory;
 pub(crate) mod usecase;
 
 use serde::{Deserialize, Serialize};
+use shaku::HasComponent;
 
 use crate::application::dto::request::RequestDto;
 use crate::application::dto::Command;
+use crate::application::usecase::event::{EventEnum, EventReceive};
+use crate::di::*;
 use crate::domain::entity::Stringify;
 use crate::error;
 use crate::Logger;
@@ -78,5 +81,24 @@ pub(crate) async fn call_service(message: String) -> String {
 
 // called from ffi::receive_events
 pub async fn receive_events() -> String {
-    todo!()
+    let module = EventService::builder().build();
+    let service: &dyn EventReceive = module.resolve_ref();
+    let event = service.execute().await;
+    match event {
+        Ok(event) => serde_json::to_string(&event).unwrap(),
+        Err(error) => {
+            let internal = ErrorMessageInternal {
+                r#type: None,
+                command: None,
+                error: format!("invalid message: {:?}", error),
+            };
+            let error_message = ErrorMessage {
+                is_success: false,
+                result: internal,
+            };
+            let message = error_message.to_string().unwrap();
+            Logger::global().error(message.as_str());
+            return message;
+        }
+    }
 }

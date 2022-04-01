@@ -1,3 +1,4 @@
+pub(crate) mod event;
 pub(crate) mod peer;
 
 use async_trait::async_trait;
