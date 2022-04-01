@@ -1,9 +1,17 @@
 use shaku::module;
 
+use crate::application::factory::FactoryImpl;
 use crate::application::usecase::event::EventReceiveImpl;
 use crate::application::usecase::peer::create::Create;
 use crate::infra::RepositoryImpl;
 use crate::GlobalStateImpl;
+
+module! {
+    pub(crate) GeneralFactory {
+        components = [FactoryImpl],
+        providers = []
+    }
+}
 
 module! {
     pub(crate) RepositoryModule {

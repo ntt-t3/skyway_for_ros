@@ -7,6 +7,7 @@ use shaku::HasComponent;
 
 use crate::application::dto::request::RequestDto;
 use crate::application::dto::Command;
+use crate::application::factory::Factory;
 use crate::application::usecase::event::{EventEnum, EventReceive};
 use crate::di::*;
 use crate::domain::entity::Stringify;
@@ -38,7 +39,10 @@ pub(crate) async fn call_service(message: String) -> String {
     match RequestDto::from_str(&message) {
         Ok(dto) => {
             println!("{:?}", dto);
-            let service = factory::factory(&dto);
+            let module = GeneralFactory::builder().build();
+            let factory: &dyn Factory = module.resolve_ref();
+            let service = factory.create_service(&dto);
+
             // errorメッセージを生成する際に必要なので確保しておく
             let command = dto.command();
             let dto_type = dto.dto_type();

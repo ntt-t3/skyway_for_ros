@@ -12,6 +12,9 @@ use crate::domain::repository::Repository;
 use crate::error::Error;
 use crate::{error, GlobalState};
 
+#[cfg(test)]
+use mockall::automock;
+
 #[async_trait]
 #[cfg_attr(test, automock)]
 pub(crate) trait EventReceive: Interface {
