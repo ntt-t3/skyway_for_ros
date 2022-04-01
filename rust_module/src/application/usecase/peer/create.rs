@@ -10,15 +10,13 @@ use crate::application::usecase::Service;
 use crate::domain::entity::request::Request;
 use crate::domain::entity::response::Response;
 use crate::domain::repository::Repository;
-use crate::{error, GlobalState};
+use crate::error;
 
 #[derive(Component)]
 #[shaku(interface = Service)]
 pub(crate) struct Create {
     #[shaku(inject)]
     repository: Arc<dyn Repository>,
-    #[shaku(inject)]
-    state: Arc<dyn GlobalState>,
 }
 
 #[async_trait]

@@ -8,7 +8,7 @@ use shaku::HasComponent;
 use crate::application::dto::request::RequestDto;
 use crate::application::dto::Command;
 use crate::application::factory::Factory;
-use crate::application::usecase::event::{EventEnum, EventReceive};
+use crate::application::usecase::event::EventReceive;
 use crate::di::*;
 use crate::domain::entity::Stringify;
 use crate::error;

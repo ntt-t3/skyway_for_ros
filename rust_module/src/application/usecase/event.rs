@@ -2,9 +2,6 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use shaku::{Component, Interface};
-use skyway_webrtc_gateway_caller::prelude::response_parser::{
-    DataResponse, MediaResponse, PeerResponse, ResponseMessage,
-};
 
 use crate::domain::entity::response::ResponseResult;
 use crate::domain::entity::{DataConnectionEventEnum, MediaConnectionEventEnum, PeerEventEnum};
