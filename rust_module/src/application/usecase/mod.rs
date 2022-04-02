@@ -1,5 +1,6 @@
 pub(crate) mod data;
 pub(crate) mod event;
+pub(crate) mod media;
 pub(crate) mod peer;
 
 use std::sync::Arc;

@@ -22,6 +22,7 @@ use tokio::sync::{mpsc, oneshot};
 use crate::domain::entity::{DataConnectionId, MediaConnectionId};
 use crate::ffi::global_params::{CallbackFunctions, DataConnectionResponse, Logger, ProgramState};
 
+use crate::application::dto::response::CallResponseDto;
 #[cfg(test)]
 use mockall::automock;
 
@@ -39,6 +40,11 @@ static CHANNELS: OnceCell<Arc<dyn Channels>> = OnceCell::new();
 // Source Topic とDestination Topicの情報を集めておく
 static DATA_CONNECTION_STATE_INSTANCE: OnceCell<
     std::sync::Mutex<HashMap<DataConnectionId, DataConnectionResponse>>,
+> = OnceCell::new();
+// Event処理やDisconnect時に利用するため、MediaConnection確立時に
+// メディアの転送情報を集めておく
+static MEDIA_CONNECTION_STATE_INSTANCE: OnceCell<
+    std::sync::Mutex<HashMap<MediaConnectionId, CallResponseDto>>,
 > = OnceCell::new();
 
 pub(crate) trait Channels: Interface {
@@ -67,6 +73,15 @@ pub(crate) trait GlobalState: Interface {
     fn program_state(&self) -> &'static ProgramState;
     fn store_topic(&self, data_connection_id: DataConnectionId, response: DataConnectionResponse);
     fn find_topic(&self, data_connection_id: &DataConnectionId) -> Option<DataConnectionResponse>;
+    fn store_call_response(
+        &self,
+        media_connection_id: MediaConnectionId,
+        response: CallResponseDto,
+    );
+    fn find_call_response(
+        &self,
+        media_connection_id: &MediaConnectionId,
+    ) -> Option<CallResponseDto>;
 }
 
 #[derive(Component)]
@@ -98,12 +113,35 @@ impl GlobalState for GlobalStateImpl {
         let item = hash.get(data_connection_id);
         item.map(|item| item.clone())
     }
+
+    fn store_call_response(
+        &self,
+        media_connection_id: MediaConnectionId,
+        response: CallResponseDto,
+    ) {
+        let hash = MEDIA_CONNECTION_STATE_INSTANCE.get().unwrap();
+        hash.lock().unwrap().insert(media_connection_id, response);
+    }
+
+    fn find_call_response(
+        &self,
+        media_connection_id: &MediaConnectionId,
+    ) -> Option<CallResponseDto> {
+        let hash = MEDIA_CONNECTION_STATE_INSTANCE
+            .get()
+            .unwrap()
+            .lock()
+            .unwrap();
+        let item = hash.get(media_connection_id);
+        item.map(|item| item.clone())
+    }
 }
 
 //========== ↑ OnceCell ↑ ==========
 
 pub(crate) async fn rust_main() {
-    DATA_CONNECTION_STATE_INSTANCE.set(std::sync::Mutex::new(HashMap::new()));
+    let _ = DATA_CONNECTION_STATE_INSTANCE.set(std::sync::Mutex::new(HashMap::new()));
+    let _ = MEDIA_CONNECTION_STATE_INSTANCE.set(std::sync::Mutex::new(HashMap::new()));
 
     let (sender, receiver) = skyway_webrtc_gateway_caller::run("http://localhost:8000").await;
     // SkyWay Crateにアクセスするためのsender, receiverを保持する

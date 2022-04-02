@@ -3,6 +3,7 @@ use shaku::module;
 use crate::application::factory::FactoryImpl;
 use crate::application::usecase::data::redirect::Redirect;
 use crate::application::usecase::event;
+use crate::application::usecase::media::answer::AnswerService;
 use crate::application::usecase::General;
 use crate::infra::RepositoryImpl;
 use crate::utils::CallbackCallerImpl;
@@ -32,6 +33,13 @@ module! {
 module! {
     pub(crate) DataRedirectService {
         components = [Redirect, GlobalStateImpl, RepositoryImpl, FactoryImpl, CallbackCallerImpl],
+        providers = []
+    }
+}
+
+module! {
+    pub(crate) MediaAnswerService {
+        components = [AnswerService, GlobalStateImpl, RepositoryImpl, FactoryImpl, CallbackCallerImpl],
         providers = []
     }
 }
