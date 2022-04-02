@@ -7,17 +7,13 @@ use skyway_webrtc_gateway_caller::prelude::data::RedirectParams;
 use skyway_webrtc_gateway_caller::prelude::response_parser::DataResponse;
 
 use crate::application::dto::request::{DataRequestDto, RequestDto};
-use crate::application::dto::response::{
-    DataResponseDto, PeerResponseDto, ResponseDto, ResponseDtoResult,
-};
+use crate::application::dto::response::{DataResponseDto, ResponseDto, ResponseDtoResult};
 use crate::application::factory::Factory;
 use crate::application::usecase::Service;
-use crate::di::*;
 use crate::domain::entity::request::{DataRequest, Request};
-use crate::domain::entity::response::{PeerResponse, Response, ResponseResult};
+use crate::domain::entity::response::{Response, ResponseResult};
 use crate::domain::entity::{
-    DataConnectionId, DataConnectionIdWrapper, DataIdWrapper, PhantomId, SerializableId,
-    SerializableSocket, SocketInfo,
+    DataIdWrapper, PhantomId, SerializableId, SerializableSocket, SocketInfo,
 };
 use crate::domain::repository::Repository;
 use crate::ffi::global_params::DataConnectionResponse;
@@ -161,15 +157,12 @@ impl Service for Redirect {
 
 #[cfg(test)]
 mod redirect_data_test {
-    use std::collections::HashMap;
-    use std::sync::Mutex;
-
     use shaku::HasComponent;
 
     use super::*;
     use crate::application::factory::MockFactory;
     use crate::application::usecase::MockService;
-    use crate::domain::entity::request::{DataRequest, Request};
+    use crate::di::*;
     use crate::domain::entity::response::{DataResponse, ResponseResult};
     use crate::domain::entity::{DataConnectionId, DataConnectionIdWrapper, DataId, SocketInfo};
     use crate::domain::repository::MockRepository;
