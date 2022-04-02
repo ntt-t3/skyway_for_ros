@@ -281,22 +281,22 @@ pub extern "C" fn run() -> RunResponse {
 
 #[repr(C)]
 pub struct SourceParameters {
-    source_topic_name: *mut c_char,
-    destination_address: *mut c_char,
-    destination_port: u16,
+    pub(crate) source_topic_name: *mut c_char,
+    pub(crate) destination_address: *mut c_char,
+    pub(crate) destination_port: u16,
 }
 
 #[repr(C)]
 pub struct DestinationParameters {
-    source_port: u16,
-    destination_topic_name: *mut c_char,
+    pub(crate) source_port: u16,
+    pub(crate) destination_topic_name: *mut c_char,
 }
 
 #[repr(C)]
 pub struct TopicParameters {
-    data_connection_id: *mut c_char,
-    source_parameters: SourceParameters,
-    destination_parameters: DestinationParameters,
+    pub(crate) data_connection_id: *mut c_char,
+    pub(crate) source_parameters: SourceParameters,
+    pub(crate) destination_parameters: DestinationParameters,
 }
 
 // ========== application methods ==========

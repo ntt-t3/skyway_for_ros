@@ -6,6 +6,7 @@ use skyway_webrtc_gateway_caller::prelude::response_parser::{DataResponse, Respo
 
 use crate::application::dto::request::{DataRequestDto, RequestDto};
 use crate::application::dto::response::{DataResponseDto, ResponseDto, ResponseDtoResult};
+use crate::application::factory::Factory;
 use crate::application::usecase::Service;
 use crate::domain::entity::request::{DataRequest, Request};
 use crate::domain::entity::response::Response;

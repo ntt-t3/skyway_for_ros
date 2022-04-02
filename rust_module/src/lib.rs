@@ -11,6 +11,7 @@ mod ffi;
 mod infra;
 mod utils;
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use once_cell::sync::OnceCell;
@@ -18,8 +19,8 @@ use shaku::{Component, Interface};
 use tokio::sync::Mutex;
 use tokio::sync::{mpsc, oneshot};
 
-use crate::domain::entity::MediaConnectionId;
-use crate::ffi::global_params::{CallbackFunctions, Logger, ProgramState};
+use crate::domain::entity::{DataConnectionId, MediaConnectionId};
+use crate::ffi::global_params::{CallbackFunctions, DataConnectionResponse, Logger, ProgramState};
 
 #[cfg(test)]
 use mockall::automock;
@@ -34,6 +35,11 @@ static LOGGER_INSTANCE: OnceCell<Logger> = OnceCell::new();
 static PROGRAM_STATE_INSTANCE: OnceCell<ProgramState> = OnceCell::new();
 // WebRTC Crate起動時に生成されたSender, Receiverを破棄すると通信できなくなるので、保持し続ける
 static CHANNELS: OnceCell<Arc<dyn Channels>> = OnceCell::new();
+// Event処理やDisconnect時に利用するため、DataConnection確立時に
+// Source Topic とDestination Topicの情報を集めておく
+static DATA_CONNECTION_STATE_INSTANCE: OnceCell<
+    std::sync::Mutex<HashMap<DataConnectionId, DataConnectionResponse>>,
+> = OnceCell::new();
 
 pub(crate) trait Channels: Interface {
     fn sender(&self) -> &mpsc::Sender<(oneshot::Sender<String>, String)>;
@@ -59,6 +65,7 @@ impl Channels for ChannelsImpl {
 pub(crate) trait GlobalState: Interface {
     fn channels(&self) -> &'static Arc<dyn Channels>;
     fn program_state(&self) -> &'static ProgramState;
+    fn store_topic(&self, data_connection_id: DataConnectionId, response: DataConnectionResponse);
 }
 
 #[derive(Component)]
@@ -74,6 +81,11 @@ impl GlobalState for GlobalStateImpl {
         PROGRAM_STATE_INSTANCE
             .get()
             .expect("PROGRAM_STATE is not initialized")
+    }
+
+    fn store_topic(&self, data_connection_id: DataConnectionId, response: DataConnectionResponse) {
+        let hash = DATA_CONNECTION_STATE_INSTANCE.get().unwrap();
+        hash.lock().unwrap().insert(data_connection_id, response);
     }
 }
 

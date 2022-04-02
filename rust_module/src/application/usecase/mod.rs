@@ -12,8 +12,8 @@ use crate::error;
 #[cfg(test)]
 use mockall::automock;
 
-#[async_trait]
 #[cfg_attr(test, automock)]
+#[async_trait]
 pub(crate) trait Service: Interface {
     async fn execute(&self, request: RequestDto) -> Result<ResponseDtoResult, error::Error>;
 }
