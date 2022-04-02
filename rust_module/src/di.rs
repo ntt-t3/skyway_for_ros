@@ -1,6 +1,7 @@
 use shaku::module;
 
 use crate::application::factory::FactoryImpl;
+use crate::application::usecase::data::connect::Connect;
 use crate::application::usecase::data::redirect::Redirect;
 use crate::application::usecase::event;
 use crate::application::usecase::media::answer::AnswerService;
@@ -26,6 +27,13 @@ module! {
 module! {
     pub(crate) GeneralService {
         components = [General, RepositoryImpl, GlobalStateImpl],
+        providers = []
+    }
+}
+
+module! {
+    pub(crate) DataConnectService {
+        components = [Connect, GlobalStateImpl, RepositoryImpl, FactoryImpl, CallbackCallerImpl],
         providers = []
     }
 }

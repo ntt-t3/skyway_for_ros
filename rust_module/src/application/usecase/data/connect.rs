@@ -1,3 +1,10 @@
+// このサービスでは、End-User-Programの指示を受けて、DataConnectionの確立を行う
+// 責務は以下の通りである
+// 1. GWにData Portを開放させる
+// 2. Data Portにデータを流し込むためのSrc Topicのパラメータを生成する
+// 3. GWから受信したデータをEnd-User-Programにデータを渡すためのDest Topicのパラメータを生成する
+// 4. CONNECT APIをコールし、DataConnectionを確立させる
+// 5. 4.で確立に成功した場合は、C++側の機能を利用し、Src, Dest Topic生成、保存する
 use std::ffi::CString;
 use std::sync::Arc;
 
@@ -11,7 +18,7 @@ use crate::application::usecase::Service;
 use crate::domain::entity::request::{DataRequest, Request};
 use crate::domain::entity::response::{DataResponse, Response, ResponseResult};
 use crate::domain::entity::{
-    DataIdWrapper, PhantomId, RedirectParams, SerializableId, SerializableSocket, SocketInfo,
+    ConnectQuery, DataIdWrapper, PhantomId, SerializableId, SerializableSocket, SocketInfo,
 };
 use crate::domain::repository::Repository;
 use crate::ffi::global_params::DataConnectionResponse;
@@ -21,7 +28,7 @@ use crate::{error, GlobalState};
 
 #[derive(Component)]
 #[shaku(interface = Service)]
-pub(crate) struct Redirect {
+pub(crate) struct Connect {
     #[shaku(inject)]
     repository: Arc<dyn Repository>,
     #[shaku(inject)]
@@ -33,17 +40,17 @@ pub(crate) struct Redirect {
 }
 
 #[async_trait]
-impl Service for Redirect {
+impl Service for Connect {
     async fn execute(&self, request: RequestDto) -> Result<ResponseDtoResult, error::Error> {
-        if let RequestDto::Data(DataRequestDto::Redirect {
-            params: redirect_params,
+        if let RequestDto::Data(DataRequestDto::Connect {
+            params: connect_params,
         }) = request
         {
             // 確立されたDataChannelに対し、以下の内容を実施する
             // 1. Dataポートを開放させ、DataChannelへのSourceとして利用する
             //    Source TopicのTopic名にはDataIdを利用する
             // 2. GWから受信したデータをEnd-User-Programにデータを渡すためのDest Topicのパラメータを生成する
-            // 3. Redirectの実行
+            // 3. Connectの実行
             // 4. Source, Destination Topicの保管
 
             // 1.は単独で実施可能なので最初に行う
@@ -74,27 +81,33 @@ impl Service for Redirect {
             //    GWからこのポートに転送されたデータが最終的にエンドユーザに届けられる
             let available_port = available_port().expect("bind port failed");
 
-            // 3. Redirectの実行
-            // REDIRECT APIを呼ぶためのパラメータ生成
+            // 3. Connectの実行
+            // Connect APIを呼ぶためのパラメータ生成
             // Dest ObjectのUDPソケット情報が必要なので、このタイミングで実施する
             let params = {
-                let params = RedirectParams {
-                    data_connection_id: redirect_params.data_connection_id,
-                    feed_params: Some(DataIdWrapper { data_id }),
+                let params = ConnectQuery {
+                    peer_id: connect_params.peer_id,
+                    token: connect_params.token,
+                    options: None,
+                    target_id: connect_params.target_id,
+                    params: Some(DataIdWrapper {
+                        data_id: data_id.clone(),
+                    }),
                     redirect_params: Some(
                         SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", available_port)
                             .unwrap(),
                     ),
                 };
-                Request::Data(DataRequest::Redirect { params })
+
+                Request::Data(DataRequest::Connect { params })
             };
             let result = self.repository.register(params).await?;
 
-            // 4. Redirectが成功した場合は、C++側に通知してTopicを開かせた後、
+            // 4. Connectが成功した場合は、C++側に通知してTopicを開かせた後、
             //    Eventの処理やDisconnect時に利用するため、Topicに関する情報を登録する
             match result {
-                // Redirectに成功した場合
-                ResponseResult::Success(Response::Data(DataResponse::Redirect(params))) => {
+                // Connectに成功した場合
+                ResponseResult::Success(Response::Data(DataResponse::Connect(params))) => {
                     // Source Topicの情報
                     let source_parameters = SourceParameters {
                         source_topic_name: CString::new(source_topic_name.as_str())
@@ -110,7 +123,7 @@ impl Service for Redirect {
                     let destination_parameters = DestinationParameters {
                         source_port: available_port,
                         destination_topic_name: CString::new(
-                            redirect_params.destination_topic.as_str(),
+                            connect_params.destination_topic.as_str(),
                         )
                         .unwrap()
                         .into_raw(),
@@ -132,13 +145,13 @@ impl Service for Redirect {
                         source_topic_name,
                         source_ip: address.to_string(),
                         source_port: port,
-                        destination_topic_name: redirect_params.destination_topic,
+                        destination_topic_name: connect_params.destination_topic,
                     };
                     self.state
                         .store_topic(params.data_connection_id.clone(), response);
 
                     return Ok(ResponseDtoResult::Success(ResponseDto::Data(
-                        DataResponseDto::Redirect(params),
+                        DataResponseDto::Connect(params),
                     )));
                 }
                 ResponseResult::Error(message) => return Ok(ResponseDtoResult::Error(message)),
@@ -154,7 +167,8 @@ impl Service for Redirect {
 }
 
 #[cfg(test)]
-mod redirect_data_test {
+mod connect_data_test {
+    use crate::application::dto::request::ConnectDtoParams;
     use shaku::HasComponent;
 
     use super::*;
@@ -162,7 +176,9 @@ mod redirect_data_test {
     use crate::application::usecase::MockService;
     use crate::di::*;
     use crate::domain::entity::response::{DataResponse, ResponseResult};
-    use crate::domain::entity::{DataConnectionId, DataConnectionIdWrapper, DataId, SocketInfo};
+    use crate::domain::entity::{
+        DataConnectionId, DataConnectionIdWrapper, DataId, PeerId, SocketInfo, Token,
+    };
     use crate::domain::repository::MockRepository;
     use crate::utils::MockCallbackCaller;
     use crate::MockGlobalState;
@@ -171,7 +187,7 @@ mod redirect_data_test {
     // eventとして異常な文字列を受信した場合
     async fn success() {
         // 待値の生成
-        // DataConnectionResponseを含むRedirectパラメータを受け取れるはずである
+        // DataConnectionResponseを含むConnectパラメータを受け取れるはずである
         let expected = {
             let value = DataConnectionIdWrapper {
                 data_connection_id: DataConnectionId::try_create(
@@ -180,21 +196,17 @@ mod redirect_data_test {
                 .unwrap(),
             };
 
-            ResponseDtoResult::Success(ResponseDto::Data(DataResponseDto::Redirect(value)))
+            ResponseDtoResult::Success(ResponseDto::Data(DataResponseDto::Connect(value)))
         };
 
-        let request = {
-            let message = r#"{
-                "type":"DATA",
-                "command":"REDIRECT",
-                "params":{
-                    "data_connection_id":"dc-8bdef7a1-65c8-46be-a82e-37d51c776309",
-                    "destination_topic":"destination_topic"
-                }
-            }"#;
-
-            RequestDto::from_str(&message).unwrap()
-        };
+        let request = RequestDto::Data(DataRequestDto::Connect {
+            params: ConnectDtoParams {
+                peer_id: PeerId::new("peer_id"),
+                token: Token::try_create("pt-06cf1d26-0ef0-4b03-aca6-933027d434c2").unwrap(),
+                target_id: PeerId::new("target_id"),
+                destination_topic: "destination_topic".to_string(),
+            },
+        });
 
         let mut factory = MockFactory::new();
         factory.expect_create_service().times(1).returning(|_| {
@@ -215,10 +227,10 @@ mod redirect_data_test {
 
         let mut repository = MockRepository::new();
         repository.expect_register().times(1).returning(|_| {
-            // redirectのmock
+            // connectのmock
             // 成功し、DataConnectionIdを返すケース
             Ok(ResponseResult::Success(Response::Data(
-                DataResponse::Redirect(DataConnectionIdWrapper {
+                DataResponse::Connect(DataConnectionIdWrapper {
                     data_connection_id: DataConnectionId::try_create(
                         "dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
                     )
@@ -234,7 +246,7 @@ mod redirect_data_test {
         state.expect_store_topic().times(1).returning(|_, _| ());
 
         // サービスの生成
-        let module = DataRedirectService::builder()
+        let module = DataConnectService::builder()
             .with_component_override::<dyn Factory>(Box::new(factory))
             .with_component_override::<dyn Repository>(Box::new(repository))
             .with_component_override::<dyn CallbackCaller>(Box::new(caller))
