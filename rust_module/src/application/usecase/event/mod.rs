@@ -3,7 +3,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use shaku::{Component, Interface};
 
-use crate::domain::entity::response::ResponseResult;
+use crate::domain::entity::response::{Response, ResponseResult};
 use crate::domain::entity::{DataConnectionEventEnum, MediaConnectionEventEnum, PeerEventEnum};
 use crate::domain::repository::Repository;
 use crate::error::Error;
@@ -11,6 +11,12 @@ use crate::{error, GlobalState};
 
 #[cfg(test)]
 use mockall::automock;
+
+#[async_trait]
+#[cfg_attr(test, automock)]
+pub(crate) trait OnEvent: Interface {
+    async fn execute(&self, event: Response) -> Result<ResponseResult, error::Error>;
+}
 
 #[async_trait]
 #[cfg_attr(test, automock)]

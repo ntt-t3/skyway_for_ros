@@ -85,7 +85,7 @@ pub(crate) async fn call_service(message: String) -> String {
 
 // called from ffi::receive_events
 pub async fn receive_events() -> String {
-    let module = EventService::builder().build();
+    let module = EventReceiveService::builder().build();
     let service: &dyn EventReceive = module.resolve_ref();
     let event = service.execute().await;
     match event {

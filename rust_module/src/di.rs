@@ -2,7 +2,7 @@ use shaku::module;
 
 use crate::application::factory::FactoryImpl;
 use crate::application::usecase::data::redirect::Redirect;
-use crate::application::usecase::event::EventReceiveImpl;
+use crate::application::usecase::event;
 use crate::application::usecase::General;
 use crate::infra::RepositoryImpl;
 use crate::utils::CallbackCallerImpl;
@@ -37,8 +37,8 @@ module! {
 }
 
 module! {
-    pub(crate) EventService {
-        components = [EventReceiveImpl, GlobalStateImpl, RepositoryImpl],
+    pub(crate) EventReceiveService {
+        components = [event::EventReceiveImpl, GlobalStateImpl, RepositoryImpl],
         providers = []
     }
 }
