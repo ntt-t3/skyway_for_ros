@@ -25,11 +25,11 @@ impl Factory for FactoryImpl {
     fn create_service(&self, request: &RequestDto) -> Arc<dyn Service> {
         match request {
             RequestDto::Data(DataRequestDto::Create) => {
-                let module = DataCreateService::builder().build();
+                let module = GeneralService::builder().build();
                 module.resolve()
             }
             _ => {
-                let module = PeerCreateService::builder().build();
+                let module = GeneralService::builder().build();
                 module.resolve()
             }
         }

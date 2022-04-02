@@ -1,10 +1,10 @@
-use crate::domain::entity::{CallQuery, MediaConnectionIdWrapper};
 use serde::{Deserialize, Serialize};
 
 use super::{
     AnswerQuery, ConnectQuery, CreatePeerParams, DataConnectionIdWrapper, DataIdWrapper, FromStr,
     MediaConnectionId, MediaIdWrapper, PeerInfo, RedirectParams, Stringify,
 };
+use crate::domain::entity::{CallQuery, MediaConnectionIdWrapper, RtcpIdWrapper};
 use crate::error;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -53,6 +53,8 @@ pub(crate) enum MediaRequest {
     ContentDelete { params: MediaIdWrapper },
     #[serde(rename = "RTCP_CREATE")]
     RtcpCreate { params: Option<()> },
+    #[serde(rename = "RTCP_DELETE")]
+    RtcpDelete { params: RtcpIdWrapper },
     #[serde(rename = "CALL")]
     Call { params: CallQuery },
     #[serde(rename = "ANSWER")]

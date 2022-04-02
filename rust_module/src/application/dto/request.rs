@@ -1,11 +1,12 @@
 use serde::{Deserialize, Serialize};
+use skyway_webrtc_gateway_caller::prelude::media::RtcpIdWrapper;
 
 use crate::application::dto::Command;
 use crate::domain::entity::request::IsVideo;
 pub(crate) use crate::domain::entity::request::PeerRequest as PeerRequestDto;
 use crate::domain::entity::{
-    DataConnectionId, DataConnectionIdWrapper, DataIdWrapper, MediaIdWrapper, PeerId,
-    RedirectParameters, Token,
+    DataConnectionId, DataConnectionIdWrapper, DataIdWrapper, MediaConnectionIdWrapper,
+    MediaIdWrapper, PeerId, RedirectParameters, Token,
 };
 use crate::{error, MediaConnectionId};
 
@@ -94,10 +95,14 @@ pub(crate) enum MediaRequestDto {
     ContentDelete { params: MediaIdWrapper },
     #[serde(rename = "RTCP_CREATE")]
     RtcpCreate { params: Option<()> },
+    #[serde(rename = "RTCP_CREATE")]
+    RtcpDelete { params: RtcpIdWrapper },
     #[serde(rename = "CALL")]
     Call { params: CallQueryDto },
     #[serde(rename = "ANSWER")]
     Answer { params: AnswerParametersDto },
+    #[serde(rename = "DISCONNECT")]
+    Disconnect { params: MediaConnectionIdWrapper },
 }
 
 impl Command for MediaRequestDto {
@@ -106,8 +111,10 @@ impl Command for MediaRequestDto {
             MediaRequestDto::ContentCreate { .. } => "CONTENT_CREATE".to_string(),
             MediaRequestDto::ContentDelete { .. } => "CONTENT_DELETE".to_string(),
             MediaRequestDto::RtcpCreate { .. } => "RTCP_CREATE".to_string(),
+            MediaRequestDto::RtcpDelete { .. } => "RTCP_DELETE".to_string(),
             MediaRequestDto::Call { .. } => "CALL".to_string(),
             MediaRequestDto::Answer { .. } => "ANSWER".to_string(),
+            MediaRequestDto::Disconnect { .. } => "DISCONNECT".to_string(),
         }
     }
 }

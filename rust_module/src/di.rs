@@ -1,10 +1,9 @@
 use shaku::module;
 
 use crate::application::factory::FactoryImpl;
-use crate::application::usecase::data::create::CreateData;
 use crate::application::usecase::data::redirect::Redirect;
 use crate::application::usecase::event::EventReceiveImpl;
-use crate::application::usecase::peer::create::Create;
+use crate::application::usecase::General;
 use crate::infra::RepositoryImpl;
 use crate::utils::CallbackCallerImpl;
 use crate::GlobalStateImpl;
@@ -24,15 +23,8 @@ module! {
 }
 
 module! {
-    pub(crate) PeerCreateService {
-        components = [Create, GlobalStateImpl, RepositoryImpl],
-        providers = []
-    }
-}
-
-module! {
-    pub(crate) DataCreateService {
-        components = [CreateData, GlobalStateImpl, RepositoryImpl],
+    pub(crate) GeneralService {
+        components = [General, RepositoryImpl, GlobalStateImpl],
         providers = []
     }
 }
