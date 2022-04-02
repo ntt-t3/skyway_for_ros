@@ -53,7 +53,7 @@ void join_handler(void* handler);
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "skyway");
-  ros::AsyncSpinner spinner(1);
+  ros::AsyncSpinner spinner(4);
   spinner.start();
 
   // Rust側からC++側の関数を呼び出すためのセッティング

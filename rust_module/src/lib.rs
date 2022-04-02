@@ -66,6 +66,7 @@ pub(crate) trait GlobalState: Interface {
     fn channels(&self) -> &'static Arc<dyn Channels>;
     fn program_state(&self) -> &'static ProgramState;
     fn store_topic(&self, data_connection_id: DataConnectionId, response: DataConnectionResponse);
+    fn find_topic(&self, data_connection_id: &DataConnectionId) -> Option<DataConnectionResponse>;
 }
 
 #[derive(Component)]
@@ -87,11 +88,23 @@ impl GlobalState for GlobalStateImpl {
         let hash = DATA_CONNECTION_STATE_INSTANCE.get().unwrap();
         hash.lock().unwrap().insert(data_connection_id, response);
     }
+
+    fn find_topic(&self, data_connection_id: &DataConnectionId) -> Option<DataConnectionResponse> {
+        let hash = DATA_CONNECTION_STATE_INSTANCE
+            .get()
+            .unwrap()
+            .lock()
+            .unwrap();
+        let item = hash.get(data_connection_id);
+        item.map(|item| item.clone())
+    }
 }
 
 //========== ↑ OnceCell ↑ ==========
 
 pub(crate) async fn rust_main() {
+    DATA_CONNECTION_STATE_INSTANCE.set(std::sync::Mutex::new(HashMap::new()));
+
     let (sender, receiver) = skyway_webrtc_gateway_caller::run("http://localhost:8000").await;
     // SkyWay Crateにアクセスするためのsender, receiverを保持する
     // Channels objectに入れた上でOnceCellで保持する

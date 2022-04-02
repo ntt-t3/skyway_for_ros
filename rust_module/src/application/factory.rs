@@ -24,6 +24,10 @@ pub(crate) struct FactoryImpl {}
 impl Factory for FactoryImpl {
     fn create_service(&self, request: &RequestDto) -> Arc<dyn Service> {
         match request {
+            RequestDto::Data(DataRequestDto::Redirect { params: _ }) => {
+                let module = DataRedirectService::builder().build();
+                module.resolve()
+            }
             RequestDto::Data(DataRequestDto::Create) => {
                 let module = GeneralService::builder().build();
                 module.resolve()
