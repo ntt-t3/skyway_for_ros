@@ -2,7 +2,15 @@ use std::ffi::{c_void, CStr, CString};
 use std::os::raw::c_char;
 use std::thread::JoinHandle;
 
+use shaku::HasComponent;
+
+use crate::application::dto::request::RequestDto;
+use crate::application::usecase::Service;
+use crate::di::GeneralService;
+use crate::domain::entity::request::PeerRequest;
+use crate::domain::entity::PeerInfo;
 use crate::ffi::global_params::{Logger, ProgramState};
+use crate::CallbackFunctions;
 
 #[allow(dead_code)]
 pub(crate) mod global_params {
@@ -326,7 +334,28 @@ pub extern "C" fn receive_events() -> *mut c_char {
 
 #[no_mangle]
 pub extern "C" fn shutdown_service(peer_id: *const c_char, token: *const c_char) {
-    todo!()
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async {
+        let c_str: &CStr = unsafe { CStr::from_ptr(peer_id) };
+        let peer_id = c_str.to_str().unwrap().to_string();
+
+        let c_str: &CStr = unsafe { CStr::from_ptr(token) };
+        let token = c_str.to_str().unwrap().to_string();
+
+        let param = RequestDto::Peer(PeerRequest::Delete {
+            params: PeerInfo::try_create(peer_id, token).expect("peer_info is invalid"),
+        });
+
+        let module = GeneralService::builder().build();
+        let service: &dyn Service = module.resolve_ref();
+
+        if let Err(e) = service.execute(param).await {
+            let error_message = format!("peer close error: {:?}", e);
+            Logger::global().error(error_message);
+        }
+
+        CallbackFunctions::global().peer_deleted_callback();
+    });
 }
 
 #[no_mangle]

@@ -71,7 +71,7 @@ fn dto_to_request(dto: RequestDto) -> Result<Request, error::Error> {
         RequestDto::Media(MediaRequestDto::Disconnect { params }) => {
             Ok(Request::Media(MediaRequest::Disconnect { params }))
         }
-        _ => Err(error::Error::create_local_error(
+        RequestDto => Err(error::Error::create_local_error(
             "invalid parameter for GenealService",
         )),
     }

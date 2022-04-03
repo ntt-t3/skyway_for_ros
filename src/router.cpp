@@ -37,8 +37,9 @@ void RouterImpl::Start() {
     control_service_->Shutdown();
     event_service_->Shutdown();
     // shutdown処理の中身はPeer Objectの開放なので、生成前であれば呼ぶ必要がない
-    if (peer_id_ != "" && token_ != "")
+    if (peer_id_ != "" && token_ != "") {
       shutdown_service(peer_id_.c_str(), token_.c_str());
+    }
     else
       ros::shutdown();
   };

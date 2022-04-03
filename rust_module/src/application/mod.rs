@@ -35,10 +35,8 @@ struct ErrorMessageInternal {
 
 // called from ffi::call_service
 pub(crate) async fn call_service(message: String) -> String {
-    println!("call_service {}", message);
     match RequestDto::from_str(&message) {
         Ok(dto) => {
-            println!("{:?}", dto);
             let module = GeneralFactory::builder().build();
             let factory: &dyn Factory = module.resolve_ref();
             let service = factory.create_service(&dto);

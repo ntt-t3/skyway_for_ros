@@ -4,7 +4,7 @@ use async_trait::async_trait;
 
 use shaku::{Component, HasComponent, Interface};
 
-use crate::application::dto::request::{DataRequestDto, RequestDto};
+use crate::application::dto::request::{DataRequestDto, PeerRequestDto, RequestDto};
 use crate::application::usecase::Service;
 use crate::di::*;
 
@@ -24,6 +24,10 @@ pub(crate) struct FactoryImpl {}
 impl Factory for FactoryImpl {
     fn create_service(&self, request: &RequestDto) -> Arc<dyn Service> {
         match request {
+            RequestDto::Peer(PeerRequestDto::Create { params: _ }) => {
+                let module = PeerCreateService::builder().build();
+                module.resolve()
+            }
             RequestDto::Data(DataRequestDto::Redirect { params: _ }) => {
                 let module = DataRedirectService::builder().build();
                 module.resolve()
