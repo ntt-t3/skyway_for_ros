@@ -70,7 +70,7 @@ module! {
 
 module! {
     pub(crate) EventReceiveService {
-        components = [event::EventReceiveImpl, GlobalStateImpl, RepositoryImpl],
+        components = [event::EventReceiveImpl, CallbackCallerImpl, GlobalStateImpl, RepositoryImpl],
         providers = []
     }
 }

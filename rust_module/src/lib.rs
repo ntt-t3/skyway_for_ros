@@ -73,6 +73,7 @@ pub(crate) trait GlobalState: Interface {
     fn program_state(&self) -> &'static ProgramState;
     fn store_topic(&self, data_connection_id: DataConnectionId, response: DataConnectionResponse);
     fn find_topic(&self, data_connection_id: &DataConnectionId) -> Option<DataConnectionResponse>;
+    fn remove_topic(&self, data_connection_id: &DataConnectionId);
     fn store_call_response(
         &self,
         media_connection_id: MediaConnectionId,
@@ -112,6 +113,15 @@ impl GlobalState for GlobalStateImpl {
             .unwrap();
         let item = hash.get(data_connection_id);
         item.map(|item| item.clone())
+    }
+
+    fn remove_topic(&self, data_connection_id: &DataConnectionId) {
+        let mut hash = DATA_CONNECTION_STATE_INSTANCE
+            .get()
+            .unwrap()
+            .lock()
+            .unwrap();
+        let _ = hash.remove(data_connection_id);
     }
 
     fn store_call_response(

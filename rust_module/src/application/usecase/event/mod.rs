@@ -3,18 +3,18 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use shaku::{Component, Interface};
 
-use crate::domain::entity::response::{Response, ResponseResult};
-use crate::domain::entity::{DataConnectionEventEnum, MediaConnectionEventEnum, PeerEventEnum};
-use crate::domain::repository::Repository;
-use crate::error::Error;
-use crate::{error, DataConnectionResponse, GlobalState};
-
 use crate::application::dto::response::{
     DataConnectionEventDto, DataResponseDto, PeerResponseDto, ResponseDto, ResponseDtoResult,
 };
+use crate::domain::entity::response::{DataResponse, PeerResponse, Response, ResponseResult};
+use crate::domain::entity::{DataConnectionEventEnum, MediaConnectionEventEnum, PeerEventEnum};
+use crate::domain::repository::Repository;
+use crate::error::Error;
+use crate::utils::CallbackCaller;
+use crate::{error, DataConnectionResponse, GlobalState};
+
 #[cfg(test)]
 use mockall::automock;
-use skyway_webrtc_gateway_caller::prelude::response_parser::{DataResponse, PeerResponse};
 
 #[async_trait]
 #[cfg_attr(test, automock)]
@@ -35,6 +35,8 @@ pub(crate) struct EventReceiveImpl {
     repository: Arc<dyn Repository>,
     #[shaku(inject)]
     state: Arc<dyn GlobalState>,
+    #[shaku(inject)]
+    callback: Arc<dyn CallbackCaller>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -78,6 +80,15 @@ impl EventReceiveImpl {
                         );
                         Err(error::Error::create_local_error(&message))
                     }
+                }
+                DataConnectionEventEnum::CLOSE(close) => {
+                    self.state.remove_topic(&close.data_connection_id);
+                    self.callback
+                        .data_connection_deleted_callback(close.data_connection_id.as_str());
+
+                    Ok(ResponseDtoResult::Success(ResponseDto::Data(
+                        DataResponseDto::Event(DataConnectionEventDto::CLOSE(close)),
+                    )))
                 }
                 _ => {
                     todo!()
