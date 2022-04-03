@@ -1071,8 +1071,6 @@ dependencies = [
 [[package]]
 name = "skyway-webrtc-gateway-caller"
 version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24bb3d73834538b30a739d3ffb9cba1a1ad45af273ab284b41ebff6981840bd5"
 dependencies = [
  "async-trait",
  "futures",

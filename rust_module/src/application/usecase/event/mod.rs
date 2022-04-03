@@ -6,7 +6,8 @@ use async_trait::async_trait;
 use shaku::{Component, HasComponent, Interface};
 
 use crate::application::dto::response::{
-    DataConnectionEventDto, DataResponseDto, PeerResponseDto, ResponseDto, ResponseDtoResult,
+    DataConnectionEventDto, DataResponseDto, MediaConnectionEventEnumDto, MediaPair,
+    MediaResponseDto, PeerResponseDto, ResponseDto, ResponseDtoResult, SendParams,
 };
 use crate::di::*;
 use crate::domain::entity::response::{DataResponse, PeerResponse, Response, ResponseResult};
@@ -14,10 +15,11 @@ use crate::domain::entity::{DataConnectionEventEnum, MediaConnectionEventEnum, P
 use crate::domain::repository::Repository;
 use crate::error::Error;
 use crate::utils::CallbackCaller;
-use crate::{error, DataConnectionResponse, GlobalState, ProgramState};
+use crate::{error, CallResponseDto, DataConnectionResponse, GlobalState, ProgramState};
 
 #[cfg(test)]
 use mockall::automock;
+use skyway_webrtc_gateway_caller::prelude::response_parser::MediaResponse;
 
 #[async_trait]
 #[cfg_attr(test, automock)]
@@ -52,7 +54,9 @@ pub(crate) enum EventEnum {
 #[async_trait]
 impl EventReceive for EventReceiveImpl {
     async fn execute(&self) -> Result<ResponseDtoResult, Error> {
+        println!("event");
         let event = self.repository.receive_event().await?;
+        println!("event {:?}", event);
         self.result_to_dto(event)
     }
 }
@@ -111,9 +115,23 @@ impl EventReceiveImpl {
                     todo!()
                 }
             },
-            _ => Err(error::Error::create_local_error(
-                "invalid response for GenealService",
-            )),
+            ResponseResult::Success(Response::Media(MediaResponse::Event(event))) => match event {
+                MediaConnectionEventEnum::STREAM(stream) => {
+                    todo!()
+                    /*
+                    let message = ResponseDto::Media(MediaResponseDto::Event(MediaConnectionEventEnumDto::Stream(CallResponseDto{
+                        send_params: SendParams { video: MediaPair { media: (), rtcp: () }, audio: MediaPair {} },
+                        redirect_params: None,
+                        media_connection_id: stream.media_connection_id
+                    })))
+                     */
+                }
+                _ => todo!(),
+            },
+            event => {
+                println!("this event will be covered {:?}", event);
+                todo!()
+            }
         }
     }
 }

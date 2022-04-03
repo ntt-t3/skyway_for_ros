@@ -40,6 +40,8 @@ pub(crate) struct AnswerService {
 #[async_trait]
 impl Service for AnswerService {
     async fn execute(&self, request: RequestDto) -> Result<ResponseDtoResult, error::Error> {
+        println!("answer request {:?}", request);
+
         if let RequestDto::Media(MediaRequestDto::Answer { params }) = request {
             let video_socket = {
                 let param = RequestDto::Media(MediaRequestDto::ContentCreate {

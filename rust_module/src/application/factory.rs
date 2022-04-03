@@ -4,7 +4,9 @@ use async_trait::async_trait;
 
 use shaku::{Component, HasComponent, Interface};
 
-use crate::application::dto::request::{DataRequestDto, PeerRequestDto, RequestDto};
+use crate::application::dto::request::{
+    DataRequestDto, MediaRequestDto, PeerRequestDto, RequestDto,
+};
 use crate::application::usecase::Service;
 use crate::di::*;
 
@@ -34,6 +36,10 @@ impl Factory for FactoryImpl {
             }
             RequestDto::Data(DataRequestDto::Create) => {
                 let module = GeneralService::builder().build();
+                module.resolve()
+            }
+            RequestDto::Media(MediaRequestDto::Answer { params: _ }) => {
+                let module = MediaAnswerService::builder().build();
                 module.resolve()
             }
             _ => {

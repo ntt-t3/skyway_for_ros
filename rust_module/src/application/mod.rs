@@ -35,6 +35,7 @@ struct ErrorMessageInternal {
 
 // called from ffi::call_service
 pub(crate) async fn call_service(message: String) -> String {
+    println!("call_service {:?}", message);
     match RequestDto::from_str(&message) {
         Ok(dto) => {
             let module = GeneralFactory::builder().build();
@@ -45,6 +46,8 @@ pub(crate) async fn call_service(message: String) -> String {
             let command = dto.command();
             let dto_type = dto.dto_type();
 
+            println!("======requestdto=========");
+            println!("{:?}", dto);
             match service.execute(dto).await {
                 Ok(response) => {
                     // ResponseMessageはto_stringでエラーを出すことはない
@@ -65,6 +68,7 @@ pub(crate) async fn call_service(message: String) -> String {
             }
         }
         Err(_e) => {
+            println!("call_service error {:?}", _e);
             let internal = ErrorMessageInternal {
                 r#type: None,
                 command: None,
