@@ -11,6 +11,14 @@ use crate::application::usecase::General;
 use crate::infra::RepositoryImpl;
 use crate::utils::CallbackCallerImpl;
 use crate::GlobalStateImpl;
+use crate::ProgramStateImpl;
+
+module! {
+    pub(crate) CppObjctsModule {
+        components = [ProgramStateImpl],
+        providers = []
+    }
+}
 
 module! {
     pub(crate) GeneralFactory {

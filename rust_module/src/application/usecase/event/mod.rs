@@ -1,17 +1,21 @@
 use std::sync::Arc;
+use std::thread::sleep;
+use std::time::Duration;
 
 use async_trait::async_trait;
-use shaku::{Component, Interface};
+use shaku::{Component, HasComponent, Interface};
+use tokio::io::AsyncWriteExt;
 
 use crate::application::dto::response::{
     DataConnectionEventDto, DataResponseDto, PeerResponseDto, ResponseDto, ResponseDtoResult,
 };
+use crate::di::*;
 use crate::domain::entity::response::{DataResponse, PeerResponse, Response, ResponseResult};
 use crate::domain::entity::{DataConnectionEventEnum, MediaConnectionEventEnum, PeerEventEnum};
 use crate::domain::repository::Repository;
 use crate::error::Error;
 use crate::utils::CallbackCaller;
-use crate::{error, DataConnectionResponse, GlobalState};
+use crate::{error, DataConnectionResponse, GlobalState, ProgramState};
 
 #[cfg(test)]
 use mockall::automock;
@@ -57,6 +61,20 @@ impl EventReceive for EventReceiveImpl {
 impl EventReceiveImpl {
     fn result_to_dto(&self, response: ResponseResult) -> Result<ResponseDtoResult, error::Error> {
         match response {
+            ResponseResult::Success(Response::Peer(PeerResponse::Event(PeerEventEnum::CLOSE(
+                close,
+            )))) => {
+                std::thread::spawn(|| {
+                    sleep(Duration::from_millis(100));
+                    let module = CppObjctsModule::builder().build();
+                    let mut state: &dyn ProgramState = module.resolve_ref();
+                    state.shutdown();
+                });
+
+                Ok(ResponseDtoResult::Success(ResponseDto::Peer(
+                    PeerResponseDto::Event(PeerEventEnum::CLOSE(close)),
+                )))
+            }
             ResponseResult::Success(Response::Peer(PeerResponse::Event(event))) => Ok(
                 ResponseDtoResult::Success(ResponseDto::Peer(PeerResponseDto::Event(event))),
             ),

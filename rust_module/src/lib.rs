@@ -20,7 +20,9 @@ use tokio::sync::Mutex;
 use tokio::sync::{mpsc, oneshot};
 
 use crate::domain::entity::{DataConnectionId, MediaConnectionId};
-use crate::ffi::global_params::{CallbackFunctions, DataConnectionResponse, Logger, ProgramState};
+use crate::ffi::global_params::{
+    CallbackFunctions, DataConnectionResponse, Logger, ProgramStateHolder,
+};
 
 use crate::application::dto::response::CallResponseDto;
 #[cfg(test)]
@@ -33,7 +35,7 @@ static CALLBACK_FUNCTIONS: OnceCell<CallbackFunctions> = OnceCell::new();
 // Log出力するために必要なC++側の関数を保持する
 static LOGGER_INSTANCE: OnceCell<Logger> = OnceCell::new();
 // Programの状態を取得・操作するために必要なC++側の関数を保持する
-static PROGRAM_STATE_INSTANCE: OnceCell<ProgramState> = OnceCell::new();
+static PROGRAM_STATE_INSTANCE: OnceCell<ProgramStateHolder> = OnceCell::new();
 // WebRTC Crate起動時に生成されたSender, Receiverを破棄すると通信できなくなるので、保持し続ける
 static CHANNELS: OnceCell<Arc<dyn Channels>> = OnceCell::new();
 // Event処理やDisconnect時に利用するため、DataConnection確立時に
@@ -46,6 +48,40 @@ static DATA_CONNECTION_STATE_INSTANCE: OnceCell<
 static MEDIA_CONNECTION_STATE_INSTANCE: OnceCell<
     std::sync::Mutex<HashMap<MediaConnectionId, CallResponseDto>>,
 > = OnceCell::new();
+
+pub(crate) trait ProgramState: Interface {
+    fn is_running(&self) -> bool;
+    fn is_shutting_down(&self) -> bool;
+    fn sleep_c(&self, duration: f64);
+    fn wait_for_shutdown(&self);
+    fn shutdown(&self);
+}
+
+#[derive(Component)]
+#[shaku(interface = ProgramState)]
+pub(crate) struct ProgramStateImpl {}
+
+impl ProgramState for ProgramStateImpl {
+    fn is_running(&self) -> bool {
+        ProgramStateHolder::global().is_running()
+    }
+
+    fn is_shutting_down(&self) -> bool {
+        ProgramStateHolder::global().is_shutting_down()
+    }
+
+    fn sleep_c(&self, duration: f64) {
+        ProgramStateHolder::global().sleep_c(duration)
+    }
+
+    fn wait_for_shutdown(&self) {
+        ProgramStateHolder::global().wait_for_shutdown()
+    }
+
+    fn shutdown(&self) {
+        ProgramStateHolder::global().shutdown()
+    }
+}
 
 pub(crate) trait Channels: Interface {
     fn sender(&self) -> &mpsc::Sender<(oneshot::Sender<String>, String)>;
@@ -70,7 +106,7 @@ impl Channels for ChannelsImpl {
 #[cfg_attr(test, automock)]
 pub(crate) trait GlobalState: Interface {
     fn channels(&self) -> &'static Arc<dyn Channels>;
-    fn program_state(&self) -> &'static ProgramState;
+    fn program_state(&self) -> &'static ProgramStateHolder;
     fn store_topic(&self, data_connection_id: DataConnectionId, response: DataConnectionResponse);
     fn find_topic(&self, data_connection_id: &DataConnectionId) -> Option<DataConnectionResponse>;
     fn remove_topic(&self, data_connection_id: &DataConnectionId);
@@ -94,7 +130,7 @@ impl GlobalState for GlobalStateImpl {
         CHANNELS.get().expect("CHANNELS is not initialized")
     }
 
-    fn program_state(&self) -> &'static ProgramState {
+    fn program_state(&self) -> &'static ProgramStateHolder {
         PROGRAM_STATE_INSTANCE
             .get()
             .expect("PROGRAM_STATE is not initialized")
@@ -163,10 +199,10 @@ pub(crate) async fn rust_main() {
     let result = CHANNELS.set(Arc::new(channels));
     if result.is_err() {
         Logger::global().error("CHANNELS set error");
-        ProgramState::global().shutdown();
+        ProgramStateHolder::global().shutdown();
     }
 
     // ROS Serviceからの操作を別スレッドで受け付ける。
     // ROSが終了するまで待機する
-    ProgramState::global().wait_for_shutdown();
+    ProgramStateHolder::global().wait_for_shutdown();
 }

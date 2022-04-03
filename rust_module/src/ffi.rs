@@ -9,7 +9,7 @@ use crate::application::usecase::Service;
 use crate::di::GeneralService;
 use crate::domain::entity::request::PeerRequest;
 use crate::domain::entity::PeerInfo;
-use crate::ffi::global_params::{Logger, ProgramState};
+use crate::ffi::global_params::{Logger, ProgramStateHolder};
 use crate::CallbackFunctions;
 
 #[allow(dead_code)]
@@ -160,7 +160,7 @@ pub(crate) mod global_params {
 
     #[derive(Debug)]
     // このモジュールでは基本的にROSの制御を指す
-    pub struct ProgramState {
+    pub struct ProgramStateHolder {
         is_running_c: extern "C" fn() -> bool,
         is_shutting_down_c: extern "C" fn() -> bool,
         sleep_c: extern "C" fn(c_double) -> (),
@@ -169,7 +169,7 @@ pub(crate) mod global_params {
     }
 
     #[allow(dead_code)]
-    impl ProgramState {
+    impl ProgramStateHolder {
         pub fn new(
             is_running_c: extern "C" fn() -> bool,
             is_shutting_down_c: extern "C" fn() -> bool,
@@ -177,7 +177,7 @@ pub(crate) mod global_params {
             wait_for_shutdown_c: extern "C" fn() -> (),
             shutdown_c: extern "C" fn() -> (),
         ) -> Self {
-            ProgramState {
+            ProgramStateHolder {
                 is_running_c,
                 is_shutting_down_c,
                 sleep_c,
@@ -186,7 +186,7 @@ pub(crate) mod global_params {
             }
         }
 
-        pub fn global() -> &'static ProgramState {
+        pub fn global() -> &'static ProgramStateHolder {
             PROGRAM_STATE_INSTANCE
                 .get()
                 .expect("ProgramState is not initialized")
@@ -226,7 +226,7 @@ pub(crate) mod global_params {
         shutdown_c: extern "C" fn() -> (),
     ) {
         PROGRAM_STATE_INSTANCE
-            .set(ProgramState {
+            .set(ProgramStateHolder {
                 is_running_c,
                 is_shutting_down_c,
                 sleep_c,
@@ -261,7 +261,7 @@ pub extern "C" fn run() -> RunResponse {
         };
     }
 
-    if !ProgramState::is_allocated() {
+    if !ProgramStateHolder::is_allocated() {
         Logger::global().error(
             "ProgramState object is not allocated. Please call the register_program_state function",
         );

@@ -287,7 +287,7 @@ mod infra_receive_event_test {
     use super::*;
     use crate::di::RepositoryModule;
     use crate::ffi::helper;
-    use crate::{Channels, ChannelsImpl, MockGlobalState, ProgramState};
+    use crate::{Channels, ChannelsImpl, MockGlobalState, ProgramStateHolder};
 
     #[tokio::test]
     // eventを正常に受信するケース
@@ -302,8 +302,8 @@ mod infra_receive_event_test {
             receiver: Mutex::new(event_rx),
         }));
 
-        static PROGRAM_STATE_INSTANCE: OnceCell<ProgramState> = OnceCell::new();
-        let _ = PROGRAM_STATE_INSTANCE.set(ProgramState::new(
+        static PROGRAM_STATE_INSTANCE: OnceCell<ProgramStateHolder> = OnceCell::new();
+        let _ = PROGRAM_STATE_INSTANCE.set(ProgramStateHolder::new(
             helper::is_running,
             helper::is_shutting_down,
             helper::sleep,
@@ -362,8 +362,8 @@ mod infra_receive_event_test {
             receiver: Mutex::new(event_rx),
         }));
 
-        static PROGRAM_STATE_INSTANCE: OnceCell<ProgramState> = OnceCell::new();
-        let _ = PROGRAM_STATE_INSTANCE.set(ProgramState::new(
+        static PROGRAM_STATE_INSTANCE: OnceCell<ProgramStateHolder> = OnceCell::new();
+        let _ = PROGRAM_STATE_INSTANCE.set(ProgramStateHolder::new(
             helper::is_running,
             helper::is_shutting_down,
             helper::sleep,
