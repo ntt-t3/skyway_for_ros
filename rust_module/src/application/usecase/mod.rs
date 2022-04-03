@@ -71,9 +71,10 @@ fn dto_to_request(dto: RequestDto) -> Result<Request, error::Error> {
         RequestDto::Media(MediaRequestDto::Disconnect { params }) => {
             Ok(Request::Media(MediaRequest::Disconnect { params }))
         }
-        RequestDto => Err(error::Error::create_local_error(
-            "invalid parameter for GenealService",
-        )),
+        param => {
+            let message = format!("invalid parameter for GeneralService {:?}", param);
+            Err(error::Error::create_local_error(&message))
+        }
     }
 }
 
@@ -112,9 +113,10 @@ fn result_to_dto(response: ResponseResult) -> Result<ResponseDtoResult, error::E
         ResponseResult::Success(Response::Media(MediaResponse::Disconnect(params))) => Ok(
             ResponseDtoResult::Success(ResponseDto::Media(MediaResponseDto::Disconnect(params))),
         ),
-        _ => Err(error::Error::create_local_error(
-            "invalid response for GenealService",
-        )),
+        param => {
+            let message = format!("invalid response for GeneralService {:?}", param);
+            Err(error::Error::create_local_error(&message))
+        }
     }
 }
 
