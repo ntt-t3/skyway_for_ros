@@ -3,7 +3,7 @@ use std::net::TcpListener;
 use shaku::{Component, Interface};
 
 use crate::ffi::TopicParameters;
-use crate::CallbackFunctions;
+use crate::CallbackFunctionsHolder;
 
 #[cfg(test)]
 use mockall::automock;
@@ -29,22 +29,22 @@ pub(crate) struct CallbackCallerImpl {}
 
 impl CallbackCaller for CallbackCallerImpl {
     fn create_peer_callback(&self, peer_id: &str, token: &str) {
-        let callback = CallbackFunctions::global();
+        let callback = CallbackFunctionsHolder::global();
         callback.create_peer_callback(peer_id, token);
     }
 
     fn peer_deleted_callback(&self) {
-        let callback = CallbackFunctions::global();
+        let callback = CallbackFunctionsHolder::global();
         callback.peer_deleted_callback();
     }
 
     fn data_callback(&self, param: TopicParameters) {
-        let callback = CallbackFunctions::global();
+        let callback = CallbackFunctionsHolder::global();
         callback.data_callback(param);
     }
 
     fn data_connection_deleted_callback(&self, data_connection_id: &str) {
-        let callback = CallbackFunctions::global();
+        let callback = CallbackFunctionsHolder::global();
         callback.data_connection_deleted_callback(data_connection_id);
     }
 }

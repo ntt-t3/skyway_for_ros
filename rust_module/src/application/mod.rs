@@ -12,7 +12,7 @@ use crate::application::usecase::event::EventReceive;
 use crate::di::*;
 use crate::domain::entity::Stringify;
 use crate::error;
-use crate::Logger;
+use crate::LoggerHolder;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct ErrorMessage {
@@ -75,7 +75,7 @@ pub(crate) async fn call_service(message: String) -> String {
                 result: internal,
             };
             let message = error_message.to_string().unwrap();
-            Logger::global().error(message.as_str());
+            LoggerHolder::global().error(message.as_str());
             message
         }
     }
@@ -99,7 +99,7 @@ pub async fn receive_events() -> String {
                 result: internal,
             };
             let message = error_message.to_string().unwrap();
-            Logger::global().error(message.as_str());
+            LoggerHolder::global().error(message.as_str());
             return message;
         }
     }

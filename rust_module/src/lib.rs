@@ -21,19 +21,20 @@ use tokio::sync::{mpsc, oneshot};
 
 use crate::domain::entity::{DataConnectionId, MediaConnectionId};
 use crate::ffi::global_params::{
-    CallbackFunctions, DataConnectionResponse, Logger, ProgramStateHolder,
+    CallbackFunctionsHolder, DataConnectionResponse, LoggerHolder, ProgramStateHolder,
 };
 
 use crate::application::dto::response::CallResponseDto;
+use crate::ffi::TopicParameters;
 #[cfg(test)]
 use mockall::automock;
 
 // C++側とオブジェクトのやり取りをする回数を最低限にするため、C++側のモジュールで本来所持するべきオブジェクトはOnceCellで保持する
 //========== ↓ OnceCell ↓ ==========
 // C++側に返すべきコールバックを保持する
-static CALLBACK_FUNCTIONS: OnceCell<CallbackFunctions> = OnceCell::new();
+static CALLBACK_FUNCTIONS: OnceCell<CallbackFunctionsHolder> = OnceCell::new();
 // Log出力するために必要なC++側の関数を保持する
-static LOGGER_INSTANCE: OnceCell<Logger> = OnceCell::new();
+static LOGGER_INSTANCE: OnceCell<LoggerHolder> = OnceCell::new();
 // Programの状態を取得・操作するために必要なC++側の関数を保持する
 static PROGRAM_STATE_INSTANCE: OnceCell<ProgramStateHolder> = OnceCell::new();
 // WebRTC Crate起動時に生成されたSender, Receiverを破棄すると通信できなくなるので、保持し続ける
@@ -48,6 +49,64 @@ static DATA_CONNECTION_STATE_INSTANCE: OnceCell<
 static MEDIA_CONNECTION_STATE_INSTANCE: OnceCell<
     std::sync::Mutex<HashMap<MediaConnectionId, CallResponseDto>>,
 > = OnceCell::new();
+
+pub(crate) trait CallbackFunctions: Interface {
+    fn create_peer_callback(&self, peer_id: &str, token: &str);
+    fn peer_deleted_callback(&self);
+    fn data_callback(&self, param: TopicParameters);
+    fn data_connection_deleted_callback(&self, data_connection_id: &str);
+}
+
+#[derive(Component)]
+#[shaku(interface = CallbackFunctions)]
+pub(crate) struct CallbackFunctionsImpl {}
+
+impl CallbackFunctions for CallbackFunctionsImpl {
+    fn create_peer_callback(&self, peer_id: &str, token: &str) {
+        CallbackFunctionsHolder::global().create_peer_callback(peer_id, token)
+    }
+
+    fn peer_deleted_callback(&self) {
+        CallbackFunctionsHolder::global().peer_deleted_callback()
+    }
+
+    fn data_callback(&self, param: TopicParameters) {
+        CallbackFunctionsHolder::global().data_callback(param)
+    }
+
+    fn data_connection_deleted_callback(&self, data_connection_id: &str) {
+        CallbackFunctionsHolder::global().data_connection_deleted_callback(data_connection_id)
+    }
+}
+
+pub(crate) trait Logger: Interface {
+    fn debug(&self, message: &str);
+    fn info(&self, message: &str);
+    fn warn(&self, message: &str);
+    fn error(&self, message: &str);
+}
+
+#[derive(Component)]
+#[shaku(interface = Logger)]
+pub(crate) struct LoggerImpl {}
+
+impl Logger for LoggerImpl {
+    fn debug(&self, message: &str) {
+        LoggerHolder::global().debug(message)
+    }
+
+    fn info(&self, message: &str) {
+        LoggerHolder::global().info(message)
+    }
+
+    fn warn(&self, message: &str) {
+        LoggerHolder::global().warn(message)
+    }
+
+    fn error(&self, message: &str) {
+        LoggerHolder::global().error(message)
+    }
+}
 
 pub(crate) trait ProgramState: Interface {
     fn is_running(&self) -> bool;
@@ -198,7 +257,7 @@ pub(crate) async fn rust_main() {
     };
     let result = CHANNELS.set(Arc::new(channels));
     if result.is_err() {
-        Logger::global().error("CHANNELS set error");
+        LoggerHolder::global().error("CHANNELS set error");
         ProgramStateHolder::global().shutdown();
     }
 

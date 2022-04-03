@@ -9,8 +9,8 @@ use crate::application::usecase::Service;
 use crate::di::GeneralService;
 use crate::domain::entity::request::PeerRequest;
 use crate::domain::entity::PeerInfo;
-use crate::ffi::global_params::{Logger, ProgramStateHolder};
-use crate::CallbackFunctions;
+use crate::ffi::global_params::{LoggerHolder, ProgramStateHolder};
+use crate::CallbackFunctionsHolder;
 
 #[allow(dead_code)]
 pub(crate) mod global_params {
@@ -24,21 +24,21 @@ pub(crate) mod global_params {
     use crate::{CALLBACK_FUNCTIONS, LOGGER_INSTANCE, PROGRAM_STATE_INSTANCE};
 
     #[repr(C)]
-    pub struct CallbackFunctions {
+    pub struct CallbackFunctionsHolder {
         create_peer_callback_c: extern "C" fn(peer_id: *mut c_char, token: *mut c_char),
         peer_deleted_callback: extern "C" fn(),
         data_callback_c: extern "C" fn(param: TopicParameters),
         data_connection_deleted_callback_c: extern "C" fn(data_connection_id: *mut c_char),
     }
 
-    impl CallbackFunctions {
+    impl CallbackFunctionsHolder {
         pub fn new(
             create_peer_callback_c: extern "C" fn(peer_id: *mut c_char, token: *mut c_char),
             peer_deleted_callback: extern "C" fn(),
             data_callback_c: extern "C" fn(param: TopicParameters),
             data_connection_deleted_callback_c: extern "C" fn(data_connection_id: *mut c_char),
         ) -> Self {
-            CallbackFunctions {
+            CallbackFunctionsHolder {
                 create_peer_callback_c,
                 peer_deleted_callback,
                 data_callback_c,
@@ -46,7 +46,7 @@ pub(crate) mod global_params {
             }
         }
 
-        pub fn global() -> &'static CallbackFunctions {
+        pub fn global() -> &'static CallbackFunctionsHolder {
             CALLBACK_FUNCTIONS
                 .get()
                 .expect("functions is not initialized")
@@ -75,8 +75,8 @@ pub(crate) mod global_params {
     }
 
     #[no_mangle]
-    pub extern "C" fn register_callbacks(param: &CallbackFunctions) {
-        let functions = CallbackFunctions {
+    pub extern "C" fn register_callbacks(param: &CallbackFunctionsHolder) {
+        let functions = CallbackFunctionsHolder {
             create_peer_callback_c: param.create_peer_callback_c,
             peer_deleted_callback: param.peer_deleted_callback,
             data_callback_c: param.data_callback_c,
@@ -89,7 +89,7 @@ pub(crate) mod global_params {
     }
 
     #[derive(Debug)]
-    pub struct Logger {
+    pub struct LoggerHolder {
         debug_c: extern "C" fn(*const c_char) -> (),
         info_c: extern "C" fn(*const c_char) -> (),
         warn_c: extern "C" fn(*const c_char) -> (),
@@ -97,14 +97,14 @@ pub(crate) mod global_params {
     }
 
     #[allow(dead_code)]
-    impl Logger {
+    impl LoggerHolder {
         pub fn new(
             debug_c: extern "C" fn(*const c_char) -> (),
             info_c: extern "C" fn(*const c_char) -> (),
             warn_c: extern "C" fn(*const c_char) -> (),
             error_c: extern "C" fn(*const c_char) -> (),
         ) -> Self {
-            Logger {
+            LoggerHolder {
                 debug_c,
                 info_c,
                 warn_c,
@@ -112,7 +112,7 @@ pub(crate) mod global_params {
             }
         }
 
-        pub fn global() -> &'static Logger {
+        pub fn global() -> &'static LoggerHolder {
             LOGGER_INSTANCE.get().expect("logger is not initialized")
         }
 
@@ -149,7 +149,7 @@ pub(crate) mod global_params {
         error_c: extern "C" fn(*const c_char),
     ) {
         LOGGER_INSTANCE
-            .set(Logger {
+            .set(LoggerHolder {
                 debug_c,
                 info_c,
                 warn_c,
@@ -254,7 +254,7 @@ pub struct RunResponse {
 
 #[no_mangle]
 pub extern "C" fn run() -> RunResponse {
-    if !Logger::is_allocated() {
+    if !LoggerHolder::is_allocated() {
         return RunResponse {
             flag: false,
             handler: std::ptr::null_mut(),
@@ -262,7 +262,7 @@ pub extern "C" fn run() -> RunResponse {
     }
 
     if !ProgramStateHolder::is_allocated() {
-        Logger::global().error(
+        LoggerHolder::global().error(
             "ProgramState object is not allocated. Please call the register_program_state function",
         );
         return RunResponse {
@@ -351,10 +351,10 @@ pub extern "C" fn shutdown_service(peer_id: *const c_char, token: *const c_char)
 
         if let Err(e) = service.execute(param).await {
             let error_message = format!("peer close error: {:?}", e);
-            Logger::global().error(error_message);
+            LoggerHolder::global().error(error_message);
         }
 
-        CallbackFunctions::global().peer_deleted_callback();
+        CallbackFunctionsHolder::global().peer_deleted_callback();
     });
 }
 
