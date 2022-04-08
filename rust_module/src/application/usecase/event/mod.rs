@@ -15,7 +15,7 @@ use crate::domain::entity::{DataConnectionEventEnum, MediaConnectionEventEnum, P
 use crate::domain::repository::Repository;
 use crate::error::Error;
 use crate::utils::CallbackCaller;
-use crate::{error, CallResponseDto, DataConnectionResponse, GlobalState, ProgramState};
+use crate::{error, CallResponseDto, DataConnectionResponse, GlobalState, Logger, ProgramState};
 
 #[cfg(test)]
 use mockall::automock;
@@ -36,6 +36,8 @@ pub(crate) trait EventReceive: Interface {
 #[derive(Component)]
 #[shaku(interface = EventReceive)]
 pub(crate) struct EventReceiveImpl {
+    #[shaku(inject)]
+    logger: Arc<dyn Logger>,
     #[shaku(inject)]
     repository: Arc<dyn Repository>,
     #[shaku(inject)]
@@ -117,19 +119,49 @@ impl EventReceiveImpl {
             },
             ResponseResult::Success(Response::Media(MediaResponse::Event(event))) => match event {
                 MediaConnectionEventEnum::STREAM(stream) => {
-                    todo!()
-                    /*
-                    let message = ResponseDto::Media(MediaResponseDto::Event(MediaConnectionEventEnumDto::Stream(CallResponseDto{
-                        send_params: SendParams { video: MediaPair { media: (), rtcp: () }, audio: MediaPair {} },
-                        redirect_params: None,
-                        media_connection_id: stream.media_connection_id
-                    })))
-                     */
+                    let response = self
+                        .state
+                        .find_call_response(&stream.media_connection_id)
+                        .expect("call response info is not stored");
+
+                    let call_response_dto = CallResponseDto {
+                        send_params: response.send_params,
+                        redirect_params: response.redirect_params,
+                        media_connection_id: stream.media_connection_id,
+                    };
+                    Ok(ResponseDtoResult::Success(ResponseDto::Media(
+                        MediaResponseDto::Event(MediaConnectionEventEnumDto::Stream(
+                            call_response_dto,
+                        )),
+                    )))
+                }
+                MediaConnectionEventEnum::READY(stream) => {
+                    let response = self
+                        .state
+                        .find_call_response(&stream.media_connection_id)
+                        .expect("call response info is not stored");
+
+                    let call_response_dto = CallResponseDto {
+                        send_params: response.send_params,
+                        redirect_params: response.redirect_params,
+                        media_connection_id: stream.media_connection_id,
+                    };
+                    Ok(ResponseDtoResult::Success(ResponseDto::Media(
+                        MediaResponseDto::Event(MediaConnectionEventEnumDto::Stream(
+                            call_response_dto,
+                        )),
+                    )))
+                }
+                MediaConnectionEventEnum::CLOSE(id_wrapper) => {
+                    Ok(ResponseDtoResult::Success(ResponseDto::Media(
+                        MediaResponseDto::Event(MediaConnectionEventEnumDto::Close(id_wrapper)),
+                    )))
                 }
                 _ => todo!(),
             },
             event => {
-                println!("this event will be covered {:?}", event);
+                let message = format!("event {:?} is not covered", event);
+                self.logger.warn(&message);
                 todo!()
             }
         }
