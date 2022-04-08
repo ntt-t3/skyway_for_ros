@@ -147,7 +147,7 @@ impl EventReceiveImpl {
                         media_connection_id: stream.media_connection_id,
                     };
                     Ok(ResponseDtoResult::Success(ResponseDto::Media(
-                        MediaResponseDto::Event(MediaConnectionEventEnumDto::Stream(
+                        MediaResponseDto::Event(MediaConnectionEventEnumDto::Ready(
                             call_response_dto,
                         )),
                     )))
