@@ -40,7 +40,6 @@ pub(crate) struct AnswerService {
 #[async_trait]
 impl Service for AnswerService {
     async fn execute(&self, request: RequestDto) -> Result<ResponseDtoResult, error::Error> {
-        println!("answer request {:?}", request);
 
         if let RequestDto::Media(MediaRequestDto::Answer { params }) = request {
             let video_socket = {
@@ -360,7 +359,6 @@ mod answer_media_test {
         factory.expect_create_service().times(4).returning(|_| {
             let mut mock_service = MockService::new();
             mock_service.expect_execute().returning(|request| {
-                println!("{:?}", request);
                 match request {
                     RequestDto::Media(MediaRequestDto::ContentCreate { params }) => {
                         if params.is_video {

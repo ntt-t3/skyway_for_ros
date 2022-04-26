@@ -56,9 +56,7 @@ pub(crate) enum EventEnum {
 #[async_trait]
 impl EventReceive for EventReceiveImpl {
     async fn execute(&self) -> Result<ResponseDtoResult, Error> {
-        println!("event");
         let event = self.repository.receive_event().await?;
-        println!("event {:?}", event);
         self.result_to_dto(event)
     }
 }

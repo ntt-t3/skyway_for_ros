@@ -38,17 +38,13 @@ pub(crate) struct General {
 #[async_trait]
 impl Service for General {
     async fn execute(&self, dto: RequestDto) -> Result<ResponseDtoResult, error::Error> {
-        println!("general service {:?}", dto);
         let request = dto_to_request(dto)?;
-        println!("general service request {:?}", request);
         let result = self.repository.register(request).await?;
-        println!("general service result {:?}", result);
         result_to_dto(result)
     }
 }
 
 fn dto_to_request(dto: RequestDto) -> Result<Request, error::Error> {
-    println!("dto request {:?} in general", dto);
     match dto {
         RequestDto::Peer(parameter) => Ok(Request::Peer(parameter)),
         RequestDto::Data(DataRequestDto::Create) => {
@@ -83,7 +79,6 @@ fn dto_to_request(dto: RequestDto) -> Result<Request, error::Error> {
 }
 
 fn result_to_dto(response: ResponseResult) -> Result<ResponseDtoResult, error::Error> {
-    println!("dto response {:?} in general", response);
     match response {
         ResponseResult::Success(Response::Peer(PeerResponse::Create(params))) => Ok(
             ResponseDtoResult::Success(ResponseDto::Peer(PeerResponseDto::Create(params))),
