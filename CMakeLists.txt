@@ -4,7 +4,7 @@ add_compile_options(-std=c++14)
 
 include(ExternalProject)
 
-SET(VENDOR_DIR ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/vendor)
+SET(VENDOR_DIR ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}/vendor)
 
 SET(SKYWAY_LIB_FILE ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/rust_module/target/release/libskyway.a)
 
@@ -49,7 +49,10 @@ ExternalProject_Add(${PROJECT_NAME}_fruit
         DOWNLOAD_DIR ${VENDOR_DIR}/fruit
         BINARY_DIR ${VENDOR_DIR}/fruit
         CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=Off
+        UPDATE_DISCONNECTED 1
         )
+
+set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${VENDOR_DIR})
 
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/presentation PRESENTATION)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/domain DOMAIN)
