@@ -14,7 +14,7 @@ void DataChannelDestinationImpl::Start() {
     socket_->bind(local_endpoint_);
 
     ros::NodeHandle nh_;
-    pub_ = nh_.advertise<std_msgs::UInt8MultiArray>(topic_name_, 10000);
+    pub_ = nh_.advertise<std_msgs::UInt8MultiArray>("/controller/data_topic", 10000);
 
     // io_service_->runは同期実行なので、別スレッドで行う
     recv_thread_.reset(new std::thread([&] {
@@ -73,6 +73,8 @@ void DataChannelDestinationImpl::handle_receive(
     return;
   }
 
+  ROS_ERROR("publish");
+  ROS_ERROR("%s", topic_name_.c_str());
   std_msgs::UInt8MultiArray array;
   array.data.insert(array.data.end(), &recv_buffer_[0],
                     &recv_buffer_[bytes_transferred]);

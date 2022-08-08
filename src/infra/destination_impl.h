@@ -53,7 +53,8 @@ class DataChannelDestinationImpl : public Destination {
         io_service_(new io_service()),
         local_endpoint_(local_endpoint),
         socket_(std::make_unique<udp::socket>(*io_service_.get())),
-        is_running_(false) {}
+        is_running_(false) {
+  }
   // デストラクタでは、PublisherとUDPポートの開放を行う
   ~DataChannelDestinationImpl() { Stop(); }
   // moveコンストラクタを追加
