@@ -51,6 +51,7 @@ class DataChannelSourceImpl : public Source {
     // DataConnectionIdは-を含むが、ROS Topic名に利用できないので
     // "-"を"_"に置換する
     topic_name_ = std::regex_replace(topic_name, std::regex("-"), "_");
+    ROS_ERROR("source topic %s", topic_name_.c_str());
   }
   ~DataChannelSourceImpl() { Stop(); }
   // ROS Topicでのデータ受信と、UDPでのデータ転送を開始する

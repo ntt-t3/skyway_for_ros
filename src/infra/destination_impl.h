@@ -54,6 +54,7 @@ class DataChannelDestinationImpl : public Destination {
         local_endpoint_(local_endpoint),
         socket_(std::make_unique<udp::socket>(*io_service_.get())),
         is_running_(false) {
+    ROS_ERROR("destination topic %s", topic_name_.c_str());
   }
   // デストラクタでは、PublisherとUDPポートの開放を行う
   ~DataChannelDestinationImpl() { Stop(); }

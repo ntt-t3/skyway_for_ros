@@ -41,7 +41,8 @@ void DataChannelSourceImpl::Start() {
   if (is_running_) return;
 
   ros::NodeHandle nh_;
-  sub_ = nh_.subscribe(topic_name_, 10000, &DataChannelSourceImpl::Callback,
+  ROS_ERROR("feedback");
+  sub_ = nh_.subscribe("feedback_topic", 10000, &DataChannelSourceImpl::Callback,
                        this, ros::TransportHints().reliable().tcpNoDelay(true));
 
   is_running_ = true;
@@ -64,4 +65,6 @@ void DataChannelSourceImpl::Callback(
     const std_msgs::UInt8MultiArray::ConstPtr &array) {
   socket_->send_to(boost::asio::buffer(&array->data[0], array->data.size()),
                    remote_endpoint_, 0, err_);
+  ROS_ERROR("%s", remote_endpoint_.address().to_string().c_str());
+  ROS_ERROR("%d", remote_endpoint_.port());
 }
