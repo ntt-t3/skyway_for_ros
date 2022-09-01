@@ -71,15 +71,21 @@ struct TopicParameters {
   DestinationParameters destination_parameters;
 };
 
+struct PluginLoadResult {
+  bool is_success;
+  uint16_t port;
+  const char* error_message;
+};
+
 using void_char_char_func = void (*)(char*, char*);
 using void_char_func = void (*)(char*);
 using void_void_func = void (*)();
-using void_topicparam_func = void (*)(TopicParameters);
+using plugin_topicparam_func = PluginLoadResult (*)(char*);
 
 struct Function {
   void_char_char_func create_peer_callback;
   void_void_func peer_deleted_callback;
-  void_topicparam_func create_data_callback;
+  plugin_topicparam_func create_data_callback;
   void_char_func data_connection_deleted_callback;
 };
 
@@ -90,7 +96,7 @@ void release_string(char* message);
 void shutdown_service(const char* peer_id, const char* token);
 void create_peer_callback(char* peer_id, char* token);
 void peer_deleted_callback();
-void create_data_callback(TopicParameters parameter);
+PluginLoadResult create_data_callback(char* parameter);
 void data_connection_close_event_callback(char* data_connection_id);
 }
 

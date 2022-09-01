@@ -138,7 +138,6 @@ pub(crate) struct PluginInfo {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub(crate) struct RedirectDtoParams {
     pub data_connection_id: DataConnectionId,
-    pub destination_topic: String,
     pub plugin_info: PluginInfo,
 }
 

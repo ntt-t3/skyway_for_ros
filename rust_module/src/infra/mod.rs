@@ -57,6 +57,7 @@ impl Repository for RepositoryImpl {
             let mut rx = receiver.lock().await;
             match time::timeout(Duration::from_millis(1000), rx.recv()).await {
                 Ok(Some(response_string)) => {
+                    println!("{}", response_string);
                     return ResponseResult::from_str(&response_string);
                 }
                 Ok(None) => {

@@ -17,8 +17,14 @@ void create_peer_callback(char* peer_id, char* token) {
 
 void peer_deleted_callback() { ros::shutdown(); }
 
-void create_data_callback(TopicParameters parameter) {
-  create_data_callback_handler(parameter);
+PluginLoadResult create_data_callback(char* message) {
+  ROS_WARN("create data callback");
+  return {
+      .is_success = true,
+      .port = 51111,
+      .error_message = ""
+  };
+  //create_data_callback_handler(parameter);
 }
 
 void data_connection_close_event_callback(char* data_connection_id) {
