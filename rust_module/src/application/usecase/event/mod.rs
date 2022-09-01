@@ -19,6 +19,7 @@ use crate::{error, CallResponseDto, DataPipeInfo, GlobalState, Logger, ProgramSt
 
 #[cfg(test)]
 use mockall::automock;
+use skyway_webrtc_gateway_caller::prelude::data::DataConnectionIdWrapper;
 use skyway_webrtc_gateway_caller::prelude::response_parser::MediaResponse;
 
 #[async_trait]
@@ -84,16 +85,13 @@ impl EventReceiveImpl {
             ResponseResult::Success(Response::Data(DataResponse::Event(event))) => match event {
                 DataConnectionEventEnum::OPEN(open) => {
                     if let Some(item) = self.state.find_topic(&open.data_connection_id) {
-                        /*
-                        let response = DataConnectionResponse {
-                            data_connection_id: open.data_connection_id,
-                        };
                         Ok(ResponseDtoResult::Success(ResponseDto::Data(
-                            DataResponseDto::Event(DataConnectionEventDto::OPEN(response)),
+                            DataResponseDto::Event(DataConnectionEventDto::OPEN(
+                                DataConnectionIdWrapper {
+                                    data_connection_id: item.data_connection_id,
+                                },
+                            )),
                         )))
-                        FIXME
-                         */
-                        unreachable!()
                     } else {
                         let message = format!(
                             "no info about DataConnectionId {:?}",

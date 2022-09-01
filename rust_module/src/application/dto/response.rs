@@ -116,7 +116,7 @@ impl MediaResponseDto {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "event")]
 pub(crate) enum DataConnectionEventDto {
-    OPEN(DataPipeInfo),
+    OPEN(DataConnectionIdWrapper),
     CLOSE(DataConnectionIdWrapper),
     ERROR((DataConnectionId, String)),
 }
