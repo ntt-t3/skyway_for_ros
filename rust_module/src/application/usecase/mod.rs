@@ -253,7 +253,7 @@ mod create_peer_test {
         // 評価
         // 間違ったパラメータである旨を返してくるはずである
         if let Err(error::Error::LocalError(error_message)) = result {
-            assert_eq!(error_message, "invalid parameter for GenealService");
+            assert_eq!(error_message, "invalid parameter for GeneralService Test");
         }
     }
 }
@@ -363,7 +363,7 @@ mod create_data_test {
         let result = service.execute(dto).await;
         // 間違ったパラメータである旨を返してくるはずである
         if let Err(error::Error::LocalError(error_message)) = result {
-            assert_eq!(error_message, "invalid parameter for GenealService");
+            assert_eq!(error_message, "invalid parameter for GeneralService Test");
         }
     }
 }
