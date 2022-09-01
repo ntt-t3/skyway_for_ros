@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use skyway_webrtc_gateway_caller::prelude::media::RtcpIdWrapper;
 
 use crate::application::dto::Command;
@@ -129,9 +130,16 @@ pub(crate) struct ConnectDtoParams {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub(crate) struct PluginInfo {
+    pub r#type: String,
+    pub plugins: Vec<Value>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub(crate) struct RedirectDtoParams {
     pub data_connection_id: DataConnectionId,
     pub destination_topic: String,
+    pub plugin_info: PluginInfo,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

@@ -84,16 +84,16 @@ impl EventReceiveImpl {
             ResponseResult::Success(Response::Data(DataResponse::Event(event))) => match event {
                 DataConnectionEventEnum::OPEN(open) => {
                     if let Some(item) = self.state.find_topic(&open.data_connection_id) {
+                        /*
                         let response = DataConnectionResponse {
                             data_connection_id: open.data_connection_id,
-                            source_topic_name: item.source_topic_name,
-                            source_ip: item.source_ip,
-                            source_port: item.source_port,
-                            destination_topic_name: item.destination_topic_name,
                         };
                         Ok(ResponseDtoResult::Success(ResponseDto::Data(
                             DataResponseDto::Event(DataConnectionEventDto::OPEN(response)),
                         )))
+                        FIXME
+                         */
+                        unreachable!()
                     } else {
                         let message = format!(
                             "no info about DataConnectionId {:?}",

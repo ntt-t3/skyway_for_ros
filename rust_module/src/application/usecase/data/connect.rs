@@ -42,6 +42,7 @@ pub(crate) struct Connect {
 #[async_trait]
 impl Service for Connect {
     async fn execute(&self, request: RequestDto) -> Result<ResponseDtoResult, error::Error> {
+        /*
         if let RequestDto::Data(DataRequestDto::Connect {
             params: connect_params,
         }) = request
@@ -137,7 +138,7 @@ impl Service for Connect {
                         source_parameters,
                         destination_parameters,
                     };
-                    self.callback.data_callback(topic_parameters);
+                    //self.callback.data_callback(topic_parameters);
 
                     // Topicの情報を保管
                     let response = DataConnectionResponse {
@@ -163,9 +164,13 @@ impl Service for Connect {
         }
 
         return Err(error::Error::create_local_error("invalid parameters"));
+        FIXME
+             */
+        unreachable!()
     }
 }
 
+/*
 #[cfg(test)]
 mod connect_data_test {
     use crate::application::dto::request::ConnectDtoParams;
@@ -258,3 +263,5 @@ mod connect_data_test {
         assert_eq!(result.unwrap(), expected);
     }
 }
+
+ */

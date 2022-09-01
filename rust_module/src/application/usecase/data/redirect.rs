@@ -1,7 +1,17 @@
-use std::ffi::CString;
+/// 確立されたDataChannelに対し、以下の内容を実施する
+/// WebRTC GW - ROS間のデータのやり取りは全てC++側に任せる
+/// そのためこのモジュールでは、WebRTC GWとのJSONのやり取りのみを行う
+/// 具体的な手順は以下の通り
+/// 1. Dataポートを開放させ、DataChannelへのSourceとして利用する
+/// 2. C++側でRos Pluginをロードさせる。
+///    ロードエラーが出たら、Dataポートを閉じてエラーを返して終了。
+///    ロードエラーが発生しない場合、この時点でC++側は送受信の準備ができている
+/// 3. C++側で開放したポート番号を戻り値から取得し、Redirect APIをcallし、戻り値を返す
+use std::ffi::{CStr, CString};
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use serde::Serialize;
 use shaku::Component;
 
 use crate::application::dto::request::{DataRequestDto, RequestDto};
@@ -39,14 +49,7 @@ impl Service for Redirect {
             params: redirect_params,
         }) = request
         {
-            // 確立されたDataChannelに対し、以下の内容を実施する
             // 1. Dataポートを開放させ、DataChannelへのSourceとして利用する
-            //    Source TopicのTopic名にはDataIdを利用する
-            // 2. GWから受信したデータをEnd-User-Programにデータを渡すためのDest Topicのパラメータを生成する
-            // 3. Redirectの実行
-            // 4. Source, Destination Topicの保管
-
-            // 1.は単独で実施可能なので最初に行う
             let (data_id, address, port) = {
                 let create_data_param = RequestDto::Data(DataRequestDto::Create);
                 let service = self.factory.create_service(&create_data_param);
@@ -66,15 +69,32 @@ impl Service for Redirect {
                 }
             };
 
-            // Source TopicのIDを生成
-            // topic名には-が使えないので_に置換する
-            let source_topic_name = data_id.as_str().replace("-", "_");
+            // 2. C++側でRos Pluginをロードさせる。
+            // ここでserializeが失敗するケースはRustの型システムにより発生しないので、テストはしていない
+            let plugin_info = serde_json::to_string(&redirect_params.plugin_info)
+                .map_err(|e| error::Error::SerdeError { error: e })?;
 
-            // 2. GWから受信したデータをEnd-User-Programにデータを渡すためのDest Topicのパラメータを生成する
-            //    GWからこのポートに転送されたデータが最終的にエンドユーザに届けられる
-            let available_port = available_port().expect("bind port failed");
+            let (flag, port, error_message) = {
+                let result = self.callback.data_callback(&plugin_info);
+                (
+                    result.is_success,
+                    result.port,
+                    unsafe { CStr::from_ptr(result.error_message) }
+                        .to_str()
+                        .unwrap()
+                        .to_string(),
+                )
+            };
 
-            // 3. Redirectの実行
+            if !flag {
+                let delete_data_param = RequestDto::Data(DataRequestDto::Delete {
+                    params: DataIdWrapper { data_id },
+                });
+                let _ = self.factory.create_service(&delete_data_param);
+                let x = return Err(error::Error::create_local_error(&error_message));
+            }
+
+            // 3. C++側で開放したポート番号を戻り値から取得し、Redirect APIをcallし、戻り値を返す
             // REDIRECT APIを呼ぶためのパラメータ生成
             // Dest ObjectのUDPソケット情報が必要なので、このタイミングで実施する
             let params = {
@@ -82,57 +102,20 @@ impl Service for Redirect {
                     data_connection_id: redirect_params.data_connection_id,
                     feed_params: Some(DataIdWrapper { data_id }),
                     redirect_params: Some(
-                        SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", available_port)
-                            .unwrap(),
+                        SocketInfo::<PhantomId>::try_create(None, "127.0.0.1", port).unwrap(),
                     ),
                 };
                 Request::Data(DataRequest::Redirect { params })
             };
-            let result = self.repository.register(params).await?;
 
-            // 4. Redirectが成功した場合は、C++側に通知してTopicを開かせた後、
-            //    Eventの処理やDisconnect時に利用するため、Topicに関する情報を登録する
+            let result = self.repository.register(params).await?;
             match result {
                 // Redirectに成功した場合
                 ResponseResult::Success(Response::Data(DataResponse::Redirect(params))) => {
-                    // Source Topicの情報
-                    let source_parameters = SourceParameters {
-                        source_topic_name: CString::new(source_topic_name.as_str())
-                            .unwrap()
-                            .into_raw(),
-                        destination_address: CString::new(address.to_string().as_str())
-                            .unwrap()
-                            .into_raw(),
-                        destination_port: port,
-                    };
-
-                    // Destination Topicの情報
-                    let destination_parameters = DestinationParameters {
-                        source_port: available_port,
-                        destination_topic_name: CString::new(
-                            redirect_params.destination_topic.as_str(),
-                        )
-                        .unwrap()
-                        .into_raw(),
-                    };
-
-                    // 1つに束ねてC++に渡す
-                    let topic_parameters = TopicParameters {
-                        data_connection_id: CString::new(params.data_connection_id.as_str())
-                            .unwrap()
-                            .into_raw(),
-                        source_parameters,
-                        destination_parameters,
-                    };
-                    self.callback.data_callback(topic_parameters);
-
                     // Topicの情報を保管
                     let response = DataConnectionResponse {
                         data_connection_id: params.data_connection_id.clone(),
-                        source_topic_name,
-                        source_ip: address.to_string(),
-                        source_port: port,
-                        destination_topic_name: redirect_params.destination_topic,
+                        data_pipe_port_num: port,
                     };
                     self.state
                         .store_topic(params.data_connection_id.clone(), response);
@@ -141,11 +124,7 @@ impl Service for Redirect {
                         DataResponseDto::Redirect(params),
                     )));
                 }
-                ResponseResult::Error(message) => return Ok(ResponseDtoResult::Error(message)),
-                _ => {
-                    // 別のAPIの成功結果が得られることはない
-                    unreachable!()
-                }
+                _ => unreachable!(),
             }
         }
 
@@ -155,6 +134,9 @@ impl Service for Redirect {
 
 #[cfg(test)]
 mod redirect_data_test {
+    use std::ffi::{CStr, CString};
+    use std::os::raw::c_char;
+
     use shaku::HasComponent;
 
     use super::*;
@@ -164,8 +146,157 @@ mod redirect_data_test {
     use crate::domain::entity::response::{DataResponse, ResponseResult};
     use crate::domain::entity::{DataConnectionId, DataConnectionIdWrapper, DataId, SocketInfo};
     use crate::domain::repository::MockRepository;
+    use crate::ffi::PluginLoadResult;
     use crate::utils::MockCallbackCaller;
     use crate::MockGlobalState;
+
+    #[tokio::test]
+    // Dataポートの開放に失敗した場合はエラーを返す
+    async fn create_data_port_fail() {
+        // mockのsetup
+        let mut factory = MockFactory::new();
+        factory.expect_create_service().times(1).returning(|_| {
+            // Dataポートの開放に失敗
+            let mut mock_service = MockService::new();
+            mock_service
+                .expect_execute()
+                .returning(|_| Err(error::Error::create_local_error("failed to open data port")));
+            Arc::new(mock_service)
+        });
+
+        // 以下のMockはこのテストでは呼ばれない
+        let mut repository = MockRepository::new();
+        repository
+            .expect_register()
+            .times(0)
+            .returning(|_| unreachable!());
+        let mut caller = MockCallbackCaller::new();
+        caller
+            .expect_data_callback()
+            .times(0)
+            .returning(|_| unreachable!());
+        let mut state = MockGlobalState::new();
+        state
+            .expect_store_topic()
+            .times(0)
+            .returning(|_, _| unreachable!());
+
+        // サービスの生成
+        let module = DataRedirectService::builder()
+            .with_component_override::<dyn Factory>(Box::new(factory))
+            .with_component_override::<dyn Repository>(Box::new(repository))
+            .with_component_override::<dyn CallbackCaller>(Box::new(caller))
+            .with_component_override::<dyn GlobalState>(Box::new(state))
+            .build();
+        let service: &dyn Service = module.resolve_ref();
+
+        let request = {
+            let message = r#"{
+                   "type":"DATA",
+                   "command":"REDIRECT",
+                   "params":{
+                       "data_connection_id":"dc-8bdef7a1-65c8-46be-a82e-37d51c776309",
+                       "destination_topic":"destination_topic",
+                       "plugin_info": {
+                            "type": "binary",
+                            "plugins": []
+                       }
+                   }
+               }"#;
+
+            RequestDto::from_str(&message).unwrap()
+        };
+
+        let result = service.execute(request).await;
+        if let Err(error::Error::LocalError(e)) = result {
+            assert_eq!(e, "failed to open data port");
+        }
+    }
+
+    #[tokio::test]
+    // Pluginのロードに失敗した場合は、Dataポートを閉じたあとエラーを返す
+    async fn plugin_load_failed() {
+        // mockのsetup
+        let mut factory = MockFactory::new();
+        factory.expect_create_service().times(2).returning(|_| {
+            let mut mock_service = MockService::new();
+            mock_service
+                .expect_execute()
+                .returning(|request| match request {
+                    RequestDto::Data(DataRequestDto::Create) => {
+                        let socket = SocketInfo::<DataId>::try_create(
+                            Some("da-06cf1d26-0ef0-4b03-aca6-933027d434c2".to_string()),
+                            "127.0.0.1",
+                            10000,
+                        )
+                        .unwrap();
+                        Ok(ResponseDtoResult::Success(ResponseDto::Data(
+                            DataResponseDto::Create(socket),
+                        )))
+                    }
+                    RequestDto::Data(DataRequestDto::Delete { params }) => {
+                        Ok(ResponseDtoResult::Success(ResponseDto::Data(
+                            DataResponseDto::Delete(params),
+                        )))
+                    }
+                    _ => unreachable!(),
+                });
+            Arc::new(mock_service)
+        });
+
+        let mut caller = MockCallbackCaller::new();
+        caller
+            .expect_data_callback()
+            .times(1)
+            .returning(|_| PluginLoadResult {
+                is_success: false,
+                port: 0,
+                error_message: CString::new("plugin load error").unwrap().into_raw(),
+            });
+
+        // 以下のMockはこのテストでは呼ばれない
+        let mut repository = MockRepository::new();
+        repository
+            .expect_register()
+            .times(0)
+            .returning(|_| unreachable!());
+        let mut state = MockGlobalState::new();
+        state
+            .expect_store_topic()
+            .times(0)
+            .returning(|_, _| unreachable!());
+
+        // サービスの生成
+        let module = DataRedirectService::builder()
+            .with_component_override::<dyn Factory>(Box::new(factory))
+            .with_component_override::<dyn Repository>(Box::new(repository))
+            .with_component_override::<dyn CallbackCaller>(Box::new(caller))
+            .with_component_override::<dyn GlobalState>(Box::new(state))
+            .build();
+        let service: &dyn Service = module.resolve_ref();
+
+        let request = {
+            let message = r#"{
+                   "type":"DATA",
+                   "command":"REDIRECT",
+                   "params":{
+                       "data_connection_id":"dc-8bdef7a1-65c8-46be-a82e-37d51c776309",
+                       "destination_topic":"destination_topic",
+                       "plugin_info": {
+                            "type": "binary",
+                            "plugins": []
+                       }
+                   }
+               }"#;
+
+            RequestDto::from_str(&message).unwrap()
+        };
+
+        let result = service.execute(request).await;
+        if let Err(error::Error::LocalError(e)) = result {
+            assert_eq!(e, "plugin load error");
+        }
+    }
 
     #[tokio::test]
     // eventとして異常な文字列を受信した場合
@@ -175,25 +306,12 @@ mod redirect_data_test {
         let expected = {
             let value = DataConnectionIdWrapper {
                 data_connection_id: DataConnectionId::try_create(
-                    "dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+                    "dc-8bdef7a1-65c8-46be-a82e-37d51c776309",
                 )
                 .unwrap(),
             };
 
             ResponseDtoResult::Success(ResponseDto::Data(DataResponseDto::Redirect(value)))
-        };
-
-        let request = {
-            let message = r#"{
-                "type":"DATA",
-                "command":"REDIRECT",
-                "params":{
-                    "data_connection_id":"dc-8bdef7a1-65c8-46be-a82e-37d51c776309",
-                    "destination_topic":"destination_topic"
-                }
-            }"#;
-
-            RequestDto::from_str(&message).unwrap()
         };
 
         let mut factory = MockFactory::new();
@@ -220,7 +338,7 @@ mod redirect_data_test {
             Ok(ResponseResult::Success(Response::Data(
                 DataResponse::Redirect(DataConnectionIdWrapper {
                     data_connection_id: DataConnectionId::try_create(
-                        "dc-4995f372-fb6a-4196-b30a-ce11e5c7f56c",
+                        "dc-8bdef7a1-65c8-46be-a82e-37d51c776309",
                     )
                     .unwrap(),
                 }),
@@ -228,10 +346,25 @@ mod redirect_data_test {
         });
 
         let mut caller = MockCallbackCaller::new();
-        caller.expect_data_callback().times(1).returning(|_| ());
+        caller
+            .expect_data_callback()
+            .times(1)
+            .returning(|_| PluginLoadResult {
+                is_success: true,
+                port: 60000,
+                error_message: CString::new("").unwrap().into_raw(),
+            });
 
         let mut state = MockGlobalState::new();
-        state.expect_store_topic().times(1).returning(|_, _| ());
+        state.expect_store_topic().times(1).returning(
+            |data_connection_id: DataConnectionId, info: DataConnectionResponse| {
+                assert_eq!(
+                    data_connection_id.as_str(),
+                    "dc-8bdef7a1-65c8-46be-a82e-37d51c776309"
+                );
+                assert_eq!(info.data_pipe_port_num, 60000);
+            },
+        );
 
         // サービスの生成
         let module = DataRedirectService::builder()
@@ -241,6 +374,23 @@ mod redirect_data_test {
             .with_component_override::<dyn GlobalState>(Box::new(state))
             .build();
         let service: &dyn Service = module.resolve_ref();
+
+        let request = {
+            let message = r#"{
+                   "type":"DATA",
+                   "command":"REDIRECT",
+                   "params":{
+                       "data_connection_id":"dc-8bdef7a1-65c8-46be-a82e-37d51c776309",
+                       "destination_topic":"destination_topic",
+                       "plugin_info": {
+                            "type": "binary",
+                            "plugins": []
+                       }
+                   }
+               }"#;
+
+            RequestDto::from_str(&message).unwrap()
+        };
 
         let result = service.execute(request).await;
         assert_eq!(result.unwrap(), expected);

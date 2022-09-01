@@ -2,7 +2,7 @@ use std::net::TcpListener;
 
 use shaku::{Component, Interface};
 
-use crate::ffi::TopicParameters;
+use crate::ffi::{PluginLoadResult, TopicParameters};
 use crate::CallbackFunctionsHolder;
 
 #[cfg(test)]
@@ -19,7 +19,7 @@ pub(crate) fn available_port() -> std::io::Result<u16> {
 pub(crate) trait CallbackCaller: Interface {
     fn create_peer_callback(&self, peer_id: &str, token: &str);
     fn peer_deleted_callback(&self);
-    fn data_callback(&self, param: TopicParameters);
+    fn data_callback(&self, param: &str) -> PluginLoadResult;
     fn data_connection_deleted_callback(&self, data_connection_id: &str);
 }
 
@@ -38,9 +38,9 @@ impl CallbackCaller for CallbackCallerImpl {
         callback.peer_deleted_callback();
     }
 
-    fn data_callback(&self, param: TopicParameters) {
+    fn data_callback(&self, param: &str) -> PluginLoadResult {
         let callback = CallbackFunctionsHolder::global();
-        callback.data_callback(param);
+        callback.data_callback(param)
     }
 
     fn data_connection_deleted_callback(&self, data_connection_id: &str) {

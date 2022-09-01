@@ -20,14 +20,14 @@ pub(crate) mod global_params {
     use serde::{Deserialize, Serialize};
 
     use crate::domain::entity::DataConnectionId;
-    use crate::ffi::TopicParameters;
+    use crate::ffi::{PluginLoadResult, TopicParameters};
     use crate::{CALLBACK_FUNCTIONS, LOGGER_INSTANCE, PROGRAM_STATE_INSTANCE};
 
     #[repr(C)]
     pub struct CallbackFunctionsHolder {
         create_peer_callback_c: extern "C" fn(peer_id: *mut c_char, token: *mut c_char),
         peer_deleted_callback: extern "C" fn(),
-        data_callback_c: extern "C" fn(param: TopicParameters),
+        data_callback_c: extern "C" fn(param: *mut c_char) -> PluginLoadResult,
         data_connection_deleted_callback_c: extern "C" fn(data_connection_id: *mut c_char),
     }
 
@@ -35,7 +35,7 @@ pub(crate) mod global_params {
         pub fn new(
             create_peer_callback_c: extern "C" fn(peer_id: *mut c_char, token: *mut c_char),
             peer_deleted_callback: extern "C" fn(),
-            data_callback_c: extern "C" fn(param: TopicParameters),
+            data_callback_c: extern "C" fn(param: *mut c_char) -> PluginLoadResult,
             data_connection_deleted_callback_c: extern "C" fn(data_connection_id: *mut c_char),
         ) -> Self {
             CallbackFunctionsHolder {
@@ -63,8 +63,8 @@ pub(crate) mod global_params {
             (self.peer_deleted_callback)();
         }
 
-        pub fn data_callback(&self, param: TopicParameters) {
-            (self.data_callback_c)(param);
+        pub fn data_callback(&self, param: &str) -> PluginLoadResult {
+            (self.data_callback_c)(CString::new(param).unwrap().into_raw())
         }
 
         pub fn data_connection_deleted_callback(&self, data_connection_id: &str) {
@@ -239,10 +239,7 @@ pub(crate) mod global_params {
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
     pub(crate) struct DataConnectionResponse {
         pub data_connection_id: DataConnectionId,
-        pub source_topic_name: String,
-        pub source_ip: String,
-        pub source_port: u16,
-        pub destination_topic_name: String,
+        pub data_pipe_port_num: u16,
     }
 }
 
@@ -305,6 +302,13 @@ pub struct TopicParameters {
     pub(crate) data_connection_id: *mut c_char,
     pub(crate) source_parameters: SourceParameters,
     pub(crate) destination_parameters: DestinationParameters,
+}
+
+#[repr(C)]
+pub struct PluginLoadResult {
+    pub(crate) is_success: bool,
+    pub(crate) port: u16,
+    pub(crate) error_message: *mut c_char,
 }
 
 // ========== application methods ==========
