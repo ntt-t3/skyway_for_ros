@@ -24,7 +24,7 @@ use crate::domain::entity::{
     DataIdWrapper, PhantomId, RedirectParams, SerializableId, SerializableSocket, SocketInfo,
 };
 use crate::domain::repository::Repository;
-use crate::ffi::global_params::DataConnectionResponse;
+use crate::ffi::global_params::DataPipeInfo;
 use crate::ffi::{DestinationParameters, SourceParameters, TopicParameters};
 use crate::utils::{available_port, CallbackCaller};
 use crate::{error, GlobalState};
@@ -113,7 +113,7 @@ impl Service for Redirect {
                 // Redirectに成功した場合
                 ResponseResult::Success(Response::Data(DataResponse::Redirect(params))) => {
                     // Topicの情報を保管
-                    let response = DataConnectionResponse {
+                    let response = DataPipeInfo {
                         data_connection_id: params.data_connection_id.clone(),
                         data_pipe_port_num: port,
                     };
@@ -357,7 +357,7 @@ mod redirect_data_test {
 
         let mut state = MockGlobalState::new();
         state.expect_store_topic().times(1).returning(
-            |data_connection_id: DataConnectionId, info: DataConnectionResponse| {
+            |data_connection_id: DataConnectionId, info: DataPipeInfo| {
                 assert_eq!(
                     data_connection_id.as_str(),
                     "dc-8bdef7a1-65c8-46be-a82e-37d51c776309"

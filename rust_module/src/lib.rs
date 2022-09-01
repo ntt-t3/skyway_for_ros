@@ -21,7 +21,7 @@ use tokio::sync::{mpsc, oneshot};
 
 use crate::domain::entity::{DataConnectionId, MediaConnectionId};
 use crate::ffi::global_params::{
-    CallbackFunctionsHolder, DataConnectionResponse, LoggerHolder, ProgramStateHolder,
+    CallbackFunctionsHolder, DataPipeInfo, LoggerHolder, ProgramStateHolder,
 };
 
 use crate::application::dto::response::CallResponseDto;
@@ -42,7 +42,7 @@ static CHANNELS: OnceCell<Arc<dyn Channels>> = OnceCell::new();
 // Event処理やDisconnect時に利用するため、DataConnection確立時に
 // Source Topic とDestination Topicの情報を集めておく
 static DATA_CONNECTION_STATE_INSTANCE: OnceCell<
-    std::sync::Mutex<HashMap<DataConnectionId, DataConnectionResponse>>,
+    std::sync::Mutex<HashMap<DataConnectionId, DataPipeInfo>>,
 > = OnceCell::new();
 // Event処理やDisconnect時に利用するため、MediaConnection確立時に
 // メディアの転送情報を集めておく
@@ -166,8 +166,8 @@ impl Channels for ChannelsImpl {
 pub(crate) trait GlobalState: Interface {
     fn channels(&self) -> &'static Arc<dyn Channels>;
     fn program_state(&self) -> &'static ProgramStateHolder;
-    fn store_topic(&self, data_connection_id: DataConnectionId, response: DataConnectionResponse);
-    fn find_topic(&self, data_connection_id: &DataConnectionId) -> Option<DataConnectionResponse>;
+    fn store_topic(&self, data_connection_id: DataConnectionId, response: DataPipeInfo);
+    fn find_topic(&self, data_connection_id: &DataConnectionId) -> Option<DataPipeInfo>;
     fn remove_topic(&self, data_connection_id: &DataConnectionId);
     fn store_call_response(
         &self,
@@ -195,12 +195,12 @@ impl GlobalState for GlobalStateImpl {
             .expect("PROGRAM_STATE is not initialized")
     }
 
-    fn store_topic(&self, data_connection_id: DataConnectionId, response: DataConnectionResponse) {
+    fn store_topic(&self, data_connection_id: DataConnectionId, response: DataPipeInfo) {
         let hash = DATA_CONNECTION_STATE_INSTANCE.get().unwrap();
         hash.lock().unwrap().insert(data_connection_id, response);
     }
 
-    fn find_topic(&self, data_connection_id: &DataConnectionId) -> Option<DataConnectionResponse> {
+    fn find_topic(&self, data_connection_id: &DataConnectionId) -> Option<DataPipeInfo> {
         let hash = DATA_CONNECTION_STATE_INSTANCE
             .get()
             .unwrap()

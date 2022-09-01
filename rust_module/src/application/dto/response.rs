@@ -9,7 +9,7 @@ use crate::domain::entity::{
     RtcpIdWrapper, SerializableId, SocketInfo,
 };
 use crate::error;
-use crate::ffi::global_params::DataConnectionResponse;
+use crate::ffi::global_params::DataPipeInfo;
 
 //========== Peer ==========
 
@@ -116,7 +116,7 @@ impl MediaResponseDto {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "event")]
 pub(crate) enum DataConnectionEventDto {
-    OPEN(DataConnectionResponse),
+    OPEN(DataPipeInfo),
     CLOSE(DataConnectionIdWrapper),
     ERROR((DataConnectionId, String)),
 }

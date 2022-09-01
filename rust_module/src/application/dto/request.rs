@@ -126,7 +126,7 @@ pub(crate) struct ConnectDtoParams {
     pub peer_id: PeerId,
     pub token: Token,
     pub target_id: PeerId,
-    pub destination_topic: String,
+    pub plugin_info: PluginInfo,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

@@ -237,7 +237,7 @@ pub(crate) mod global_params {
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-    pub(crate) struct DataConnectionResponse {
+    pub(crate) struct DataPipeInfo {
         pub data_connection_id: DataConnectionId,
         pub data_pipe_port_num: u16,
     }

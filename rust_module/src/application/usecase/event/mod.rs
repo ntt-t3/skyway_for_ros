@@ -15,7 +15,7 @@ use crate::domain::entity::{DataConnectionEventEnum, MediaConnectionEventEnum, P
 use crate::domain::repository::Repository;
 use crate::error::Error;
 use crate::utils::CallbackCaller;
-use crate::{error, CallResponseDto, DataConnectionResponse, GlobalState, Logger, ProgramState};
+use crate::{error, CallResponseDto, DataPipeInfo, GlobalState, Logger, ProgramState};
 
 #[cfg(test)]
 use mockall::automock;
