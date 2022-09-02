@@ -39,7 +39,6 @@ class BinaryPluginRouter : public PluginRouter {
   virtual PluginResult TryStart() override;
 };
 
-using BinaryPluginRouterFactory = std::function<std::unique_ptr<PluginRouter>(
-    XmlRpc::XmlRpcValue, udp::endpoint)>;
+Component<PluginRouterFactory> getBinaryPluginRouterComponent();
 
 #endif  // SKYWAY_PLUGIN_UDP_PIPE_BINARY_PLUGIN_ROUTER_H

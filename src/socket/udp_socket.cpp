@@ -104,3 +104,7 @@ void UdpSocket::wait_for_packets() {
                     boost::asio::placeholders::bytes_transferred));
   }
 }
+
+Component<SocketFactory> getUdpSocketComponent() {
+  return createComponent().bind<Socket, UdpSocket>();
+}

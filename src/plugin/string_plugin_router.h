@@ -39,7 +39,6 @@ class StringPluginRouter : public PluginRouter {
   virtual PluginResult TryStart() override;
 };
 
-using StringPluginRouterFactory = std::function<std::unique_ptr<PluginRouter>(
-    XmlRpc::XmlRpcValue, udp::endpoint)>;
+Component<PluginRouterFactory> getStringPluginRouterComponent();
 
 #endif  // SKYWAY_PLUGIN_UDP_PIPE_STRING_PLUGIN_ROUTER_H

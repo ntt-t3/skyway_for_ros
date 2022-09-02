@@ -2,8 +2,8 @@
 // Created by nakakura on 22/08/31.
 //
 
-#ifndef SKYWAY_PLUGIN_UDP_PIPE_STRING_PLUGIN_ROUTER_H
-#define SKYWAY_PLUGIN_UDP_PIPE_STRING_PLUGIN_ROUTER_H
+#ifndef SKYWAY_PLUGIN_UDP_PIPE_JSON_PLUGIN_ROUTER_H
+#define SKYWAY_PLUGIN_UDP_PIPE_JSON_PLUGIN_ROUTER_H
 
 #include <fruit/fruit.h>
 #include <pluginlib/class_loader.h>
@@ -43,7 +43,6 @@ class JsonPluginRouter : public PluginRouter {
   virtual PluginResult TryStart() override;
 };
 
-using JsonPluginRouterFactory = std::function<std::unique_ptr<PluginRouter>(
-    XmlRpc::XmlRpcValue, udp::endpoint)>;
+Component<PluginRouterFactory> getJsonPluginRouterComponent();
 
-#endif  // SKYWAY_PLUGIN_UDP_PIPE_STRING_PLUGIN_ROUTER_H
+#endif  // SKYWAY_PLUGIN_UDP_PIPE_JSON_PLUGIN_ROUTER_H

@@ -19,11 +19,6 @@ using fruit::Component;
 using fruit::createComponent;
 using fruit::Injector;
 
-// di.cpp内の内容と同じ
-Component<SocketFactory> getSourceComponent() {
-  return createComponent().bind<Socket, UdpSocket>();
-}
-
 // UDPでデータを受信したらcallbackが発火する部分のテスト
 TEST(TestSuite, socket_callback) {
   ros::NodeHandle nh;
@@ -42,7 +37,7 @@ TEST(TestSuite, socket_callback) {
       });
 
   // objectを作成し、受信スレッドを開始
-  Injector<SocketFactory> injector(getSourceComponent);
+  Injector<SocketFactory> injector(getUdpSocketComponent);
   SocketFactory socketFactory(injector);
   // データは送信しないのでportは何でも良い
   auto source = socketFactory(udp::endpoint(udp::v4(), 0), func_ptr);
@@ -105,7 +100,7 @@ TEST(TestSuite, socket_callback_twice) {
       });
 
   // objectを作成し、受信スレッドを開始
-  Injector<SocketFactory> injector(getSourceComponent);
+  Injector<SocketFactory> injector(getUdpSocketComponent);
   SocketFactory socketFactory(injector);
   // データは送信しないのでportは何でも良い
   auto source = socketFactory(udp::endpoint(udp::v4(), 0), func_ptr);
@@ -166,7 +161,7 @@ TEST(TestSuite, socket_callback_in_map) {
 
   // objectを作成し、source objectをmapで管理
   // 受信スレッドを開始
-  Injector<SocketFactory> injector(getSourceComponent);
+  Injector<SocketFactory> injector(getUdpSocketComponent);
   SocketFactory socketFactory(injector);
   // データは送信しないのでportは何でも良い
   auto source = socketFactory(udp::endpoint(udp::v4(), 0), func_ptr);
@@ -245,7 +240,7 @@ TEST(TestSuite, socket_send_data) {
       [&](std::vector<uint8_t> vec) { ASSERT_TRUE(false); });
 
   // objectを作成し、受信スレッドを開始
-  Injector<SocketFactory> injector(getSourceComponent);
+  Injector<SocketFactory> injector(getUdpSocketComponent);
   SocketFactory socketFactory(injector);
   // 受信スレッドのportを与える
   auto source = socketFactory(endpoint, func_ptr);
@@ -306,7 +301,7 @@ TEST(TestSuite, socket_send_data_in_map) {
       [&](std::vector<uint8_t> vec) { ASSERT_TRUE(false); });
 
   // objectを作成し、受信スレッドを開始
-  Injector<SocketFactory> injector(getSourceComponent);
+  Injector<SocketFactory> injector(getUdpSocketComponent);
   SocketFactory socketFactory(injector);
   // 受信スレッドのportを与える
   auto source = socketFactory(endpoint, func_ptr);

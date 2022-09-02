@@ -69,3 +69,8 @@ PluginResult StringPluginRouter::TryStart() {
 
   return {.is_success = true, .error_message = ""};
 }
+
+Component<PluginRouterFactory> getStringPluginRouterComponent() {
+  return createComponent().bind<PluginRouter, StringPluginRouter>().install(
+      getUdpSocketComponent);
+}

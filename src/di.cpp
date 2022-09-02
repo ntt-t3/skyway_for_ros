@@ -6,6 +6,8 @@
 #include "infra/destination_impl.h"
 #include "infra/source_impl.h"
 #include "plugin/binary_plugin_router.h"
+#include "plugin/json_plugin_router.h"
+#include "plugin/string_plugin_router.h"
 #include "presentation/control_service.h"
 #include "presentation/events_service.h"
 #include "router.h"
@@ -41,13 +43,4 @@ Component<Router> getRouterComponent() {
       .install(getSourceComponent)
       .install(getDestinationComponent)
       .install(getDataTopicContainerComponent);
-}
-
-Component<SocketFactory> getSocketComponent() {
-  return createComponent().bind<Socket, UdpSocket>();
-}
-
-Component<BinaryPluginRouterFactory> getPluginRouterComponent() {
-  return createComponent().bind<PluginRouter, BinaryPluginRouter>().install(
-      getSocketComponent);
 }

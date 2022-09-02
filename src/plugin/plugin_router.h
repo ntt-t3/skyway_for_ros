@@ -20,4 +20,7 @@ class PluginRouter {
   }
 };
 
+using PluginRouterFactory = std::function<std::unique_ptr<PluginRouter>(
+    XmlRpc::XmlRpcValue, udp::endpoint)>;
+
 #endif  // SKYWAY_PLUGIN_UDP_PIPE_PLUGINROUTER_H

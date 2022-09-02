@@ -65,9 +65,11 @@ Component<SocketFactory> getMockJsonUdpSourceComponent() {
   return createComponent().bind<Socket, MockJsonSocket>();
 }
 
-Component<JsonPluginRouterFactory> getJsonPluginRouterComponent() {
-  return createComponent().bind<PluginRouter, JsonPluginRouter>().install(
-      getMockJsonUdpSourceComponent);
+Component<PluginRouterFactory> getMockJsonPluginRouterComponent() {
+  return createComponent()
+      .replace(getUdpSocketComponent)
+      .with(getMockJsonUdpSourceComponent)
+      .install(getJsonPluginRouterComponent);
 }
 
 // XmlRpcValueが不正なケース
@@ -76,8 +78,8 @@ TEST(TestSuite, json_plugin_try_start_with_invalid_xml) {
   XmlRpc::XmlRpcValue config;
 
   // objectを作成し、受信スレッドを開始
-  Injector<JsonPluginRouterFactory> injector(getJsonPluginRouterComponent);
-  JsonPluginRouterFactory pluginRouterFactory(injector);
+  Injector<PluginRouterFactory> injector(getMockJsonPluginRouterComponent);
+  PluginRouterFactory pluginRouterFactory(injector);
   // データは送信しないのでportは何でも良い
   auto source = pluginRouterFactory(config, udp::endpoint(udp::v4(), 0));
   auto result = source->TryStart();
@@ -93,8 +95,8 @@ TEST(TestSuite, json_plugin_try_start_not_found_plugin) {
   nh.getParam("/test_node/invalid_json_config", config);
 
   // objectを作成し、受信スレッドを開始
-  Injector<JsonPluginRouterFactory> injector(getJsonPluginRouterComponent);
-  JsonPluginRouterFactory pluginRouterFactory(injector);
+  Injector<PluginRouterFactory> injector(getMockJsonPluginRouterComponent);
+  PluginRouterFactory pluginRouterFactory(injector);
   // データは送信しないのでportは何でも良い
   auto source = pluginRouterFactory(config, udp::endpoint(udp::v4(), 0));
   auto result = source->TryStart();
@@ -110,8 +112,8 @@ TEST(TestSuite, json_plugin_try_start_with_loopback_plugin) {
   nh.getParam("/test_node/valid_json_config", config);
 
   // objectを作成し、受信スレッドを開始
-  Injector<JsonPluginRouterFactory> injector(getJsonPluginRouterComponent);
-  JsonPluginRouterFactory pluginRouterFactory(injector);
+  Injector<PluginRouterFactory> injector(getMockJsonPluginRouterComponent);
+  PluginRouterFactory pluginRouterFactory(injector);
   // データは送信しないのでportは何でも良い
   auto source = pluginRouterFactory(config, udp::endpoint(udp::v4(), 0));
   auto result = source->TryStart();
