@@ -54,6 +54,7 @@ ExternalProject_Add(${PROJECT_NAME}_fruit
 
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${VENDOR_DIR})
 
+aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/socket SOCKET)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/presentation PRESENTATION)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/domain DOMAIN)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/infra INFRA)
@@ -62,6 +63,7 @@ add_executable(${PROJECT_NAME}
         src/main.cpp
         src/router.cpp
         src/di.cpp
+        ${SOCKET}
         ${PRESENTATION}
         ${DOMAIN}
         ${INFRA}
@@ -81,19 +83,20 @@ target_link_libraries(${PROJECT_NAME}
         )
 
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test TESTS)
+aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/socket SOCKET_TESTS)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/domain DOMAIN_TESTS)
-aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/infra INFRA_TESTS)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/stub STUB)
 
 if (CATKIN_ENABLE_TESTING)
     find_package(rostest REQUIRED)
     add_rostest_gtest(${PROJECT_NAME}_test_node test/unit_test.test
             ${TESTS}
+            ${SOCKET_TESTS}
             ${DOMAIN_TESTS}
-            ${INFRA_TESTS}
             ${STUB}
             ${DOMAIN}
             ${INFRA}
+            ${SOCKET}
             )
     target_link_libraries(${PROJECT_NAME}_test_node
             ${catkin_LIBRARIES}
