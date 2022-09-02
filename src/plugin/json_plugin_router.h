@@ -43,6 +43,9 @@ class JsonPluginRouter : public PluginRouter {
   virtual PluginResult TryStart() override;
 };
 
-Component<PluginRouterFactory> getJsonPluginRouterComponent();
+struct JsonAnnotation {};
+
+Component<fruit::Annotated<JsonAnnotation, PluginRouterFactory>>
+getJsonPluginRouterComponent();
 
 #endif  // SKYWAY_PLUGIN_UDP_PIPE_JSON_PLUGIN_ROUTER_H

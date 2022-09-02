@@ -78,7 +78,9 @@ PluginResult JsonPluginRouter::TryStart() {
   return {.is_success = true, .error_message = ""};
 }
 
-Component<PluginRouterFactory> getJsonPluginRouterComponent() {
-  return createComponent().bind<PluginRouter, JsonPluginRouter>().install(
-      getUdpSocketComponent);
+Component<fruit::Annotated<JsonAnnotation, PluginRouterFactory>>
+getJsonPluginRouterComponent() {
+  return createComponent()
+      .bind<fruit::Annotated<JsonAnnotation, PluginRouter>, JsonPluginRouter>()
+      .install(getUdpSocketComponent);
 }

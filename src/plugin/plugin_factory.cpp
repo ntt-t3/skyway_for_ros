@@ -5,5 +5,10 @@
 #include "plugin_factory.h"
 
 Component<PluginFactory> getPluginFactoryComponent() {
-  return createComponent().bind<PluginFactory, PluginFactoryImpl>();
+  ROS_ERROR("plugin component");
+  return createComponent()
+      .bind<PluginFactory, PluginFactoryImpl>()
+      .install(getBinaryPluginRouterComponent)
+      .install(getJsonPluginRouterComponent)
+      .install(getStringPluginRouterComponent);
 }

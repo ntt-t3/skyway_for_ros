@@ -16,6 +16,7 @@
 #include "std_msgs/UInt8MultiArray.h"
 
 using boost::asio::ip::udp;
+using fruit::Annotated;
 using fruit::Component;
 using fruit::createComponent;
 using fruit::Injector;
@@ -56,7 +57,8 @@ Component<SocketFactory> getMockBinarySourceComponent() {
   return createComponent().bind<Socket, MockBinarySocket>();
 }
 
-Component<PluginRouterFactory> getMockBinaryPluginRouterComponent() {
+Component<Annotated<BinaryAnnotation, PluginRouterFactory>>
+getMockBinaryPluginRouterComponent() {
   return createComponent()
       .replace(getUdpSocketComponent)
       .with(getMockBinarySourceComponent)
@@ -69,8 +71,10 @@ TEST(TestSuite, binary_plugin_try_start_with_invalid_xml) {
   XmlRpc::XmlRpcValue config;
 
   // objectを作成し、受信スレッドを開始
-  Injector<PluginRouterFactory> injector(getMockBinaryPluginRouterComponent);
-  PluginRouterFactory pluginRouterFactory(injector);
+  Injector<Annotated<BinaryAnnotation, PluginRouterFactory>> injector(
+      getMockBinaryPluginRouterComponent);
+  PluginRouterFactory pluginRouterFactory =
+      injector.get<Annotated<BinaryAnnotation, PluginRouterFactory>>();
   // データは送信しないのでportは何でも良い
   auto source = pluginRouterFactory(config, udp::endpoint(udp::v4(), 0));
   auto result = source->TryStart();
@@ -86,8 +90,10 @@ TEST(TestSuite, binary_plugin_try_start_not_found_plugin) {
   nh.getParam("/test_node/invalid_binary_config", config);
 
   // objectを作成し、受信スレッドを開始
-  Injector<PluginRouterFactory> injector(getMockBinaryPluginRouterComponent);
-  PluginRouterFactory pluginRouterFactory(injector);
+  Injector<Annotated<BinaryAnnotation, PluginRouterFactory>> injector(
+      getMockBinaryPluginRouterComponent);
+  PluginRouterFactory pluginRouterFactory =
+      injector.get<Annotated<BinaryAnnotation, PluginRouterFactory>>();
   // データは送信しないのでportは何でも良い
   auto source = pluginRouterFactory(config, udp::endpoint(udp::v4(), 0));
   auto result = source->TryStart();
@@ -103,8 +109,10 @@ TEST(TestSuite, binary_plugin_try_start_with_loopback_plugin) {
   nh.getParam("/test_node/valid_binary_config", config);
 
   // objectを作成し、受信スレッドを開始
-  Injector<PluginRouterFactory> injector(getMockBinaryPluginRouterComponent);
-  PluginRouterFactory pluginRouterFactory(injector);
+  Injector<Annotated<BinaryAnnotation, PluginRouterFactory>> injector(
+      getMockBinaryPluginRouterComponent);
+  PluginRouterFactory pluginRouterFactory =
+      injector.get<Annotated<BinaryAnnotation, PluginRouterFactory>>();
   // データは送信しないのでportは何でも良い
   auto source = pluginRouterFactory(config, udp::endpoint(udp::v4(), 0));
   auto result = source->TryStart();

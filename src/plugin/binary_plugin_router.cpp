@@ -68,7 +68,10 @@ PluginResult BinaryPluginRouter::TryStart() {
   return {.is_success = true, .error_message = ""};
 }
 
-Component<PluginRouterFactory> getBinaryPluginRouterComponent() {
-  return createComponent().bind<PluginRouter, BinaryPluginRouter>().install(
-      getUdpSocketComponent);
+Component<fruit::Annotated<BinaryAnnotation, PluginRouterFactory>>
+getBinaryPluginRouterComponent() {
+  return createComponent()
+      .bind<fruit::Annotated<BinaryAnnotation, PluginRouter>,
+            BinaryPluginRouter>()
+      .install(getUdpSocketComponent);
 }

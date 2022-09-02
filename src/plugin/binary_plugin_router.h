@@ -39,6 +39,9 @@ class BinaryPluginRouter : public PluginRouter {
   virtual PluginResult TryStart() override;
 };
 
-Component<PluginRouterFactory> getBinaryPluginRouterComponent();
+struct BinaryAnnotation {};
+
+Component<fruit::Annotated<BinaryAnnotation, PluginRouterFactory>>
+getBinaryPluginRouterComponent();
 
 #endif  // SKYWAY_PLUGIN_UDP_PIPE_BINARY_PLUGIN_ROUTER_H

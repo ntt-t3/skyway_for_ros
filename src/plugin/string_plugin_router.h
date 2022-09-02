@@ -39,6 +39,9 @@ class StringPluginRouter : public PluginRouter {
   virtual PluginResult TryStart() override;
 };
 
-Component<PluginRouterFactory> getStringPluginRouterComponent();
+struct StringAnnotation {};
+
+Component<fruit::Annotated<StringAnnotation, PluginRouterFactory>>
+getStringPluginRouterComponent();
 
 #endif  // SKYWAY_PLUGIN_UDP_PIPE_STRING_PLUGIN_ROUTER_H

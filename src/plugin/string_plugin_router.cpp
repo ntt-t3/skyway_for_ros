@@ -70,7 +70,10 @@ PluginResult StringPluginRouter::TryStart() {
   return {.is_success = true, .error_message = ""};
 }
 
-Component<PluginRouterFactory> getStringPluginRouterComponent() {
-  return createComponent().bind<PluginRouter, StringPluginRouter>().install(
-      getUdpSocketComponent);
+Component<fruit::Annotated<StringAnnotation, PluginRouterFactory>>
+getStringPluginRouterComponent() {
+  return createComponent()
+      .bind<fruit::Annotated<StringAnnotation, PluginRouter>,
+            StringPluginRouter>()
+      .install(getUdpSocketComponent);
 }
