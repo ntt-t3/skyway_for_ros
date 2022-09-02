@@ -5,9 +5,11 @@
 #include "domain/entity.h"
 #include "infra/destination_impl.h"
 #include "infra/source_impl.h"
+#include "plugin/binary_plugin_router.h"
 #include "presentation/control_service.h"
 #include "presentation/events_service.h"
 #include "router.h"
+#include "socket/udp_socket.h"
 
 Component<SourceFactory> getSourceComponent() {
   return createComponent().bind<Source, DataChannelSourceImpl>();
@@ -39,4 +41,13 @@ Component<Router> getRouterComponent() {
       .install(getSourceComponent)
       .install(getDestinationComponent)
       .install(getDataTopicContainerComponent);
+}
+
+Component<SocketFactory> getSocketComponent() {
+  return createComponent().bind<Socket, UdpSocket>();
+}
+
+Component<BinaryPluginRouterFactory> getPluginRouterComponent() {
+  return createComponent().bind<PluginRouter, BinaryPluginRouter>().install(
+      getSocketComponent);
 }

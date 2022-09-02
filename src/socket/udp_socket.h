@@ -78,6 +78,6 @@ class UdpSocket : public Socket {
 using SocketFactory = std::function<std::unique_ptr<Socket>(
     udp::endpoint, std::shared_ptr<std::function<void(std::vector<uint8_t>)>>)>;
 
-fruit::Component<SocketFactory> getSourceComponent();
+fruit::Component<SocketFactory> getSocketComponent();
 
 #endif  // SKYWAY_PLUGIN_UDP_PIPE_DATA_CHANNEL_PIPE_H
