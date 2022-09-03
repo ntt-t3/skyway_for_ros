@@ -19,6 +19,7 @@ use crate::ffi::rust_to_c_bridge::state_objects::{
     ChannelsImpl, CHANNELS, DATA_CONNECTION_STATE_INSTANCE, MEDIA_CONNECTION_STATE_INSTANCE,
 };
 
+/// C++側から、 `crate::ffi::c_to_rust_bridge::run` 経由で呼ばれる
 pub(crate) async fn rust_main() {
     let _ = DATA_CONNECTION_STATE_INSTANCE.set(std::sync::Mutex::new(HashMap::new()));
     let _ = MEDIA_CONNECTION_STATE_INSTANCE.set(std::sync::Mutex::new(HashMap::new()));
