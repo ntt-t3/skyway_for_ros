@@ -1,3 +1,7 @@
+/// Create Peer APIは、あくまでPeer Objectの生成要求に過ぎず、
+/// Openイベントが発火するまではPeer Objectの生成に失敗する可能性がある
+/// ユーザにとってはPeer Objectは生成に完了して然るべきもので、Eventの監視をする積極的理由がないので、
+/// このUseCase内でEventの監視まで自動的に行い、Open完了時に結果を返す
 use std::sync::Arc;
 
 use async_trait::async_trait;
