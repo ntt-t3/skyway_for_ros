@@ -8,9 +8,12 @@ use crate::application::usecase::media::answer::AnswerService;
 use crate::application::usecase::media::call::Call;
 use crate::application::usecase::peer::create::Create;
 use crate::application::usecase::General;
+use crate::ffi::rust_to_c_bridge::state_objects::{
+    CallbackFunctionsImpl, GlobalStateImpl, LoggerImpl, ProgramStateImpl,
+};
 use crate::infra::RepositoryImpl;
 use crate::utils::CallbackCallerImpl;
-use crate::{CallbackFunctionsImpl, GlobalStateImpl, LoggerImpl, ProgramStateImpl};
+use crate::*;
 
 module! {
     pub(crate) CppObjctsModule {

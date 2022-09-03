@@ -15,8 +15,9 @@ use crate::domain::entity::{DataConnectionEventEnum, MediaConnectionEventEnum, P
 use crate::domain::repository::Repository;
 use crate::error::Error;
 use crate::utils::CallbackCaller;
-use crate::{error, CallResponseDto, DataPipeInfo, GlobalState, Logger, ProgramState};
+use crate::{error, CallResponseDto, DataPipeInfo};
 
+use crate::ffi::rust_to_c_bridge::state_objects::{GlobalState, Logger, ProgramState};
 #[cfg(test)]
 use mockall::automock;
 use skyway_webrtc_gateway_caller::prelude::data::DataConnectionIdWrapper;

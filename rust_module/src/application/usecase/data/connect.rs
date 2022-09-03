@@ -23,10 +23,12 @@ use crate::domain::entity::{
     ConnectQuery, DataIdWrapper, PhantomId, SerializableId, SerializableSocket, SocketInfo,
 };
 use crate::domain::repository::Repository;
-use crate::ffi::global_params::DataPipeInfo;
-use crate::ffi::{DestinationParameters, SourceParameters, TopicParameters};
+use crate::error;
+use crate::ffi::rust_to_c_bridge::c_functions_wrapper::{
+    DataPipeInfo, DestinationParameters, SourceParameters, TopicParameters,
+};
+use crate::ffi::rust_to_c_bridge::state_objects::GlobalState;
 use crate::utils::{available_port, CallbackCaller};
-use crate::{error, GlobalState};
 
 #[derive(Component)]
 #[shaku(interface = Service)]
@@ -151,8 +153,9 @@ mod connect_data_test {
         DataConnectionId, DataConnectionIdWrapper, DataId, PeerId, SocketInfo, Token,
     };
     use crate::domain::repository::MockRepository;
+    use crate::ffi::rust_to_c_bridge::c_functions_wrapper::PluginLoadResult;
     use crate::utils::MockCallbackCaller;
-    use crate::{MockGlobalState, PluginLoadResult};
+    use crate::MockGlobalState;
 
     #[tokio::test]
     // Dataポートの開放に失敗した場合はエラーを返す

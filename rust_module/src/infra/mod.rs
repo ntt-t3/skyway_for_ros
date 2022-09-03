@@ -8,7 +8,8 @@ use crate::domain::entity::response::ResponseResult;
 use crate::domain::entity::Stringify;
 use crate::domain::repository::Repository;
 use crate::error;
-use crate::GlobalState;
+use crate::ffi::rust_to_c_bridge::state_objects::GlobalState;
+use crate::*;
 
 #[derive(Component)]
 #[shaku(interface = Repository)]
@@ -85,7 +86,8 @@ mod infra_send_message_test {
     use crate::di::RepositoryModule;
     use crate::domain::entity::request::PeerRequest;
     use crate::domain::entity::{CreatePeerParams, FromStr, PeerId};
-    use crate::{Channels, ChannelsImpl, MockGlobalState};
+    use crate::ffi::rust_to_c_bridge::state_objects::{Channels, ChannelsImpl};
+    use crate::MockGlobalState;
 
     fn create_request() -> Request {
         let inner = PeerRequest::Create {
@@ -287,8 +289,9 @@ mod infra_receive_event_test {
 
     use super::*;
     use crate::di::RepositoryModule;
-    use crate::ffi::helper;
-    use crate::{Channels, ChannelsImpl, MockGlobalState, ProgramStateHolder};
+    use crate::ffi::rust_to_c_bridge::helper;
+    use crate::ffi::rust_to_c_bridge::state_objects::{Channels, ChannelsImpl};
+    use crate::{MockGlobalState, ProgramStateHolder};
 
     #[tokio::test]
     // eventを正常に受信するケース

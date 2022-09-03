@@ -24,7 +24,9 @@ use crate::domain::entity::{
     AnswerQuery, Constraints, MediaId, MediaParams, RedirectParameters, RtcpId, SerializableSocket,
 };
 use crate::domain::repository::Repository;
-use crate::{error, GlobalState};
+use crate::error;
+use crate::ffi::rust_to_c_bridge::state_objects::GlobalState;
+use crate::utils::CallbackCaller;
 
 #[derive(Component)]
 #[shaku(interface = Service)]
@@ -40,7 +42,6 @@ pub(crate) struct AnswerService {
 #[async_trait]
 impl Service for AnswerService {
     async fn execute(&self, request: RequestDto) -> Result<ResponseDtoResult, error::Error> {
-
         if let RequestDto::Media(MediaRequestDto::Answer { params }) = request {
             let video_socket = {
                 let param = RequestDto::Media(MediaRequestDto::ContentCreate {
@@ -358,8 +359,9 @@ mod answer_media_test {
         let mut factory = MockFactory::new();
         factory.expect_create_service().times(4).returning(|_| {
             let mut mock_service = MockService::new();
-            mock_service.expect_execute().returning(|request| {
-                match request {
+            mock_service
+                .expect_execute()
+                .returning(|request| match request {
                     RequestDto::Media(MediaRequestDto::ContentCreate { params }) => {
                         if params.is_video {
                             let socket = SocketInfo::<MediaId>::try_create(
@@ -397,8 +399,7 @@ mod answer_media_test {
                     _ => {
                         unreachable!()
                     }
-                }
-            });
+                });
             Arc::new(mock_service)
         });
 

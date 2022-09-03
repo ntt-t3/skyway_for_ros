@@ -24,10 +24,12 @@ use crate::domain::entity::{
     DataIdWrapper, PhantomId, RedirectParams, SerializableId, SerializableSocket, SocketInfo,
 };
 use crate::domain::repository::Repository;
-use crate::ffi::global_params::DataPipeInfo;
-use crate::ffi::{DestinationParameters, SourceParameters, TopicParameters};
+use crate::error;
+use crate::ffi::rust_to_c_bridge::c_functions_wrapper::{
+    DataPipeInfo, DestinationParameters, SourceParameters, TopicParameters,
+};
+use crate::ffi::rust_to_c_bridge::state_objects::GlobalState;
 use crate::utils::{available_port, CallbackCaller};
-use crate::{error, GlobalState};
 
 #[derive(Component)]
 #[shaku(interface = Service)]
@@ -146,7 +148,7 @@ mod redirect_data_test {
     use crate::domain::entity::response::{DataResponse, ResponseResult};
     use crate::domain::entity::{DataConnectionId, DataConnectionIdWrapper, DataId, SocketInfo};
     use crate::domain::repository::MockRepository;
-    use crate::ffi::PluginLoadResult;
+    use crate::ffi::rust_to_c_bridge::c_functions_wrapper::PluginLoadResult;
     use crate::utils::MockCallbackCaller;
     use crate::MockGlobalState;
 

@@ -9,7 +9,7 @@ use crate::domain::entity::{
     RtcpIdWrapper, SerializableId, SocketInfo,
 };
 use crate::error;
-use crate::ffi::global_params::DataPipeInfo;
+use crate::ffi::rust_to_c_bridge::c_functions_wrapper::DataPipeInfo;
 
 //========== Peer ==========
 

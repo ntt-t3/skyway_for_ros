@@ -10,8 +10,9 @@ use crate::application::usecase::Service;
 use crate::domain::entity::request::Request;
 use crate::domain::entity::response::Response;
 use crate::domain::repository::Repository;
+use crate::error;
+use crate::ffi::rust_to_c_bridge::state_objects::GlobalState;
 use crate::utils::CallbackCaller;
-use crate::{error, GlobalState};
 
 #[derive(Component)]
 #[shaku(interface = Service)]

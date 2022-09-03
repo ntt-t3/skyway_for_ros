@@ -2,8 +2,7 @@ use std::net::TcpListener;
 
 use shaku::{Component, Interface};
 
-use crate::ffi::{PluginLoadResult, TopicParameters};
-use crate::CallbackFunctionsHolder;
+use crate::ffi::rust_to_c_bridge::c_functions_wrapper::*;
 
 #[cfg(test)]
 use mockall::automock;
