@@ -3,9 +3,9 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use shaku::Component;
 
+use crate::application::dto;
 use crate::application::dto::request::RequestDto;
 use crate::application::dto::response::ResponseDtoResult;
-use crate::application::usecase;
 use crate::application::usecase::Service;
 use crate::domain::repository::Repository;
 use crate::error;
@@ -21,9 +21,9 @@ pub(crate) struct General {
 #[async_trait]
 impl Service for General {
     async fn execute(&self, dto: RequestDto) -> Result<ResponseDtoResult, error::Error> {
-        let request = usecase::dto_to_request(dto)?;
+        let request = dto::dto_to_request(dto)?;
         let result = self.repository.register(request).await?;
-        usecase::result_to_dto(result)
+        dto::result_to_dto(result)
     }
 }
 
@@ -171,10 +171,10 @@ mod create_data_test {
     use shaku::HasComponent;
 
     use crate::application::dto::request::{DataRequestDto, RequestDto};
-    use crate::application::dto::response::{DataResponseDto, ResponseDtoResult};
+    use crate::application::dto::response::{DataResponseDto, ResponseDto, ResponseDtoResult};
     use crate::application::usecase::*;
     use crate::di::GeneralService;
-    use crate::domain::entity::response::{Response, ResponseResult};
+    use crate::domain::entity::response::{DataResponse, Response, ResponseResult};
     use crate::domain::entity::{DataId, SerializableSocket, SocketInfo};
     use crate::domain::repository::{MockRepository, Repository};
 
