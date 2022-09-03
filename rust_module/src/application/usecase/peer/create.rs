@@ -6,13 +6,12 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use shaku::Component;
-use skyway_webrtc_gateway_caller::prelude::response_parser::{PeerResponse, ResponseResult};
 
 use crate::application::dto::request::RequestDto;
 use crate::application::dto::response::{PeerResponseDto, ResponseDto, ResponseDtoResult};
 use crate::application::usecase::Service;
 use crate::domain::entity::request::Request;
-use crate::domain::entity::response::Response;
+use crate::domain::entity::response::{PeerResponse, Response, ResponseResult};
 use crate::domain::repository::Repository;
 use crate::error;
 use crate::ffi::rust_to_c_bridge::state_objects::{CallbackFunctions, GlobalState};

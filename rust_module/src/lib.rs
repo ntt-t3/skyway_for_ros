@@ -13,7 +13,6 @@ mod utils;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::domain::entity::MediaConnectionId;
 use crate::ffi::rust_to_c_bridge::c_functions_wrapper::{LoggerHolder, ProgramStateHolder};
 use crate::ffi::rust_to_c_bridge::state_objects::{
     ChannelsImpl, CHANNELS, DATA_CONNECTION_STATE_INSTANCE, MEDIA_CONNECTION_STATE_INSTANCE,

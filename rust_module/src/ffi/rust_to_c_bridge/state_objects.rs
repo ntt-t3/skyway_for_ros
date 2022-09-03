@@ -6,11 +6,11 @@ use once_cell::sync::OnceCell;
 use shaku::{Component, Interface};
 use tokio::sync::{mpsc, oneshot, Mutex};
 
-use super::c_functions_wrapper::{
-    CallbackFunctionsHolder, DataPipeInfo, LoggerHolder, PluginLoadResult, ProgramStateHolder,
-};
 use crate::application::dto::response::CallResponseDto;
 use crate::domain::entity::{DataConnectionId, MediaConnectionId};
+use crate::ffi::rust_to_c_bridge::c_functions_wrapper::{
+    CallbackFunctionsHolder, DataPipeInfo, LoggerHolder, PluginLoadResult, ProgramStateHolder,
+};
 
 #[cfg(test)]
 use mockall::automock;

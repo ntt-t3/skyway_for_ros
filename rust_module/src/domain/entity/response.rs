@@ -1,5 +1,3 @@
-use crate::error;
-
 #[allow(unused_imports)]
 pub(crate) use skyway_webrtc_gateway_caller::prelude::response_parser::ResponseMessage as Response;
 #[allow(unused_imports)]
@@ -8,6 +6,7 @@ pub(crate) use skyway_webrtc_gateway_caller::prelude::response_parser::{
 };
 
 use crate::domain::entity::{FromStr, Stringify};
+use crate::error;
 
 #[allow(dead_code)]
 impl Stringify for ResponseResult {
