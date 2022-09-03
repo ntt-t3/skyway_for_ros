@@ -1,3 +1,5 @@
+/// Rust側の処理の大元となるモジュール
+/// 全ての処理はcall_serviceとreceive_eventの2つを経由してC++側と連携される
 pub(crate) mod dto;
 pub(crate) mod factory;
 pub(crate) mod usecase;
@@ -33,7 +35,12 @@ struct ErrorMessageInternal {
     error: String,
 }
 
-// called from ffi::call_service
+/// called from ffi::call_service
+/// 能動的にWebRTC GatewayのAPIを呼ぶために使用される
+/// 取得した結果は、そのままの形ではなく、C++側/End Userが必要とする形に変換される。
+/// また、処理によってはRust側のEventListenerが内部的な処理を行うものもある
+/// 特別な処理を行うものは、usecase内のdata, media, peer moduleの中で実装される。
+/// その他のものはgeneral moduleの中で処理される。
 pub(crate) async fn call_service(message: String) -> String {
     match RequestDto::from_str(&message) {
         Ok(dto) => {
@@ -81,7 +88,11 @@ pub(crate) async fn call_service(message: String) -> String {
     }
 }
 
-// called from ffi::receive_events
+/// called from ffi::receive_events
+/// 起動時に開始されたEventListenerが常時WebRTC Gatewayのイベントを監視している。
+/// この関数を通してC++側のプログラムがイベントを取得する。
+/// 取得したイベントはそのままの形ではなく、C++側/End Userが必要とする形に変換される。
+/// また、イベントによってはRust側のEventListenerが受信時に処理を行うものもある
 pub async fn receive_events() -> String {
     let module = EventReceiveService::builder().build();
     let service: &dyn EventReceive = module.resolve_ref();

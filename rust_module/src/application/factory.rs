@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-
 use shaku::{Component, HasComponent, Interface};
 
 use crate::application::dto::request::{
@@ -23,6 +22,7 @@ pub(crate) trait Factory: Interface {
 #[shaku(interface = Factory)]
 pub(crate) struct FactoryImpl {}
 
+/// 各UseCaseのインスタンスを生成し、サービスとして返す
 impl Factory for FactoryImpl {
     fn create_service(&self, request: &RequestDto) -> Arc<dyn Service> {
         match request {
