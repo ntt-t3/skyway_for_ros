@@ -1,3 +1,4 @@
+// skyway_webrtc_gateway_callerをInfra層として利用するための薄いラッパー
 use std::sync::Arc;
 
 use async_trait::async_trait;
