@@ -12,7 +12,6 @@ use crate::ffi::rust_to_c_bridge::state_objects::{
     CallbackFunctionsImpl, GlobalStateImpl, LoggerImpl, ProgramStateImpl,
 };
 use crate::infra::RepositoryImpl;
-use crate::utils::CallbackCallerImpl;
 
 module! {
     pub(crate) CppObjctsModule {
@@ -44,42 +43,42 @@ module! {
 
 module! {
     pub(crate) PeerCreateService {
-        components = [Create, GlobalStateImpl, RepositoryImpl, FactoryImpl, CallbackCallerImpl],
+        components = [Create, GlobalStateImpl, RepositoryImpl, FactoryImpl, CallbackFunctionsImpl],
         providers = []
     }
 }
 
 module! {
     pub(crate) DataConnectService {
-        components = [Connect, GlobalStateImpl, RepositoryImpl, FactoryImpl, CallbackCallerImpl],
+        components = [Connect, GlobalStateImpl, RepositoryImpl, FactoryImpl, CallbackFunctionsImpl],
         providers = []
     }
 }
 
 module! {
     pub(crate) DataRedirectService {
-        components = [Redirect, GlobalStateImpl, RepositoryImpl, FactoryImpl, CallbackCallerImpl],
+        components = [Redirect, GlobalStateImpl, RepositoryImpl, FactoryImpl, CallbackFunctionsImpl],
         providers = []
     }
 }
 
 module! {
     pub(crate) MediaCallService {
-        components = [Call, GlobalStateImpl, RepositoryImpl, FactoryImpl, CallbackCallerImpl],
+        components = [Call, GlobalStateImpl, RepositoryImpl, FactoryImpl, CallbackFunctionsImpl],
         providers = []
     }
 }
 
 module! {
     pub(crate) MediaAnswerService {
-        components = [AnswerService, GlobalStateImpl, RepositoryImpl, FactoryImpl, CallbackCallerImpl],
+        components = [AnswerService, GlobalStateImpl, RepositoryImpl, FactoryImpl, CallbackFunctionsImpl],
         providers = []
     }
 }
 
 module! {
     pub(crate) EventReceiveService {
-        components = [event::EventReceiveImpl, CallbackCallerImpl, GlobalStateImpl, RepositoryImpl, LoggerImpl],
+        components = [event::EventReceiveImpl, CallbackFunctionsImpl, GlobalStateImpl, RepositoryImpl, LoggerImpl],
         providers = []
     }
 }

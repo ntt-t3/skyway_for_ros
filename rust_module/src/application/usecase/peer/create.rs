@@ -11,8 +11,7 @@ use crate::domain::entity::request::Request;
 use crate::domain::entity::response::Response;
 use crate::domain::repository::Repository;
 use crate::error;
-use crate::ffi::rust_to_c_bridge::state_objects::GlobalState;
-use crate::utils::CallbackCaller;
+use crate::ffi::rust_to_c_bridge::state_objects::{CallbackFunctions, GlobalState};
 
 #[allow(unused)]
 #[derive(Component)]
@@ -23,7 +22,7 @@ pub(crate) struct Create {
     #[shaku(inject)]
     state: Arc<dyn GlobalState>,
     #[shaku(inject)]
-    callback: Arc<dyn CallbackCaller>,
+    callback: Arc<dyn CallbackFunctions>,
 }
 
 #[async_trait]
@@ -71,7 +70,7 @@ mod create_peer_test {
     use crate::di::PeerCreateService;
     use crate::domain::entity::response::ResponseResult;
     use crate::domain::repository::MockRepository;
-    use crate::utils::MockCallbackCaller;
+    use crate::ffi::rust_to_c_bridge::state_objects::MockCallbackFunctions;
 
     #[tokio::test]
     async fn success() {
@@ -120,7 +119,7 @@ mod create_peer_test {
             ResponseResult::from_str(message)
         });
 
-        let mut caller = MockCallbackCaller::new();
+        let mut caller = MockCallbackFunctions::new();
         caller
             .expect_create_peer_callback()
             .times(1)
@@ -129,7 +128,7 @@ mod create_peer_test {
         // サービスの生成
         let module = PeerCreateService::builder()
             .with_component_override::<dyn Repository>(Box::new(repository))
-            .with_component_override::<dyn CallbackCaller>(Box::new(caller))
+            .with_component_override::<dyn CallbackFunctions>(Box::new(caller))
             .build();
         let service: &dyn Service = module.resolve_ref();
 

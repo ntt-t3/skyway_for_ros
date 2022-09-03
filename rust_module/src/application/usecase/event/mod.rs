@@ -11,8 +11,7 @@ use crate::application::dto::response::{ResponseDto, ResponseDtoResult};
 use crate::domain::entity::response::{Response, ResponseResult};
 use crate::domain::repository::Repository;
 use crate::error;
-use crate::ffi::rust_to_c_bridge::state_objects::{GlobalState, Logger};
-use crate::utils::CallbackCaller;
+use crate::ffi::rust_to_c_bridge::state_objects::{CallbackFunctions, GlobalState, Logger};
 
 #[cfg(test)]
 use mockall::automock;
@@ -39,7 +38,7 @@ pub(crate) struct EventReceiveImpl {
     #[shaku(inject)]
     state: Arc<dyn GlobalState>,
     #[shaku(inject)]
-    callback: Arc<dyn CallbackCaller>,
+    callback: Arc<dyn CallbackFunctions>,
 }
 
 #[async_trait]

@@ -25,8 +25,7 @@ use crate::domain::entity::{
 use crate::domain::repository::Repository;
 use crate::error;
 use crate::ffi::rust_to_c_bridge::c_functions_wrapper::DataPipeInfo;
-use crate::ffi::rust_to_c_bridge::state_objects::GlobalState;
-use crate::utils::CallbackCaller;
+use crate::ffi::rust_to_c_bridge::state_objects::{CallbackFunctions, GlobalState};
 
 #[derive(Component)]
 #[shaku(interface = Service)]
@@ -38,7 +37,7 @@ pub(crate) struct Redirect {
     #[shaku(inject)]
     factory: Arc<dyn Factory>,
     #[shaku(inject)]
-    callback: Arc<dyn CallbackCaller>,
+    callback: Arc<dyn CallbackFunctions>,
 }
 
 #[async_trait]
@@ -145,8 +144,7 @@ mod redirect_data_test {
     use crate::domain::entity::{DataConnectionId, DataConnectionIdWrapper, DataId, SocketInfo};
     use crate::domain::repository::MockRepository;
     use crate::ffi::rust_to_c_bridge::c_functions_wrapper::PluginLoadResult;
-    use crate::ffi::rust_to_c_bridge::state_objects::MockGlobalState;
-    use crate::utils::MockCallbackCaller;
+    use crate::ffi::rust_to_c_bridge::state_objects::{MockCallbackFunctions, MockGlobalState};
 
     #[tokio::test]
     // Dataポートの開放に失敗した場合はエラーを返す
@@ -168,7 +166,7 @@ mod redirect_data_test {
             .expect_register()
             .times(0)
             .returning(|_| unreachable!());
-        let mut caller = MockCallbackCaller::new();
+        let mut caller = MockCallbackFunctions::new();
         caller
             .expect_data_callback()
             .times(0)
@@ -183,7 +181,7 @@ mod redirect_data_test {
         let module = DataRedirectService::builder()
             .with_component_override::<dyn Factory>(Box::new(factory))
             .with_component_override::<dyn Repository>(Box::new(repository))
-            .with_component_override::<dyn CallbackCaller>(Box::new(caller))
+            .with_component_override::<dyn CallbackFunctions>(Box::new(caller))
             .with_component_override::<dyn GlobalState>(Box::new(state))
             .build();
         let service: &dyn Service = module.resolve_ref();
@@ -242,7 +240,7 @@ mod redirect_data_test {
             Arc::new(mock_service)
         });
 
-        let mut caller = MockCallbackCaller::new();
+        let mut caller = MockCallbackFunctions::new();
         caller
             .expect_data_callback()
             .times(1)
@@ -268,7 +266,7 @@ mod redirect_data_test {
         let module = DataRedirectService::builder()
             .with_component_override::<dyn Factory>(Box::new(factory))
             .with_component_override::<dyn Repository>(Box::new(repository))
-            .with_component_override::<dyn CallbackCaller>(Box::new(caller))
+            .with_component_override::<dyn CallbackFunctions>(Box::new(caller))
             .with_component_override::<dyn GlobalState>(Box::new(state))
             .build();
         let service: &dyn Service = module.resolve_ref();
@@ -343,7 +341,7 @@ mod redirect_data_test {
             )))
         });
 
-        let mut caller = MockCallbackCaller::new();
+        let mut caller = MockCallbackFunctions::new();
         caller
             .expect_data_callback()
             .times(1)
@@ -368,7 +366,7 @@ mod redirect_data_test {
         let module = DataRedirectService::builder()
             .with_component_override::<dyn Factory>(Box::new(factory))
             .with_component_override::<dyn Repository>(Box::new(repository))
-            .with_component_override::<dyn CallbackCaller>(Box::new(caller))
+            .with_component_override::<dyn CallbackFunctions>(Box::new(caller))
             .with_component_override::<dyn GlobalState>(Box::new(state))
             .build();
         let service: &dyn Service = module.resolve_ref();

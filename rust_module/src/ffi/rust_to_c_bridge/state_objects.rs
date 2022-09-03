@@ -34,6 +34,7 @@ pub(crate) static MEDIA_CONNECTION_STATE_INSTANCE: OnceCell<
     std::sync::Mutex<HashMap<MediaConnectionId, CallResponseDto>>,
 > = OnceCell::new();
 
+#[cfg_attr(test, automock)]
 pub(crate) trait CallbackFunctions: Interface {
     fn create_peer_callback(&self, peer_id: &str, token: &str);
     fn peer_deleted_callback(&self);
