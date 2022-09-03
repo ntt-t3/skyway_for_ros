@@ -12,7 +12,7 @@ use crate::application::usecase::event::EventReceive;
 use crate::di::*;
 use crate::domain::entity::Stringify;
 use crate::error;
-use crate::LoggerHolder;
+use crate::ffi::rust_to_c_bridge::c_functions_wrapper::LoggerHolder;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct ErrorMessage {

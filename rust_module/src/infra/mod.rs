@@ -9,7 +9,6 @@ use crate::domain::entity::Stringify;
 use crate::domain::repository::Repository;
 use crate::error;
 use crate::ffi::rust_to_c_bridge::state_objects::GlobalState;
-use crate::*;
 
 #[derive(Component)]
 #[shaku(interface = Repository)]
@@ -86,8 +85,7 @@ mod infra_send_message_test {
     use crate::di::RepositoryModule;
     use crate::domain::entity::request::PeerRequest;
     use crate::domain::entity::{CreatePeerParams, FromStr, PeerId};
-    use crate::ffi::rust_to_c_bridge::state_objects::{Channels, ChannelsImpl};
-    use crate::MockGlobalState;
+    use crate::ffi::rust_to_c_bridge::state_objects::{Channels, ChannelsImpl, MockGlobalState};
 
     fn create_request() -> Request {
         let inner = PeerRequest::Create {
@@ -110,10 +108,10 @@ mod infra_send_message_test {
         // eventのtestは他でやるので、txは使わない
         let (_event_tx, event_rx) = mpsc::channel::<String>(1000);
         static CHANNELS: OnceCell<Arc<dyn Channels>> = OnceCell::new();
-        let _ = CHANNELS.set(Arc::new(ChannelsImpl {
-            sender: message_tx,
-            receiver: Mutex::new(event_rx),
-        }));
+        let _ = CHANNELS.set(Arc::new(ChannelsImpl::new(
+            message_tx,
+            Mutex::new(event_rx),
+        )));
 
         // GlobalStateのMockを生成
         // message_txを返すために使う
@@ -172,10 +170,10 @@ mod infra_send_message_test {
         // eventのtestは他でやるので、txは使わない
         let (_event_tx, event_rx) = mpsc::channel::<String>(1000);
         static CHANNELS: OnceCell<Arc<dyn Channels>> = OnceCell::new();
-        let _ = CHANNELS.set(Arc::new(ChannelsImpl {
-            sender: message_tx,
-            receiver: Mutex::new(event_rx),
-        }));
+        let _ = CHANNELS.set(Arc::new(ChannelsImpl::new(
+            message_tx,
+            Mutex::new(event_rx),
+        )));
 
         // GlobalStateのMockを生成
         // message_txを返すために使う
@@ -227,10 +225,10 @@ mod infra_send_message_test {
         // eventのtestは他でやるので、txは使わない
         let (_event_tx, event_rx) = mpsc::channel::<String>(1000);
         static CHANNELS: OnceCell<Arc<dyn Channels>> = OnceCell::new();
-        let _ = CHANNELS.set(Arc::new(ChannelsImpl {
-            sender: message_tx,
-            receiver: Mutex::new(event_rx),
-        }));
+        let _ = CHANNELS.set(Arc::new(ChannelsImpl::new(
+            message_tx,
+            Mutex::new(event_rx),
+        )));
 
         // GlobalStateのMockを生成
         // message_txを返すために使う
@@ -289,9 +287,8 @@ mod infra_receive_event_test {
 
     use super::*;
     use crate::di::RepositoryModule;
-    use crate::ffi::rust_to_c_bridge::helper;
-    use crate::ffi::rust_to_c_bridge::state_objects::{Channels, ChannelsImpl};
-    use crate::{MockGlobalState, ProgramStateHolder};
+    use crate::ffi::rust_to_c_bridge::c_functions_wrapper::{helper, ProgramStateHolder};
+    use crate::ffi::rust_to_c_bridge::state_objects::{Channels, ChannelsImpl, MockGlobalState};
 
     #[tokio::test]
     // eventを正常に受信するケース
@@ -301,10 +298,10 @@ mod infra_receive_event_test {
         // eventのtestは他でやるので、txは使わない
         let (event_tx, event_rx) = mpsc::channel::<String>(1000);
         static CHANNELS: OnceCell<Arc<dyn Channels>> = OnceCell::new();
-        let _ = CHANNELS.set(Arc::new(ChannelsImpl {
-            sender: message_tx,
-            receiver: Mutex::new(event_rx),
-        }));
+        let _ = CHANNELS.set(Arc::new(ChannelsImpl::new(
+            message_tx,
+            Mutex::new(event_rx),
+        )));
 
         static PROGRAM_STATE_INSTANCE: OnceCell<ProgramStateHolder> = OnceCell::new();
         let _ = PROGRAM_STATE_INSTANCE.set(ProgramStateHolder::new(
@@ -361,10 +358,10 @@ mod infra_receive_event_test {
         // eventのtestは他でやるので、txは使わない
         let (event_tx, event_rx) = mpsc::channel::<String>(1000);
         static CHANNELS: OnceCell<Arc<dyn Channels>> = OnceCell::new();
-        let _ = CHANNELS.set(Arc::new(ChannelsImpl {
-            sender: message_tx,
-            receiver: Mutex::new(event_rx),
-        }));
+        let _ = CHANNELS.set(Arc::new(ChannelsImpl::new(
+            message_tx,
+            Mutex::new(event_rx),
+        )));
 
         static PROGRAM_STATE_INSTANCE: OnceCell<ProgramStateHolder> = OnceCell::new();
         let _ = PROGRAM_STATE_INSTANCE.set(ProgramStateHolder::new(

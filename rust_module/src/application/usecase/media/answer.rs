@@ -26,7 +26,6 @@ use crate::domain::entity::{
 use crate::domain::repository::Repository;
 use crate::error;
 use crate::ffi::rust_to_c_bridge::state_objects::GlobalState;
-use crate::utils::CallbackCaller;
 
 #[derive(Component)]
 #[shaku(interface = Service)]
@@ -265,7 +264,7 @@ mod answer_media_test {
     use crate::domain::entity::response::ResponseResult;
     use crate::domain::entity::{AnswerResult, MediaConnectionId, SocketInfo};
     use crate::domain::repository::MockRepository;
-    use crate::MockGlobalState;
+    use crate::ffi::rust_to_c_bridge::state_objects::MockGlobalState;
 
     #[tokio::test]
     async fn success() {

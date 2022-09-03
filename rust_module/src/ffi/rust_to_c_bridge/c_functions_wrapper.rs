@@ -9,7 +9,6 @@ use crate::domain::entity::DataConnectionId;
 use crate::ffi::rust_to_c_bridge::state_objects::{
     CALLBACK_FUNCTIONS, LOGGER_INSTANCE, PROGRAM_STATE_INSTANCE,
 };
-use crate::*;
 
 // Rust側でイベントが発生した際にC++側に通知するためのコールバック関数を保持する
 #[repr(C)]
@@ -66,12 +65,12 @@ impl CallbackFunctionsHolder {
 // Rust側でイベントが発生した際にC++側に通知するためのコールバック関数の実体をC++側から受け取る
 #[no_mangle]
 pub extern "C" fn register_callbacks(param: &CallbackFunctionsHolder) {
-    let functions = CallbackFunctionsHolder {
-        create_peer_callback_c: param.create_peer_callback_c,
-        peer_deleted_callback: param.peer_deleted_callback,
-        data_callback_c: param.data_callback_c,
-        data_connection_deleted_callback_c: param.data_connection_deleted_callback_c,
-    };
+    let functions = CallbackFunctionsHolder::new(
+        param.create_peer_callback_c,
+        param.peer_deleted_callback,
+        param.data_callback_c,
+        param.data_connection_deleted_callback_c,
+    );
 
     if CALLBACK_FUNCTIONS.set(functions).is_err() {
         return;
@@ -236,26 +235,6 @@ pub(crate) struct DataPipeInfo {
     pub data_pipe_port_num: u16,
 }
 
-#[repr(C)]
-pub struct SourceParameters {
-    pub(crate) source_topic_name: *mut c_char,
-    pub(crate) destination_address: *mut c_char,
-    pub(crate) destination_port: u16,
-}
-
-#[repr(C)]
-pub struct DestinationParameters {
-    pub(crate) source_port: u16,
-    pub(crate) destination_topic_name: *mut c_char,
-}
-
-#[repr(C)]
-pub struct TopicParameters {
-    pub(crate) data_connection_id: *mut c_char,
-    pub(crate) source_parameters: SourceParameters,
-    pub(crate) destination_parameters: DestinationParameters,
-}
-
 // DataChannel <-> ROS間のデータのやり取りはC++側のPluginでハンドリングする
 // Pluginが正常にロードされたかどうかを返す
 #[repr(C)]
@@ -263,4 +242,23 @@ pub struct PluginLoadResult {
     pub(crate) is_success: bool,
     pub(crate) port: u16,
     pub(crate) error_message: *mut c_char,
+}
+
+#[cfg(test)]
+pub(crate) mod helper {
+    use std::os::raw::c_double;
+
+    pub extern "C" fn is_running() -> bool {
+        true
+    }
+
+    pub extern "C" fn is_shutting_down() -> bool {
+        false
+    }
+
+    pub extern "C" fn sleep(_param: c_double) {}
+
+    pub extern "C" fn wait_for_shutdown() {}
+
+    pub extern "C" fn shutdown() {}
 }

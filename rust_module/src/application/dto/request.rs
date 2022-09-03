@@ -198,6 +198,7 @@ impl RequestDto {
         }
     }
 
+    #[allow(dead_code)]
     pub fn to_string(&self) -> Result<String, error::Error> {
         serde_json::to_string(self).map_err(|e| error::Error::SerdeError { error: e })
     }

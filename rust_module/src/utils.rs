@@ -7,6 +7,7 @@ use crate::ffi::rust_to_c_bridge::c_functions_wrapper::*;
 #[cfg(test)]
 use mockall::automock;
 
+#[allow(dead_code)]
 pub(crate) fn available_port() -> std::io::Result<u16> {
     match TcpListener::bind("0.0.0.0:0") {
         Ok(listener) => Ok(listener.local_addr().unwrap().port()),

@@ -12,6 +12,9 @@ use super::c_functions_wrapper::{
 use crate::application::dto::response::CallResponseDto;
 use crate::domain::entity::{DataConnectionId, MediaConnectionId};
 
+#[cfg(test)]
+use mockall::automock;
+
 // Rust側でイベントが発生した際に、C++側に返すべきコールバックを保持する
 pub(crate) static CALLBACK_FUNCTIONS: OnceCell<CallbackFunctionsHolder> = OnceCell::new();
 // Log出力するために必要なC++側の関数を保持する

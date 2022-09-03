@@ -14,6 +14,7 @@ use crate::error;
 use crate::ffi::rust_to_c_bridge::state_objects::GlobalState;
 use crate::utils::CallbackCaller;
 
+#[allow(unused)]
 #[derive(Component)]
 #[shaku(interface = Service)]
 pub(crate) struct Create {

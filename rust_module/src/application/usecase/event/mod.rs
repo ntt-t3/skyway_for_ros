@@ -6,16 +6,16 @@ use async_trait::async_trait;
 use shaku::{Component, HasComponent, Interface};
 
 use crate::application::dto::response::{
-    DataConnectionEventDto, DataResponseDto, MediaConnectionEventEnumDto, MediaPair,
-    MediaResponseDto, PeerResponseDto, ResponseDto, ResponseDtoResult, SendParams,
+    CallResponseDto, DataConnectionEventDto, DataResponseDto, MediaConnectionEventEnumDto,
+    MediaResponseDto, PeerResponseDto, ResponseDto, ResponseDtoResult,
 };
 use crate::di::*;
 use crate::domain::entity::response::{DataResponse, PeerResponse, Response, ResponseResult};
 use crate::domain::entity::{DataConnectionEventEnum, MediaConnectionEventEnum, PeerEventEnum};
 use crate::domain::repository::Repository;
+use crate::error;
 use crate::error::Error;
 use crate::utils::CallbackCaller;
-use crate::{error, CallResponseDto, DataPipeInfo};
 
 use crate::ffi::rust_to_c_bridge::state_objects::{GlobalState, Logger, ProgramState};
 #[cfg(test)]
@@ -48,6 +48,7 @@ pub(crate) struct EventReceiveImpl {
     callback: Arc<dyn CallbackCaller>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, PartialEq)]
 pub(crate) enum EventEnum {
     Peer(PeerEventEnum),

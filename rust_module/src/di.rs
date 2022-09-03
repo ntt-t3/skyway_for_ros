@@ -13,7 +13,6 @@ use crate::ffi::rust_to_c_bridge::state_objects::{
 };
 use crate::infra::RepositoryImpl;
 use crate::utils::CallbackCallerImpl;
-use crate::*;
 
 module! {
     pub(crate) CppObjctsModule {

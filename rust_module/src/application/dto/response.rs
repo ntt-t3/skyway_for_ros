@@ -9,7 +9,6 @@ use crate::domain::entity::{
     RtcpIdWrapper, SerializableId, SocketInfo,
 };
 use crate::error;
-use crate::ffi::rust_to_c_bridge::c_functions_wrapper::DataPipeInfo;
 
 //========== Peer ==========
 
@@ -27,6 +26,7 @@ pub(crate) enum PeerResponseDto {
 }
 
 impl PeerResponseDto {
+    #[allow(dead_code)]
     pub(crate) fn from_entity(entity: PeerResponse) -> Self {
         match entity {
             PeerResponse::Create(item) => PeerResponseDto::Create(item),
@@ -96,6 +96,7 @@ pub(crate) enum MediaResponseDto {
 }
 
 impl MediaResponseDto {
+    #[allow(dead_code)]
     pub(crate) fn from_entity(entity: MediaResponse) -> Self {
         match entity {
             MediaResponse::ContentCreate(item) => MediaResponseDto::ContentCreate(item),
@@ -141,6 +142,7 @@ pub(crate) enum DataResponseDto {
 }
 
 impl DataResponseDto {
+    #[allow(dead_code)]
     pub(crate) fn from_entity(entity: DataResponse) -> Self {
         match entity {
             DataResponse::Create(item) => DataResponseDto::Create(item),

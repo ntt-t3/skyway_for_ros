@@ -264,7 +264,7 @@ mod call_media_test {
         MediaConnectionId, MediaConnectionIdWrapper, PeerId, SocketInfo, Token,
     };
     use crate::domain::repository::MockRepository;
-    use crate::MockGlobalState;
+    use crate::ffi::rust_to_c_bridge::state_objects::MockGlobalState;
 
     #[tokio::test]
     async fn success() {

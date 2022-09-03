@@ -7,11 +7,10 @@
 ///    ロードエラーが出たら、Dataポートを閉じてエラーを返して終了。
 ///    ロードエラーが発生しない場合、この時点でC++側は送受信の準備ができている
 /// 3. C++側で開放したポート番号を戻り値から取得し、Redirect APIをcallし、戻り値を返す
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use serde::Serialize;
 use shaku::Component;
 
 use crate::application::dto::request::{DataRequestDto, RequestDto};
@@ -21,15 +20,13 @@ use crate::application::usecase::Service;
 use crate::domain::entity::request::{DataRequest, Request};
 use crate::domain::entity::response::{DataResponse, Response, ResponseResult};
 use crate::domain::entity::{
-    DataIdWrapper, PhantomId, RedirectParams, SerializableId, SerializableSocket, SocketInfo,
+    DataIdWrapper, PhantomId, RedirectParams, SerializableSocket, SocketInfo,
 };
 use crate::domain::repository::Repository;
 use crate::error;
-use crate::ffi::rust_to_c_bridge::c_functions_wrapper::{
-    DataPipeInfo, DestinationParameters, SourceParameters, TopicParameters,
-};
+use crate::ffi::rust_to_c_bridge::c_functions_wrapper::DataPipeInfo;
 use crate::ffi::rust_to_c_bridge::state_objects::GlobalState;
-use crate::utils::{available_port, CallbackCaller};
+use crate::utils::CallbackCaller;
 
 #[derive(Component)]
 #[shaku(interface = Service)]
@@ -52,7 +49,7 @@ impl Service for Redirect {
         }) = request
         {
             // 1. Dataポートを開放させ、DataChannelへのSourceとして利用する
-            let (data_id, address, port) = {
+            let (data_id, _address, _port) = {
                 let create_data_param = RequestDto::Data(DataRequestDto::Create);
                 let service = self.factory.create_service(&create_data_param);
                 let result = service.execute(create_data_param).await?;
@@ -93,7 +90,7 @@ impl Service for Redirect {
                     params: DataIdWrapper { data_id },
                 });
                 let _ = self.factory.create_service(&delete_data_param);
-                let x = return Err(error::Error::create_local_error(&error_message));
+                return Err(error::Error::create_local_error(&error_message));
             }
 
             // 3. C++側で開放したポート番号を戻り値から取得し、Redirect APIをcallし、戻り値を返す
@@ -136,8 +133,7 @@ impl Service for Redirect {
 
 #[cfg(test)]
 mod redirect_data_test {
-    use std::ffi::{CStr, CString};
-    use std::os::raw::c_char;
+    use std::ffi::CString;
 
     use shaku::HasComponent;
 
@@ -149,8 +145,8 @@ mod redirect_data_test {
     use crate::domain::entity::{DataConnectionId, DataConnectionIdWrapper, DataId, SocketInfo};
     use crate::domain::repository::MockRepository;
     use crate::ffi::rust_to_c_bridge::c_functions_wrapper::PluginLoadResult;
+    use crate::ffi::rust_to_c_bridge::state_objects::MockGlobalState;
     use crate::utils::MockCallbackCaller;
-    use crate::MockGlobalState;
 
     #[tokio::test]
     // Dataポートの開放に失敗した場合はエラーを返す
