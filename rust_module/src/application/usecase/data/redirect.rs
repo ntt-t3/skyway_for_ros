@@ -188,7 +188,7 @@ mod redirect_data_test {
 
         let request = {
             let message = r#"{
-                   "type":"DATA",
+                   "request_type":"DATA",
                    "command":"REDIRECT",
                    "params":{
                        "data_connection_id":"dc-8bdef7a1-65c8-46be-a82e-37d51c776309",
@@ -273,7 +273,7 @@ mod redirect_data_test {
 
         let request = {
             let message = r#"{
-                   "type":"DATA",
+                   "request_type":"DATA",
                    "command":"REDIRECT",
                    "params":{
                        "data_connection_id":"dc-8bdef7a1-65c8-46be-a82e-37d51c776309",
@@ -373,7 +373,7 @@ mod redirect_data_test {
 
         let request = {
             let message = r#"{
-                   "type":"DATA",
+                   "request_type":"DATA",
                    "command":"REDIRECT",
                    "params":{
                        "data_connection_id":"dc-8bdef7a1-65c8-46be-a82e-37d51c776309",

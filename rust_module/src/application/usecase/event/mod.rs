@@ -45,21 +45,24 @@ pub(crate) struct EventReceiveImpl {
 impl EventReceive for EventReceiveImpl {
     async fn execute(&self) -> Result<ResponseDtoResult, error::Error> {
         let event = self.repository.receive_event().await?;
-        self.process_event(event)
+        self.process_event(event).await
     }
 }
 
 impl EventReceiveImpl {
-    fn process_event(&self, response: ResponseResult) -> Result<ResponseDtoResult, error::Error> {
+    async fn process_event(
+        &self,
+        response: ResponseResult,
+    ) -> Result<ResponseDtoResult, error::Error> {
         match response {
             ResponseResult::Success(Response::Peer(response)) => Ok(ResponseDtoResult::Success(
-                ResponseDto::Peer(self.process_peer_event(response)?),
+                ResponseDto::Peer(self.process_peer_event(response).await?),
             )),
             ResponseResult::Success(Response::Data(response)) => Ok(ResponseDtoResult::Success(
-                ResponseDto::Data(self.process_data_event(response)?),
+                ResponseDto::Data(self.process_data_event(response).await?),
             )),
             ResponseResult::Success(Response::Media(response)) => Ok(ResponseDtoResult::Success(
-                ResponseDto::Media(self.process_media_event(response)?),
+                ResponseDto::Media(self.process_media_event(response).await?),
             )),
             ResponseResult::Error(e) => {
                 let message = format!("EventReceiveImpl receives error message {}", e);

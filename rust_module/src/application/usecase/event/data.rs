@@ -5,7 +5,7 @@ use crate::domain::entity::{DataConnectionEventEnum, DataConnectionIdWrapper};
 use crate::error;
 
 impl EventReceiveImpl {
-    pub fn process_data_event(
+    pub(crate) async fn process_data_event(
         &self,
         response: DataResponse,
     ) -> Result<DataResponseDto, error::Error> {

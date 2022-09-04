@@ -82,7 +82,7 @@ mod create_peer_test {
             let message = r#"{
                     "is_success":true,
                     "result":{
-                        "type":"PEER",
+                        "request_type":"PEER",
                         "command":"CREATE",
                         "peer_id":"peer_id",
                         "token":"pt-06cf1d26-0ef0-4b03-aca6-933027d434c2"
@@ -94,7 +94,7 @@ mod create_peer_test {
         // CreatePeerのパラメータ生成
         let dto = {
             let message = r#"{
-                "type": "PEER",
+                "request_type": "PEER",
                 "command": "CREATE",
                 "params": {
                     "key": "API_KEY",
@@ -113,7 +113,7 @@ mod create_peer_test {
             let message = r#"{
                     "is_success":true,
                     "result":{
-                        "type":"PEER",
+                        "request_type":"PEER",
                         "command":"CREATE",
                         "peer_id":"peer_id",
                         "token":"pt-06cf1d26-0ef0-4b03-aca6-933027d434c2"
@@ -147,7 +147,7 @@ mod create_peer_test {
         // CreatePeerのパラメータ生成
         let dto = {
             let message = r#"{
-                "type": "PEER",
+                "request_type": "PEER",
                 "command": "CREATE",
                 "params": {
                     "key": "API_KEY",

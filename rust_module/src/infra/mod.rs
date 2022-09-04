@@ -58,7 +58,6 @@ impl Repository for RepositoryImpl {
             let mut rx = receiver.lock().await;
             match time::timeout(Duration::from_millis(1000), rx.recv()).await {
                 Ok(Some(response_string)) => {
-                    println!("{}", response_string);
                     return ResponseResult::from_str(&response_string);
                 }
                 Ok(None) => {
@@ -146,7 +145,7 @@ mod infra_send_message_test {
             let response_str = r#"{
                 "is_success":true,
                 "result":{
-                    "type":"PEER",
+                    "request_type":"PEER",
                     "command":"CREATE",
                     "peer_id":"hoge",
                     "token":"pt-9749250e-d157-4f80-9ee2-359ce8524308"
@@ -261,7 +260,7 @@ mod infra_send_message_test {
             let response_str = r#"{
                 "is_success":true,
                 "result":{
-                    "type":"PEER",
+                    "request_type":"PEER",
                     "command":"CREATE",
                     "peer_id":"hoge",
                     "token":"pt-9749250e-d157-4f80-9ee2-359ce8524308"
@@ -334,7 +333,7 @@ mod infra_receive_event_test {
             let response_str = r#"{
                 "is_success":true,
                 "result":{
-                    "type":"PEER",
+                    "request_type":"PEER",
                     "command":"CREATE",
                     "peer_id":"hoge",
                     "token":"pt-9749250e-d157-4f80-9ee2-359ce8524308"

@@ -31,6 +31,8 @@ pub(crate) enum DataRequest {
     Redirect { params: RedirectParams },
     #[serde(rename = "DISCONNECT")]
     Disconnect { params: DataConnectionIdWrapper },
+    #[serde(rename = "STATUS")]
+    Status { params: DataConnectionIdWrapper },
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]

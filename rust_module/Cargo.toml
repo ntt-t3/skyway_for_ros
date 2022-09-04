@@ -11,7 +11,7 @@ path = "src/lib.rs"
 [dependencies]
 async-trait = "*"
 futures = "0.3.12"
-skyway-webrtc-gateway-caller = "0.0.2"
+skyway-webrtc-gateway-caller = { version="0.1.0", path="./skyway_webrtc_gateway_caller" }
 once_cell = "*"
 serde = { version = "1.0.126", features = ["derive"] }
 serde_json = { version = "1.0.64", default-features = false, features = ["alloc"] }

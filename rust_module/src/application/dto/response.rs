@@ -5,12 +5,34 @@ use crate::domain::entity::response::{DataResponse, MediaResponse, PeerResponse}
 use crate::domain::entity::{
     AnswerResult, DataConnectionId, DataConnectionIdWrapper, DataConnectionStatus, DataId,
     DataIdWrapper, MediaConnectionId, MediaConnectionIdWrapper, MediaConnectionStatus, MediaId,
-    MediaIdWrapper, PeerEventEnum, PeerInfo, PeerStatusMessage, RedirectParameters, RtcpId,
-    RtcpIdWrapper, SerializableId, SocketInfo,
+    MediaIdWrapper, PeerCallEvent, PeerCloseEvent, PeerErrorEvent, PeerEventEnum, PeerInfo,
+    PeerOpenEvent, PeerStatusMessage, RedirectParameters, RtcpId, RtcpIdWrapper, SerializableId,
+    SocketInfo,
 };
 use crate::error;
 
 //========== Peer ==========
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct PeerConnectionEventDto {
+    /// Pair of PeerId and Token. Indicate which Peer Object is regarded.
+    pub params: PeerInfo,
+    /// Id to identify the DataConnection
+    pub data_params: DataConnectionIdWrapper,
+    /// status of the DataConnection
+    pub status: DataConnectionStatus,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(tag = "event")]
+pub enum PeerEventEnumDto {
+    OPEN(PeerOpenEvent),
+    CLOSE(PeerCloseEvent),
+    CONNECTION(PeerConnectionEventDto),
+    CALL(PeerCallEvent),
+    ERROR(PeerErrorEvent),
+    TIMEOUT,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "command")]
@@ -22,7 +44,7 @@ pub(crate) enum PeerResponseDto {
     #[serde(rename = "DELETE")]
     Delete(PeerInfo),
     #[serde(rename = "EVENT")]
-    Event(PeerEventEnum),
+    Event(PeerEventEnumDto),
 }
 
 impl PeerResponseDto {
@@ -32,7 +54,7 @@ impl PeerResponseDto {
             PeerResponse::Create(item) => PeerResponseDto::Create(item),
             PeerResponse::Delete(item) => PeerResponseDto::Delete(item),
             PeerResponse::Status(item) => PeerResponseDto::Status(item),
-            PeerResponse::Event(item) => PeerResponseDto::Event(item),
+            PeerResponse::Event(item) => unreachable!(),
         }
     }
 }
@@ -157,7 +179,7 @@ impl DataResponseDto {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(tag = "type")]
+#[serde(tag = "request_type")]
 pub(crate) enum ResponseDto {
     #[serde(rename = "PEER")]
     Peer(PeerResponseDto),

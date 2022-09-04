@@ -194,7 +194,7 @@ mod connect_data_test {
 
         let request = {
             let message = r#"{
-                   "type":"DATA",
+                   "request_type":"DATA",
                    "command":"CONNECT",
                    "params":{
                        "peer_id": "peer_id",
@@ -280,7 +280,7 @@ mod connect_data_test {
 
         let request = {
             let message = r#"{
-                   "type":"DATA",
+                   "request_type":"DATA",
                    "command":"CONNECT",
                    "params":{
                        "peer_id": "peer_id",
@@ -381,7 +381,7 @@ mod connect_data_test {
 
         let request = {
             let message = r#"{
-                   "type":"DATA",
+                   "request_type":"DATA",
                    "command":"CONNECT",
                    "params":{
                        "peer_id": "peer_id",

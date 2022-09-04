@@ -28,6 +28,9 @@ pub(crate) fn dto_to_request(dto: RequestDto) -> Result<Request, error::Error> {
         RequestDto::Data(DataRequestDto::Disconnect { params }) => {
             Ok(Request::Data(DataRequest::Disconnect { params }))
         }
+        RequestDto::Data(DataRequestDto::Status { params }) => {
+            Ok(Request::Data(DataRequest::Status { params }))
+        }
         RequestDto::Media(MediaRequestDto::ContentCreate { params }) => {
             Ok(Request::Media(MediaRequest::ContentCreate { params }))
         }
@@ -70,6 +73,9 @@ pub(crate) fn result_to_dto(response: ResponseResult) -> Result<ResponseDtoResul
         ),
         ResponseResult::Success(Response::Data(DataResponse::Disconnect(params))) => Ok(
             ResponseDtoResult::Success(ResponseDto::Data(DataResponseDto::Disconnect(params))),
+        ),
+        ResponseResult::Success(Response::Data(DataResponse::Status(params))) => Ok(
+            ResponseDtoResult::Success(ResponseDto::Data(DataResponseDto::Status(params))),
         ),
         ResponseResult::Success(Response::Media(MediaResponse::ContentCreate(params))) => Ok(
             ResponseDtoResult::Success(ResponseDto::Media(MediaResponseDto::ContentCreate(params))),

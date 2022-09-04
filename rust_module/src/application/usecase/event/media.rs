@@ -7,7 +7,7 @@ use crate::domain::entity::MediaConnectionEventEnum;
 use crate::error;
 
 impl EventReceiveImpl {
-    pub fn process_media_event(
+    pub(crate) async fn process_media_event(
         &self,
         response: MediaResponse,
     ) -> Result<MediaResponseDto, error::Error> {

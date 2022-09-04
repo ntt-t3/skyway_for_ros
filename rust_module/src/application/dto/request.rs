@@ -154,6 +154,8 @@ pub(crate) enum DataRequestDto {
     Redirect { params: RedirectDtoParams },
     #[serde(rename = "DISCONNECT")]
     Disconnect { params: DataConnectionIdWrapper },
+    #[serde(rename = "STATUS")]
+    Status { params: DataConnectionIdWrapper },
 }
 
 impl Command for DataRequestDto {
@@ -164,6 +166,7 @@ impl Command for DataRequestDto {
             DataRequestDto::Connect { .. } => "CONNECT".to_string(),
             DataRequestDto::Redirect { .. } => "REDIRECT".to_string(),
             DataRequestDto::Disconnect { .. } => "DISCONNECT".to_string(),
+            DataRequestDto::Status { .. } => "STATUS".to_string(),
         }
     }
 }
@@ -171,7 +174,7 @@ impl Command for DataRequestDto {
 //========== General ==========
 // JSONでクライアントから受け取るメッセージ
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(tag = "type")]
+#[serde(tag = "request_type")]
 pub(crate) enum RequestDto {
     #[serde(rename = "PEER")]
     Peer(PeerRequestDto),

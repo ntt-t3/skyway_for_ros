@@ -30,7 +30,7 @@ impl Stringify for ErrorMessage {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct ErrorMessageInternal {
-    r#type: Option<String>,
+    request_type: Option<String>,
     command: Option<String>,
     error: String,
 }
@@ -59,7 +59,7 @@ pub(crate) async fn call_service(message: String) -> String {
                 }
                 Err(e) => {
                     let internal = ErrorMessageInternal {
-                        r#type: Some(dto_type),
+                        request_type: Some(dto_type),
                         command: Some(command),
                         error: format!("{:?}", e),
                     };
@@ -73,7 +73,7 @@ pub(crate) async fn call_service(message: String) -> String {
         }
         Err(_e) => {
             let internal = ErrorMessageInternal {
-                r#type: None,
+                request_type: None,
                 command: None,
                 error: format!("invalid message: {}", message),
             };
@@ -101,7 +101,7 @@ pub async fn receive_events() -> String {
         Ok(event) => serde_json::to_string(&event).unwrap(),
         Err(error) => {
             let internal = ErrorMessageInternal {
-                r#type: None,
+                request_type: None,
                 command: None,
                 error: format!("invalid message: {:?}", error),
             };
