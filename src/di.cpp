@@ -10,7 +10,6 @@
 #include "plugin/string_plugin_router.h"
 #include "presentation/control_service.h"
 #include "presentation/events_service.h"
-#include "router.h"
 #include "socket/udp_socket.h"
 
 Component<SourceFactory> getSourceComponent() {
@@ -33,14 +32,4 @@ Component<ControlServiceFactory> getControlServiceComponent() {
 
 Component<EventsServiceFactory> getEventsServiceComponent() {
   return createComponent().bind<EventsService, EventsServiceImpl>();
-}
-
-Component<Router> getRouterComponent() {
-  return createComponent()
-      .bind<Router, RouterImpl>()
-      .install(getControlServiceComponent)
-      .install(getEventsServiceComponent)
-      .install(getSourceComponent)
-      .install(getDestinationComponent)
-      .install(getDataTopicContainerComponent);
 }

@@ -82,6 +82,8 @@ add_executable(${PROJECT_NAME}
         src/main.cpp
         src/router.cpp
         src/di.cpp
+        src/ffi.cpp
+        src/ffi_bridge.cpp
         ${SOCKET}
         ${PLUGIN}
         ${PRESENTATION}
