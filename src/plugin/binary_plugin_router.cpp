@@ -67,7 +67,7 @@ PluginResult BinaryPluginRouter::TryStart() {
   // ここでsocket startするとデータが流れ始める
   socket_->Start();
 
-  return {.is_success = true, .error_message = ""};
+  return {.is_success = true, .port = socket_->Port(), .error_message = ""};
 }
 
 uint16_t BinaryPluginRouter::Port() { return socket_->Port(); }

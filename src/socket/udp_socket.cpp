@@ -56,6 +56,8 @@ unsigned short UdpSocket::Port() {
 }
 
 void UdpSocket::SendData(std::vector<uint8_t> vec) {
+  std::string message(vec.begin(), vec.end());
+
   socket_->async_send_to(
       boost::asio::buffer(vec), target_socket_,
       boost::bind(&UdpSocket::send_handler, this,
@@ -95,8 +97,9 @@ void UdpSocket::receive_handler(const boost::system::error_code& error,
 void UdpSocket::wait_for_packets() {
   socket_.get();
   if (socket_) {
+    udp::endpoint remote_port;
     socket_->async_receive_from(
-        boost::asio::buffer(recv_buffer_), target_socket_,
+        boost::asio::buffer(recv_buffer_), remote_port,
         boost::bind(&UdpSocket::receive_handler, this,
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred));

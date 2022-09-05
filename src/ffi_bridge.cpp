@@ -16,7 +16,6 @@ std::function<void(uint16_t)> data_connection_close_event_callback_handler;
 
 extern "C" {
 void create_peer_callback_ffi(char* peer_id, char* token) {
-  ROS_ERROR("create peer callback");
   create_peer_callback_handler(peer_id, token);
 }
 
@@ -26,7 +25,6 @@ void peer_deleted_callback_ffi() { ros::shutdown(); }
 PluginLoadResult create_data_callback_ffi(char* target_ip, uint16_t target_port,
                                           char* plugin_type,
                                           char* plugin_param) {
-  ROS_WARN("create_data_callback_ffi");
   return create_data_callback_handler(target_ip, target_port, plugin_type,
                                       plugin_param);
 }
