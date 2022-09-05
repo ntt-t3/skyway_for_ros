@@ -68,7 +68,8 @@ void RouterImpl::OnCreatePeer(char* peer_id, char* token) {
   token_ = token;
 }
 
-void RouterImpl::OnConnectData(std::string plugin_type,
+void RouterImpl::OnConnectData(std::string target_ip, uint16_t target_port,
+                               std::string plugin_type,
                                std::string plugin_param) {
   std::shared_ptr<rapidjson::Document> doc(new rapidjson::Document);
   doc->Parse(plugin_param.c_str());

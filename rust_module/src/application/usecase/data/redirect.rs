@@ -48,7 +48,7 @@ impl Service for Redirect {
         }) = request
         {
             // 1. Dataポートを開放させ、DataChannelへのSourceとして利用する
-            let (data_id, _address, _port) = {
+            let (data_id, address, port) = {
                 let create_data_param = RequestDto::Data(DataRequestDto::Create);
                 let service = self.factory.create_service(&create_data_param);
                 let result = service.execute(create_data_param).await?;
@@ -73,9 +73,12 @@ impl Service for Redirect {
                 serde_json::to_string(&redirect_params.plugin_info.plugins).unwrap();
 
             let (flag, port, error_message) = {
-                let result = self
-                    .callback
-                    .data_callback(&redirect_params.plugin_info.r#type, &plugin_params);
+                let result = self.callback.data_callback(
+                    &address.to_string(),
+                    port,
+                    &redirect_params.plugin_info.r#type,
+                    &plugin_params,
+                );
                 (
                     result.is_success,
                     result.port,
@@ -172,7 +175,7 @@ mod redirect_data_test {
         caller
             .expect_data_callback()
             .times(0)
-            .returning(|_, _| unreachable!());
+            .returning(|_, _, _, _| unreachable!());
         let mut state = MockGlobalState::new();
         state
             .expect_store_topic()
@@ -246,7 +249,7 @@ mod redirect_data_test {
         caller
             .expect_data_callback()
             .times(1)
-            .returning(|_, _| PluginLoadResult {
+            .returning(|_, _, _, _| PluginLoadResult {
                 is_success: false,
                 port: 0,
                 error_message: CString::new("plugin load error").unwrap().into_raw(),
@@ -347,7 +350,7 @@ mod redirect_data_test {
         caller
             .expect_data_callback()
             .times(1)
-            .returning(|_, _| PluginLoadResult {
+            .returning(|_, _, _, _| PluginLoadResult {
                 is_success: true,
                 port: 60000,
                 error_message: CString::new("").unwrap().into_raw(),

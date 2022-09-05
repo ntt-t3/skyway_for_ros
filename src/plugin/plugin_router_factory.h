@@ -21,7 +21,8 @@ class IPluginRouterFactory {
  public:
   virtual ~IPluginRouterFactory() = default;
   virtual std::unique_ptr<PluginRouter> Create(
-      std::string plugin_type, std::shared_ptr<rapidjson::Document> config) = 0;
+      std::string target_ip, uint16_t target_port, std::string plugin_type,
+      std::shared_ptr<rapidjson::Document> config) = 0;
 };
 
 class PluginRouterFactoryImpl : public IPluginRouterFactory {
@@ -42,7 +43,7 @@ class PluginRouterFactoryImpl : public IPluginRouterFactory {
   ~PluginRouterFactoryImpl() {}
 
   virtual std::unique_ptr<PluginRouter> Create(
-      std::string plugin_type,
+      std::string target_ip, uint16_t target_port, std::string plugin_type,
       std::shared_ptr<rapidjson::Document> config) override;
 };
 

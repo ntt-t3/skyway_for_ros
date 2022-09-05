@@ -48,7 +48,7 @@ impl Service for Connect {
         }) = request
         {
             // 1.は単独で実施可能なので最初に行う
-            let (data_id, _address, _port) = {
+            let (data_id, address, port) = {
                 let create_data_param = RequestDto::Data(DataRequestDto::Create);
                 let service = self.factory.create_service(&create_data_param);
                 let result = service.execute(create_data_param).await?;
@@ -72,9 +72,12 @@ impl Service for Connect {
             let plugin_params = serde_json::to_string(&connect_params.plugin_info.plugins).unwrap();
 
             let (flag, port, error_message) = {
-                let result = self
-                    .callback
-                    .data_callback(&connect_params.plugin_info.r#type, &plugin_params);
+                let result = self.callback.data_callback(
+                    &address.to_string(),
+                    port,
+                    &connect_params.plugin_info.r#type,
+                    &plugin_params,
+                );
                 (
                     result.is_success,
                     result.port,
@@ -177,7 +180,7 @@ mod connect_data_test {
         caller
             .expect_data_callback()
             .times(0)
-            .returning(|_, _| unreachable!());
+            .returning(|_, _, _, _| unreachable!());
         let mut state = MockGlobalState::new();
         state
             .expect_store_topic()
@@ -252,7 +255,7 @@ mod connect_data_test {
         caller
             .expect_data_callback()
             .times(1)
-            .returning(|_, _| PluginLoadResult {
+            .returning(|_, _, _, _| PluginLoadResult {
                 is_success: false,
                 port: 0,
                 error_message: CString::new("plugin load error").unwrap().into_raw(),
@@ -354,7 +357,7 @@ mod connect_data_test {
         caller
             .expect_data_callback()
             .times(1)
-            .returning(|_, _| PluginLoadResult {
+            .returning(|_, _, _, _| PluginLoadResult {
                 is_success: true,
                 port: 60000,
                 error_message: CString::new("").unwrap().into_raw(),

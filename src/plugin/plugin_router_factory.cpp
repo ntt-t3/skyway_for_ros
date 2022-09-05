@@ -5,13 +5,17 @@
 #include "plugin_router_factory.h"
 
 std::unique_ptr<PluginRouter> PluginRouterFactoryImpl::Create(
-    std::string plugin_type, std::shared_ptr<rapidjson::Document> config) {
+    std::string target_ip, uint16_t port, std::string plugin_type,
+    std::shared_ptr<rapidjson::Document> config) {
   if (plugin_type == "binary") {
-    return binary_factory_(config, udp::endpoint(udp::v4(), 0));
+    return binary_factory_(
+        config, udp::endpoint(address::from_string(target_ip), port));
   } else if (plugin_type == "json") {
-    return json_factory_(config, udp::endpoint(udp::v4(), 0));
+    return json_factory_(config,
+                         udp::endpoint(address::from_string(target_ip), port));
   } else {
-    return string_factory_(config, udp::endpoint(udp::v4(), 0));
+    return string_factory_(
+        config, udp::endpoint(address::from_string(target_ip), port));
   }
 }
 

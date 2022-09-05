@@ -21,7 +21,8 @@ class Router {
  public:
   virtual ~Router() = default;
   virtual void OnCreatePeer(char* peer_id, char* token) {}
-  virtual void OnConnectData(std::string plugin_type,
+  virtual void OnConnectData(std::string target_ip, uint16_t target_port,
+                             std::string plugin_type,
                              std::string plugin_param) {}
 };
 
@@ -55,7 +56,8 @@ class RouterImpl : public Router {
   ~RouterImpl() {}
 
   virtual void OnCreatePeer(char* peer_id, char* token) override;
-  virtual void OnConnectData(std::string, std::string) override;
+  virtual void OnConnectData(std::string target_ip, uint16_t, std::string,
+                             std::string) override;
 };
 
 Component<Router> getRouterComponent();
