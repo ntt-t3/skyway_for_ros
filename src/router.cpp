@@ -65,6 +65,48 @@ void RouterImpl::OnCreatePeer(char* peer_id, char* token) {
   token_ = token;
 }
 
+void RouterImpl::OnConnectData(std::string plugin_type,
+                               std::string plugin_param) {
+  ROS_WARN("type %s", plugin_type.c_str());
+  ROS_WARN("type %s", plugin_param.c_str());
+  /*
+   TODO
+  rapidjson::Document doc;
+  doc.Parse(json_str.c_str());
+
+  if (!doc.HasMember("type")) return;
+
+  std::string type = doc["type"].GetString();
+  ROS_ERROR("type %s", type.c_str());
+
+  if (!doc["plugins"].IsArray()) return;
+   */
+
+  /*
+  for (int i = 0; i < doc["plugins"].Size(); i++) {
+  }
+   */
+
+  /*
+  const char* const json = "{\"serial\": 7}";
+
+  xmlrpc_value* const valP = xmlrpc_parse_json(&env, json);
+
+  xmlrpc_value* serialP;
+  int serial;
+
+  xmlrpc_struct_find_value(&env, valP, "serial", &serialP);
+
+  xmlrpc_read_int(&env, serialP, &serial);
+  assert(serial == 7);
+   */
+
+  /*
+  for (SizeType i = 0; i < a.Size(); i++)  // Uses SizeType instead of size_t
+    printf("a[%d] = %d\n", i, a[i].GetInt());
+    */
+}
+
 Component<Router> getRouterComponent() {
   return fruit::createComponent()
       .bind<Router, RouterImpl>()

@@ -69,11 +69,12 @@ impl Service for Connect {
 
             // 2. C++側でRos Pluginをロードさせる。
             // ここでserializeが失敗するケースはRustの型システムにより発生しないので、テストはしていない
-            let plugin_info = serde_json::to_string(&connect_params.plugin_info)
-                .map_err(|e| error::Error::SerdeError { error: e })?;
+            let plugin_params = serde_json::to_string(&connect_params.plugin_info.plugins).unwrap();
 
             let (flag, port, error_message) = {
-                let result = self.callback.data_callback(&plugin_info);
+                let result = self
+                    .callback
+                    .data_callback(&connect_params.plugin_info.r#type, &plugin_params);
                 (
                     result.is_success,
                     result.port,
@@ -176,7 +177,7 @@ mod connect_data_test {
         caller
             .expect_data_callback()
             .times(0)
-            .returning(|_| unreachable!());
+            .returning(|_, _| unreachable!());
         let mut state = MockGlobalState::new();
         state
             .expect_store_topic()
@@ -251,7 +252,7 @@ mod connect_data_test {
         caller
             .expect_data_callback()
             .times(1)
-            .returning(|_| PluginLoadResult {
+            .returning(|_, _| PluginLoadResult {
                 is_success: false,
                 port: 0,
                 error_message: CString::new("plugin load error").unwrap().into_raw(),
@@ -353,7 +354,7 @@ mod connect_data_test {
         caller
             .expect_data_callback()
             .times(1)
-            .returning(|_| PluginLoadResult {
+            .returning(|_, _| PluginLoadResult {
                 is_success: true,
                 port: 60000,
                 error_message: CString::new("").unwrap().into_raw(),

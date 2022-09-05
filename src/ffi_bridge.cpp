@@ -9,7 +9,7 @@
 namespace {
 std::function<void(int)> shutdown_handler;
 std::function<void(char*, char*)> create_peer_callback_handler;
-std::function<PluginLoadResult(char*)> create_data_callback_handler;
+std::function<PluginLoadResult(char*, char*)> create_data_callback_handler;
 std::function<void(char*)> data_connection_close_event_callback_handler;
 }  // namespace
 
@@ -22,8 +22,10 @@ void create_peer_callback_ffi(char* peer_id, char* token) {
 // Peer Closeイベントが発火したときにプログラム全体を終了する
 void peer_deleted_callback_ffi() { ros::shutdown(); }
 
-PluginLoadResult create_data_callback_ffi(char* message) {
-  return create_data_callback_handler(message);
+PluginLoadResult create_data_callback_ffi(char* plugin_type,
+                                          char* plugin_param) {
+  ROS_WARN("create_data_callback_ffi");
+  return create_data_callback_handler(plugin_type, plugin_param);
 }
 
 void data_connection_close_event_callback_ffi(char* data_connection_id) {
@@ -39,7 +41,7 @@ FfiBridgeImpl::FfiBridgeImpl(std::shared_ptr<Router> router)
 
   create_data_callback_handler =
       std::bind(&FfiBridgeImpl::create_data_connection_callback, this,
-                std::placeholders::_1);
+                std::placeholders::_1, std::placeholders::_2);
 
   data_connection_close_event_callback_handler =
       std::bind(&FfiBridgeImpl::delete_data_connection_callback, this,
@@ -58,9 +60,11 @@ void FfiBridgeImpl::create_peer_callback(char* peer_id, char* token) {
   release_string(token);
 }
 
-PluginLoadResult FfiBridgeImpl::create_data_connection_callback(char* message) {
-  release_string(message);
-  // Todo: impl
+PluginLoadResult FfiBridgeImpl::create_data_connection_callback(
+    char* plugin_type, char* plugin_param) {
+  router_->OnConnectData(plugin_type, plugin_param);
+  release_string(plugin_type);
+  release_string(plugin_param);
   return {.is_success = true, .port = 51111, .error_message = ""};
   /*
   auto source = source_factory_(

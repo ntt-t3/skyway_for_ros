@@ -53,6 +53,7 @@ PluginResult JsonPluginRouter::TryStart() {
       std::function<void(std::shared_ptr<rapidjson::Document>)>>(std::bind(
       &JsonPluginRouter::observe_plugins, this, std::placeholders::_1));
 
+  /*
   XmlRpc::XmlRpcValue array = config_[0]["plugins"];
   for (int i = 0; i < array.size(); ++i) {
     try {
@@ -71,6 +72,7 @@ PluginResult JsonPluginRouter::TryStart() {
       return {.is_success = false, .error_message = stream.str()};
     }
   }
+   */
 
   // ここでsocket startするとデータが流れ始める
   socket_->Start();

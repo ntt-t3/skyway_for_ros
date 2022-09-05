@@ -38,7 +38,7 @@ pub(crate) static MEDIA_CONNECTION_STATE_INSTANCE: OnceCell<
 pub(crate) trait CallbackFunctions: Interface {
     fn create_peer_callback(&self, peer_id: &str, token: &str);
     fn peer_deleted_callback(&self);
-    fn data_callback(&self, param: &str) -> PluginLoadResult;
+    fn data_callback(&self, plugin_type: &str, json_parameter: &str) -> PluginLoadResult;
     fn data_connection_deleted_callback(&self, data_connection_id: &str);
 }
 
@@ -51,8 +51,8 @@ impl CallbackFunctions for CallbackFunctionsImpl {
         CallbackFunctionsHolder::global().peer_deleted_callback()
     }
 
-    fn data_callback(&self, param: &str) -> PluginLoadResult {
-        CallbackFunctionsHolder::global().data_callback(param)
+    fn data_callback(&self, param: &str, json_parameter: &str) -> PluginLoadResult {
+        CallbackFunctionsHolder::global().data_callback(param, json_parameter)
     }
 
     fn data_connection_deleted_callback(&self, data_connection_id: &str) {

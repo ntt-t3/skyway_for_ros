@@ -19,7 +19,7 @@ class FfiBridge {};
 class FfiBridgeImpl : public FfiBridge {
  private:
   void create_peer_callback(char* peer_id, char* token);
-  PluginLoadResult create_data_connection_callback(char*);
+  PluginLoadResult create_data_connection_callback(char*, char*);
   void delete_data_connection_callback(char* data_connection_id);
 
   std::shared_ptr<Router> router_;

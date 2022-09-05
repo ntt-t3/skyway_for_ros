@@ -2,6 +2,9 @@
 #define SKYWAY_ROUTER_H
 
 #include <fruit/fruit.h>
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 #include <ros/ros.h>
 
 #include "domain/entity.h"
@@ -9,6 +12,7 @@
 #include "presentation/control_service.h"
 #include "presentation/events_service.h"
 
+using namespace rapidjson;
 using fruit::Component;
 using fruit::Injector;
 
@@ -16,6 +20,8 @@ class Router {
  public:
   virtual ~Router() = default;
   virtual void OnCreatePeer(char* peer_id, char* token) {}
+  virtual void OnConnectData(std::string plugin_type,
+                             std::string plugin_param) {}
 };
 
 class RouterImpl : public Router {
@@ -45,6 +51,7 @@ class RouterImpl : public Router {
   ~RouterImpl() {}
 
   virtual void OnCreatePeer(char* peer_id, char* token) override;
+  virtual void OnConnectData(std::string, std::string) override;
 };
 
 Component<Router> getRouterComponent();

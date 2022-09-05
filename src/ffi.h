@@ -24,7 +24,7 @@ using bool_void_func = bool (*)();
 using void_char_char_func = void (*)(char*, char*);
 using void_char_func = void (*)(char*);
 using void_void_func = void (*)();
-using plugin_topicparam_func = PluginLoadResult (*)(char*);
+using plugin_topicparam_func = PluginLoadResult (*)(char*, char*);
 
 struct Function {
   void_char_char_func create_peer_callback;

@@ -38,6 +38,7 @@ PluginResult BinaryPluginRouter::TryStart() {
     return {.is_success = false, .error_message = "invalid config parameters"};
   }
 
+  /*
   // try startにして、errorを返せるようにする
   auto func_ptr =
       std::make_shared<std::function<void(std::vector<uint8_t>)>>(std::bind(
@@ -61,7 +62,7 @@ PluginResult BinaryPluginRouter::TryStart() {
       return {.is_success = false, .error_message = stream.str()};
     }
   }
-
+*/
   // ここでsocket startするとデータが流れ始める
   socket_->Start();
 

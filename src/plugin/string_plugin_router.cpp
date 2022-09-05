@@ -45,6 +45,7 @@ PluginResult StringPluginRouter::TryStart() {
   auto func_ptr = std::make_shared<std::function<void(std::string)>>(std::bind(
       &StringPluginRouter::observe_plugins, this, std::placeholders::_1));
 
+  /*
   XmlRpc::XmlRpcValue array = config_[0]["plugins"];
   for (int i = 0; i < array.size(); ++i) {
     try {
@@ -63,6 +64,7 @@ PluginResult StringPluginRouter::TryStart() {
       return {.is_success = false, .error_message = stream.str()};
     }
   }
+   */
 
   // ここでsocket startするとデータが流れ始める
   socket_->Start();

@@ -15,7 +15,8 @@ use crate::ffi::rust_to_c_bridge::state_objects::{
 pub struct CallbackFunctionsHolder {
     create_peer_callback_c: extern "C" fn(peer_id: *mut c_char, token: *mut c_char),
     peer_deleted_callback: extern "C" fn(),
-    data_callback_c: extern "C" fn(param: *mut c_char) -> PluginLoadResult,
+    data_callback_c:
+        extern "C" fn(plugin_type: *mut c_char, plugin_param: *mut c_char) -> PluginLoadResult,
     data_connection_deleted_callback_c: extern "C" fn(data_connection_id: *mut c_char),
 }
 
@@ -23,7 +24,10 @@ impl CallbackFunctionsHolder {
     pub fn new(
         create_peer_callback_c: extern "C" fn(peer_id: *mut c_char, token: *mut c_char),
         peer_deleted_callback: extern "C" fn(),
-        data_callback_c: extern "C" fn(param: *mut c_char) -> PluginLoadResult,
+        data_callback_c: extern "C" fn(
+            plugin_type: *mut c_char,
+            plugin_param: *mut c_char,
+        ) -> PluginLoadResult,
         data_connection_deleted_callback_c: extern "C" fn(data_connection_id: *mut c_char),
     ) -> Self {
         CallbackFunctionsHolder {
@@ -51,8 +55,11 @@ impl CallbackFunctionsHolder {
         (self.peer_deleted_callback)();
     }
 
-    pub fn data_callback(&self, param: &str) -> PluginLoadResult {
-        (self.data_callback_c)(CString::new(param).unwrap().into_raw())
+    pub fn data_callback(&self, plugin_type: &str, plugin_parameter: &str) -> PluginLoadResult {
+        (self.data_callback_c)(
+            CString::new(plugin_type).unwrap().into_raw(),
+            CString::new(plugin_parameter).unwrap().into_raw(),
+        )
     }
 
     pub fn data_connection_deleted_callback(&self, data_connection_id: &str) {

@@ -5,9 +5,8 @@ use crate::domain::entity::response::{DataResponse, MediaResponse, PeerResponse}
 use crate::domain::entity::{
     AnswerResult, DataConnectionId, DataConnectionIdWrapper, DataConnectionStatus, DataId,
     DataIdWrapper, MediaConnectionId, MediaConnectionIdWrapper, MediaConnectionStatus, MediaId,
-    MediaIdWrapper, PeerCallEvent, PeerCloseEvent, PeerErrorEvent, PeerEventEnum, PeerInfo,
-    PeerOpenEvent, PeerStatusMessage, RedirectParameters, RtcpId, RtcpIdWrapper, SerializableId,
-    SocketInfo,
+    MediaIdWrapper, PeerCallEvent, PeerCloseEvent, PeerErrorEvent, PeerInfo, PeerOpenEvent,
+    PeerStatusMessage, RedirectParameters, RtcpId, RtcpIdWrapper, SerializableId, SocketInfo,
 };
 use crate::error;
 
