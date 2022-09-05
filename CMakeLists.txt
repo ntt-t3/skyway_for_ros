@@ -75,7 +75,6 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${VENDOR_DIR})
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/plugin PLUGIN)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/socket SOCKET)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/presentation PRESENTATION)
-aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/domain DOMAIN)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/infra INFRA)
 
 add_executable(${PROJECT_NAME}
@@ -87,7 +86,6 @@ add_executable(${PROJECT_NAME}
         ${SOCKET}
         ${PLUGIN}
         ${PRESENTATION}
-        ${DOMAIN}
         ${INFRA}
         )
 
@@ -111,7 +109,6 @@ target_link_libraries(${PROJECT_NAME}
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test TESTS)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/socket SOCKET_TESTS)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/plugin PLUGIN_TESTS)
-aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/domain DOMAIN_TESTS)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/stub STUB)
 
 if (CATKIN_ENABLE_TESTING)
@@ -120,9 +117,7 @@ if (CATKIN_ENABLE_TESTING)
             ${TESTS}
             ${SOCKET_TESTS}
             ${PLUGIN_TESTS}
-            ${DOMAIN_TESTS}
             ${STUB}
-            ${DOMAIN}
             ${INFRA}
             ${SOCKET}
             ${PLUGIN}

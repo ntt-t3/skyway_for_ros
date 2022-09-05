@@ -7,7 +7,6 @@
 #include <rapidjson/writer.h>
 #include <ros/ros.h>
 
-#include "domain/entity.h"
 #include "ffi.h"
 #include "plugin/plugin_router_factory.h"
 #include "presentation/control_service.h"
@@ -35,8 +34,6 @@ class RouterImpl : public Router {
   // factories
   ControlServiceFactory control_service_factory_;
   EventsServiceFactory event_service_factory_;
-  SourceFactory source_factory_;
-  DestinationFactory destination_factory_;
   // ROS Serviceの実体
   std::unique_ptr<ControlService> control_service_;
   std::unique_ptr<EventsService> event_service_;
@@ -51,12 +48,10 @@ class RouterImpl : public Router {
 
  public:
   RouterImpl() = delete;
-  INJECT(RouterImpl(
-      ControlServiceFactory control_service_factory,
-      EventsServiceFactory event_service_factory, SourceFactory source_factory,
-      DestinationFactory destination_factory,
-      std::shared_ptr<DataTopicContainer> data_topic_container,
-      std::shared_ptr<IPluginRouterFactory> plugin_router_factory));
+  INJECT(
+      RouterImpl(ControlServiceFactory control_service_factory,
+                 EventsServiceFactory event_service_factory,
+                 std::shared_ptr<IPluginRouterFactory> plugin_router_factory));
   ~RouterImpl() {}
 
   virtual void OnCreatePeer(char* peer_id, char* token) override;
