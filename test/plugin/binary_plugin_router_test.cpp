@@ -67,8 +67,8 @@ getMockBinaryPluginRouterComponent() {
 
 // XmlRpcValueが不正なケース
 TEST(TestSuite, binary_plugin_try_start_with_invalid_xml) {
-  ros::NodeHandle nh;
-  XmlRpc::XmlRpcValue config;
+  std::shared_ptr<rapidjson::Document> config(new rapidjson::Document);
+  config->Parse("{}");
 
   // objectを作成し、受信スレッドを開始
   Injector<Annotated<BinaryAnnotation, PluginRouterFactory>> injector(
@@ -85,9 +85,11 @@ TEST(TestSuite, binary_plugin_try_start_with_invalid_xml) {
 
 // pluginが見つからないケース
 TEST(TestSuite, binary_plugin_try_start_not_found_plugin) {
-  ros::NodeHandle nh;
-  XmlRpc::XmlRpcValue config;
-  nh.getParam("/test_node/invalid_binary_config", config);
+  std::shared_ptr<rapidjson::Document> config(new rapidjson::Document);
+  config->Parse(
+      "[{\"plugin_name\":\"bnary_loopback::BinaryLoopback\",\"param\":"
+      "\"Parameter\"},{"
+      "\"plugin_name\":\"not_found_plugin::NotFoundPlugin\"}]");
 
   // objectを作成し、受信スレッドを開始
   Injector<Annotated<BinaryAnnotation, PluginRouterFactory>> injector(
@@ -104,9 +106,10 @@ TEST(TestSuite, binary_plugin_try_start_not_found_plugin) {
 
 // Loopback Pluginを使うケース
 TEST(TestSuite, binary_plugin_try_start_with_loopback_plugin) {
-  ros::NodeHandle nh;
-  XmlRpc::XmlRpcValue config;
-  nh.getParam("/test_node/valid_binary_config", config);
+  std::shared_ptr<rapidjson::Document> config(new rapidjson::Document);
+  config->Parse(
+      "[{\"plugin_name\":\"binary_loopback::BinaryLoopback\",\"param\":"
+      "\"Parameter\"}]");
 
   // objectを作成し、受信スレッドを開始
   Injector<Annotated<BinaryAnnotation, PluginRouterFactory>> injector(

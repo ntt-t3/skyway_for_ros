@@ -23,19 +23,18 @@ using fruit::Injector;
 
 class JsonPluginRouter : public PluginRouter {
  private:
-  ros::NodeHandle nh_;
   pluginlib::ClassLoader<skyway_plugin::SkyWayJsonPlugin> plugin_loader_;
   std::vector<boost::shared_ptr<skyway_plugin::SkyWayJsonPlugin>> plugins_;
   udp::endpoint target_socket_;
   std::unique_ptr<Socket> socket_;
-  XmlRpc::XmlRpcValue config_;
+  std::shared_ptr<rapidjson::Document> config_;
 
   void observe_socket(std::vector<uint8_t> data);
   void observe_plugins(std::shared_ptr<rapidjson::Document> document);
 
  public:
   JsonPluginRouter() = delete;
-  INJECT(JsonPluginRouter(ASSISTED(XmlRpc::XmlRpcValue) config,
+  INJECT(JsonPluginRouter(ASSISTED(std::shared_ptr<rapidjson::Document>) config,
                           ASSISTED(udp::endpoint) target_socket,
                           SocketFactory factory));
   ~JsonPluginRouter();

@@ -4,6 +4,7 @@
 
 #include "plugin_factory.h"
 
+/*
 Component<PluginFactory> getPluginFactoryComponent() {
   ROS_ERROR("plugin component");
   return createComponent()
@@ -12,3 +13,4 @@ Component<PluginFactory> getPluginFactoryComponent() {
       .install(getJsonPluginRouterComponent)
       .install(getStringPluginRouterComponent);
 }
+*/

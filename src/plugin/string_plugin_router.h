@@ -19,19 +19,19 @@ using fruit::Injector;
 
 class StringPluginRouter : public PluginRouter {
  private:
-  ros::NodeHandle nh_;
   pluginlib::ClassLoader<skyway_plugin::SkyWayStringPlugin> plugin_loader_;
   std::vector<boost::shared_ptr<skyway_plugin::SkyWayStringPlugin>> plugins_;
   udp::endpoint target_socket_;
   std::unique_ptr<Socket> socket_;
-  XmlRpc::XmlRpcValue config_;
+  std::shared_ptr<rapidjson::Document> config_;
 
   void observe_socket(std::vector<uint8_t> data);
   void observe_plugins(std::string message);
 
  public:
   StringPluginRouter() = delete;
-  INJECT(StringPluginRouter(ASSISTED(XmlRpc::XmlRpcValue) config,
+  INJECT(StringPluginRouter(ASSISTED(std::shared_ptr<rapidjson::Document>)
+                                config,
                             ASSISTED(udp::endpoint) target_socket,
                             SocketFactory factory));
   ~StringPluginRouter();

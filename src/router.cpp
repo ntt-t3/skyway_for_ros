@@ -53,6 +53,7 @@ void RouterImpl::shutdown(int signal) {
   // event_service_->Shutdown();
   // shutdown処理の中身はPeer Objectの開放なので、生成前であれば呼ぶ必要がない
   if (peer_id_ != "" && token_ != "") {
+    // FIXME
     // shutdown_service(peer_id_.c_str(), token_.c_str());
   } else
     ros::shutdown();
@@ -67,11 +68,13 @@ void RouterImpl::OnCreatePeer(char* peer_id, char* token) {
 
 void RouterImpl::OnConnectData(std::string plugin_type,
                                std::string plugin_param) {
-  ROS_WARN("type %s", plugin_type.c_str());
-  ROS_WARN("type %s", plugin_param.c_str());
+  std::shared_ptr<rapidjson::Document> doc(new rapidjson::Document);
+  doc->Parse(plugin_param.c_str());
+
+  if (plugin_type == "BINARY") {
+  }
   /*
    TODO
-  rapidjson::Document doc;
   doc.Parse(json_str.c_str());
 
   if (!doc.HasMember("type")) return;

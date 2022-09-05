@@ -16,11 +16,11 @@ void BinaryPluginRouter::observe_plugins(std::vector<uint8_t> data) {
 }
 
 //===== public =====
-BinaryPluginRouter::BinaryPluginRouter(XmlRpc::XmlRpcValue config,
-                                       udp::endpoint target_socket,
-                                       SocketFactory factory)
+BinaryPluginRouter::BinaryPluginRouter(
+    std::shared_ptr<rapidjson::Document> config, udp::endpoint target_socket,
+    SocketFactory factory)
     : plugin_loader_("skyway_plugin", "skyway_plugin::SkyWayBinaryPlugin"),
-      config_(config),
+      config_(std::move(config)),
       target_socket_(target_socket) {
   // Socketからのcallbackを与えてSocketを生成`
   socket_ = factory(
@@ -34,35 +34,36 @@ BinaryPluginRouter::~BinaryPluginRouter() {
 }
 
 PluginResult BinaryPluginRouter::TryStart() {
-  if (config_.getType() != XmlRpc::XmlRpcValue::TypeArray) {
+  // plugin情報の配列を与えられていない場合は開始できない
+  if (!config_->IsArray()) {
     return {.is_success = false, .error_message = "invalid config parameters"};
   }
 
-  /*
   // try startにして、errorを返せるようにする
-  auto func_ptr =
+  auto callback =
       std::make_shared<std::function<void(std::vector<uint8_t>)>>(std::bind(
           &BinaryPluginRouter::observe_plugins, this, std::placeholders::_1));
 
-  XmlRpc::XmlRpcValue array = config_[0]["plugins"];
-  for (int i = 0; i < array.size(); ++i) {
+  for (rapidjson::Value::ConstValueIterator itr = config_->Begin();
+       itr != config_->End(); ++itr) {
+    if (!itr->HasMember("plugin_name")) continue;
+    std::string plugin_name = (*itr)["plugin_name"].GetString();
+
     try {
-      std::string plugin_name =
-          static_cast<std::string>(array[i]["plugin_name"]);
       boost::shared_ptr<skyway_plugin::SkyWayBinaryPlugin> plugin =
-          plugin_loader_.createInstance(plugin_name);
-      plugin->initialize(array[i], func_ptr);
+          plugin_loader_.createInstance(plugin_name.c_str());
+      std::shared_ptr<rapidjson::Document> parameter(new rapidjson::Document);
+      parameter->CopyFrom(*itr, parameter->GetAllocator());
+      plugin->initialize(std::move(parameter), callback);
       plugins_.push_back(plugin);
     } catch (pluginlib::PluginlibException &ex) {
       // pluginがopenできなかったらここでreturnする
-      std::string plugin_name =
-          static_cast<std::string>(array[i]["plugin_name"]);
       std::ostringstream stream;
       stream << "Failed to load " << plugin_name << ex.what();
       return {.is_success = false, .error_message = stream.str()};
     }
   }
-*/
+
   // ここでsocket startするとデータが流れ始める
   socket_->Start();
 

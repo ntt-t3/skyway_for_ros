@@ -76,8 +76,8 @@ getMockJsonPluginRouterComponent() {
 
 // XmlRpcValueが不正なケース
 TEST(TestSuite, json_plugin_try_start_with_invalid_xml) {
-  ros::NodeHandle nh;
-  XmlRpc::XmlRpcValue config;
+  std::shared_ptr<rapidjson::Document> config(new rapidjson::Document);
+  config->Parse("{}");
 
   // objectを作成し、受信スレッドを開始
   Injector<Annotated<JsonAnnotation, PluginRouterFactory>> injector(
@@ -95,9 +95,11 @@ TEST(TestSuite, json_plugin_try_start_with_invalid_xml) {
 
 // pluginが見つからないケース
 TEST(TestSuite, json_plugin_try_start_not_found_plugin) {
-  ros::NodeHandle nh;
-  XmlRpc::XmlRpcValue config;
-  nh.getParam("/test_node/invalid_json_config", config);
+  std::shared_ptr<rapidjson::Document> config(new rapidjson::Document);
+  config->Parse(
+      "[{\"plugin_name\":\"json_loopback::JsonLoopback\",\"param\":"
+      "\"Parameter\"},{"
+      "\"plugin_name\":\"not_found_plugin::NotFoundPlugin\"}]");
 
   // objectを作成し、受信スレッドを開始
   Injector<Annotated<JsonAnnotation, PluginRouterFactory>> injector(
@@ -115,9 +117,10 @@ TEST(TestSuite, json_plugin_try_start_not_found_plugin) {
 
 // Loopback Pluginを使うケース
 TEST(TestSuite, json_plugin_try_start_with_loopback_plugin) {
-  ros::NodeHandle nh;
-  XmlRpc::XmlRpcValue config;
-  nh.getParam("/test_node/valid_json_config", config);
+  std::shared_ptr<rapidjson::Document> config(new rapidjson::Document);
+  config->Parse(
+      "[{\"plugin_name\":\"json_loopback::JsonLoopback\",\"param\":"
+      "\"Parameter\"}]");
 
   // objectを作成し、受信スレッドを開始
   Injector<Annotated<JsonAnnotation, PluginRouterFactory>> injector(

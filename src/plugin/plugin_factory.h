@@ -16,6 +16,7 @@ using fruit::Component;
 using fruit::createComponent;
 using fruit::Injector;
 
+/*
 class PluginFactory {
  private:
  public:
@@ -44,5 +45,6 @@ class PluginFactoryImpl : public PluginFactory {
 };
 
 Component<PluginFactory> getPluginFactoryComponent();
+*/
 
 #endif  // SKYWAY_PLUGIN_FACTORY_H

@@ -5,6 +5,12 @@
 #ifndef SKYWAY_PLUGIN_UDP_PIPE_PLUGINROUTER_H
 #define SKYWAY_PLUGIN_UDP_PIPE_PLUGINROUTER_H
 
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
+using namespace rapidjson;
+
 struct PluginResult {
   bool is_success;
   uint16_t port;
@@ -21,6 +27,6 @@ class PluginRouter {
 };
 
 using PluginRouterFactory = std::function<std::unique_ptr<PluginRouter>(
-    XmlRpc::XmlRpcValue, udp::endpoint)>;
+    std::shared_ptr<rapidjson::Document>, udp::endpoint)>;
 
 #endif  // SKYWAY_PLUGIN_UDP_PIPE_PLUGINROUTER_H

@@ -39,22 +39,6 @@ class MockStringSocket : public Socket {
     std::string first_message = "first message";
     std::vector<uint8_t> first_data(first_message.begin(), first_message.end());
     (*callback_)(first_data);
-
-    /*
-    std::string second_message = "second message";
-    vec.clear();
-    vec.resize(second_message.length() * sizeof(char));
-    memcpy(&vec[0], second_message.c_str(),
-           second_message.length() * sizeof(char));
-    (*callback_)(vec);
-
-    std::string third_message = "third message";
-    vec.clear();
-    vec.resize(third_message.length() * sizeof(char));
-    memcpy(&vec[0], third_message.c_str(),
-           third_message.length() * sizeof(char));
-    (*callback_)(vec);
-     */
   }
 
   virtual void SendData(std::vector<uint8_t> data) override {
@@ -90,8 +74,8 @@ getMockStringPluginRouterComponent() {
 
 // XmlRpcValueが不正なケース
 TEST(TestSuite, string_plugin_try_start_with_invalid_xml) {
-  ros::NodeHandle nh;
-  XmlRpc::XmlRpcValue config;
+  std::shared_ptr<rapidjson::Document> config(new rapidjson::Document);
+  config->Parse("{}");
 
   // objectを作成し、受信スレッドを開始
   Injector<Annotated<StringAnnotation, PluginRouterFactory>> injector(
@@ -108,9 +92,11 @@ TEST(TestSuite, string_plugin_try_start_with_invalid_xml) {
 
 // pluginが見つからないケース
 TEST(TestSuite, string_plugin_try_start_not_found_plugin) {
-  ros::NodeHandle nh;
-  XmlRpc::XmlRpcValue config;
-  nh.getParam("/test_node/invalid_string_config", config);
+  std::shared_ptr<rapidjson::Document> config(new rapidjson::Document);
+  config->Parse(
+      "[{\"plugin_name\":\"string_loopback::StringLoopback\",\"param\":"
+      "\"Parameter\"},{"
+      "\"plugin_name\":\"not_found_plugin::NotFoundPlugin\"}]");
 
   // objectを作成し、受信スレッドを開始
   Injector<Annotated<StringAnnotation, PluginRouterFactory>> injector(
@@ -127,9 +113,10 @@ TEST(TestSuite, string_plugin_try_start_not_found_plugin) {
 
 // Loopback Pluginを使うケース
 TEST(TestSuite, string_plugin_try_start_with_loopback_plugin) {
-  ros::NodeHandle nh;
-  XmlRpc::XmlRpcValue config;
-  nh.getParam("/test_node/valid_string_config", config);
+  std::shared_ptr<rapidjson::Document> config(new rapidjson::Document);
+  config->Parse(
+      "[{\"plugin_name\":\"string_loopback::StringLoopback\",\"param\":"
+      "\"Parameter\"}]");
 
   // objectを作成し、受信スレッドを開始
   Injector<Annotated<StringAnnotation, PluginRouterFactory>> injector(
