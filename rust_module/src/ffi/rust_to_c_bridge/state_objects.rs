@@ -45,7 +45,7 @@ pub(crate) trait CallbackFunctions: Interface {
         plugin_type: &str,
         json_parameter: &str,
     ) -> PluginLoadResult;
-    fn data_connection_deleted_callback(&self, data_connection_id: &str);
+    fn data_connection_deleted_callback(&self, data_connection_id: u16);
 }
 
 impl CallbackFunctions for CallbackFunctionsImpl {
@@ -72,8 +72,8 @@ impl CallbackFunctions for CallbackFunctionsImpl {
         )
     }
 
-    fn data_connection_deleted_callback(&self, data_connection_id: &str) {
-        CallbackFunctionsHolder::global().data_connection_deleted_callback(data_connection_id)
+    fn data_connection_deleted_callback(&self, port_num: u16) {
+        CallbackFunctionsHolder::global().data_connection_deleted_callback(port_num);
     }
 }
 
@@ -179,7 +179,7 @@ pub(crate) trait GlobalState: Interface {
     fn program_state(&self) -> &'static ProgramStateHolder;
     fn store_topic(&self, data_connection_id: DataConnectionId, response: DataPipeInfo);
     fn find_topic(&self, data_connection_id: &DataConnectionId) -> Option<DataPipeInfo>;
-    fn remove_topic(&self, data_connection_id: &DataConnectionId);
+    fn remove_topic(&self, data_connection_id: &DataConnectionId) -> Option<DataPipeInfo>;
     fn store_call_response(
         &self,
         media_connection_id: MediaConnectionId,
@@ -221,13 +221,13 @@ impl GlobalState for GlobalStateImpl {
         item.map(|item| item.clone())
     }
 
-    fn remove_topic(&self, data_connection_id: &DataConnectionId) {
+    fn remove_topic(&self, data_connection_id: &DataConnectionId) -> Option<DataPipeInfo> {
         let mut hash = DATA_CONNECTION_STATE_INSTANCE
             .get()
             .unwrap()
             .lock()
             .unwrap();
-        let _ = hash.remove(data_connection_id);
+        return hash.remove(data_connection_id);
     }
 
     fn store_call_response(

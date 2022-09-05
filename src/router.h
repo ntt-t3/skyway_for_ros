@@ -21,9 +21,11 @@ class Router {
  public:
   virtual ~Router() = default;
   virtual void OnCreatePeer(char* peer_id, char* token) {}
-  virtual void OnConnectData(std::string target_ip, uint16_t target_port,
-                             std::string plugin_type,
-                             std::string plugin_param) {}
+  virtual PluginResult OnConnectData(std::string target_ip,
+                                     uint16_t target_port,
+                                     std::string plugin_type,
+                                     std::string plugin_param) = 0;
+  virtual void OnDeleteData(uint16_t port_num) {}
 };
 
 class RouterImpl : public Router {
@@ -39,6 +41,8 @@ class RouterImpl : public Router {
   std::unique_ptr<ControlService> control_service_;
   std::unique_ptr<EventsService> event_service_;
 
+  // pluginの実体を管理する
+  std::unordered_map<std::string, std::unique_ptr<PluginRouter>> plugin_map_;
   std::shared_ptr<IPluginRouterFactory> plugin_router_factory_;
 
   void shutdown(int signal);
@@ -56,8 +60,9 @@ class RouterImpl : public Router {
   ~RouterImpl() {}
 
   virtual void OnCreatePeer(char* peer_id, char* token) override;
-  virtual void OnConnectData(std::string target_ip, uint16_t, std::string,
-                             std::string) override;
+  virtual PluginResult OnConnectData(std::string target_ip, uint16_t,
+                                     std::string, std::string) override;
+  virtual void OnDeleteData(uint16_t port_num) override;
 };
 
 Component<Router> getRouterComponent();

@@ -26,9 +26,12 @@ impl EventReceiveImpl {
                 }
             }
             DataResponse::Event(DataConnectionEventEnum::CLOSE(close)) => {
-                self.state.remove_topic(&close.data_connection_id);
-                self.callback
-                    .data_connection_deleted_callback(close.data_connection_id.as_str());
+                let data_info = self.state.remove_topic(&close.data_connection_id);
+                data_info.map(|item| {
+                    self.callback
+                        .data_connection_deleted_callback(item.data_pipe_port_num);
+                });
+
                 Ok(DataResponseDto::Event(DataConnectionEventDto::CLOSE(close)))
             }
             DataResponse::Event(event) => {

@@ -68,49 +68,33 @@ void RouterImpl::OnCreatePeer(char* peer_id, char* token) {
   token_ = token;
 }
 
-void RouterImpl::OnConnectData(std::string target_ip, uint16_t target_port,
-                               std::string plugin_type,
-                               std::string plugin_param) {
+PluginResult RouterImpl::OnConnectData(std::string target_ip,
+                                       uint16_t target_port,
+                                       std::string plugin_type,
+                                       std::string plugin_param) {
   std::shared_ptr<rapidjson::Document> doc(new rapidjson::Document);
   doc->Parse(plugin_param.c_str());
 
-  if (plugin_type == "BINARY") {
+  auto plugin_router =
+      plugin_router_factory_->Create(target_ip, target_port, plugin_type, doc);
+  auto result = plugin_router->TryStart();
+
+  // pluginのロードに成功した場合のみ、実体を保管する
+  if (result.is_success) {
+    std::stringstream ss;
+    ss << "key-" << result.port;
+    std::string key = ss.str();
+    plugin_map_.emplace(key, std::move(plugin_router));
   }
-  /*
-   TODO
-  doc.Parse(json_str.c_str());
 
-  if (!doc.HasMember("type")) return;
+  return result;
+}
 
-  std::string type = doc["type"].GetString();
-  ROS_ERROR("type %s", type.c_str());
-
-  if (!doc["plugins"].IsArray()) return;
-   */
-
-  /*
-  for (int i = 0; i < doc["plugins"].Size(); i++) {
-  }
-   */
-
-  /*
-  const char* const json = "{\"serial\": 7}";
-
-  xmlrpc_value* const valP = xmlrpc_parse_json(&env, json);
-
-  xmlrpc_value* serialP;
-  int serial;
-
-  xmlrpc_struct_find_value(&env, valP, "serial", &serialP);
-
-  xmlrpc_read_int(&env, serialP, &serial);
-  assert(serial == 7);
-   */
-
-  /*
-  for (SizeType i = 0; i < a.Size(); i++)  // Uses SizeType instead of size_t
-    printf("a[%d] = %d\n", i, a[i].GetInt());
-    */
+void RouterImpl::OnDeleteData(uint16_t port_num) {
+  std::stringstream ss;
+  ss << "key-" << port_num;
+  std::string key = ss.str();
+  plugin_map_.erase(key);
 }
 
 Component<Router> getRouterComponent() {

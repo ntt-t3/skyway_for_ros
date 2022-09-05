@@ -21,7 +21,7 @@ pub struct CallbackFunctionsHolder {
         plugin_type: *mut c_char,
         plugin_param: *mut c_char,
     ) -> PluginLoadResult,
-    data_connection_deleted_callback_c: extern "C" fn(data_connection_id: *mut c_char),
+    data_connection_deleted_callback_c: extern "C" fn(data_connection_id: u16),
 }
 
 impl CallbackFunctionsHolder {
@@ -34,7 +34,7 @@ impl CallbackFunctionsHolder {
             plugin_type: *mut c_char,
             plugin_param: *mut c_char,
         ) -> PluginLoadResult,
-        data_connection_deleted_callback_c: extern "C" fn(data_connection_id: *mut c_char),
+        data_connection_deleted_callback_c: extern "C" fn(data_connection_id: u16),
     ) -> Self {
         CallbackFunctionsHolder {
             create_peer_callback_c,
@@ -76,10 +76,8 @@ impl CallbackFunctionsHolder {
         )
     }
 
-    pub fn data_connection_deleted_callback(&self, data_connection_id: &str) {
-        (self.data_connection_deleted_callback_c)(
-            CString::new(data_connection_id).unwrap().into_raw(),
-        );
+    pub fn data_connection_deleted_callback(&self, port_num: u16) {
+        (self.data_connection_deleted_callback_c)(port_num);
     }
 }
 
@@ -249,7 +247,7 @@ pub extern "C" fn register_program_state(
         .unwrap();
 }
 
-// 変数定義
+// Pluginがロードされた場合、この構造体に格納して使用中のPluginを管理する
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub(crate) struct DataPipeInfo {
     pub data_connection_id: DataConnectionId,

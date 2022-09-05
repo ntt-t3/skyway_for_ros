@@ -11,7 +11,7 @@ std::function<void(int)> shutdown_handler;
 std::function<void(char*, char*)> create_peer_callback_handler;
 std::function<PluginLoadResult(char*, uint16_t, char*, char*)>
     create_data_callback_handler;
-std::function<void(char*)> data_connection_close_event_callback_handler;
+std::function<void(uint16_t)> data_connection_close_event_callback_handler;
 }  // namespace
 
 extern "C" {
@@ -66,30 +66,21 @@ void FfiBridgeImpl::create_peer_callback(char* peer_id, char* token) {
 
 PluginLoadResult FfiBridgeImpl::create_data_connection_callback(
     char* target_ip, uint16_t port, char* plugin_type, char* plugin_param) {
-  router_->OnConnectData(target_ip, port, plugin_type, plugin_param);
+  auto result =
+      router_->OnConnectData(target_ip, port, plugin_type, plugin_param);
   release_string(target_ip);
   release_string(plugin_type);
   release_string(plugin_param);
-  return {.is_success = true, .port = 51111, .error_message = ""};
-  /*
-  auto source = source_factory_(
-      parameter.source_parameters.source_topic_name,
-      udp::endpoint(boost::asio::ip::address::from_string(
-                        parameter.source_parameters.destination_address),
-                    parameter.source_parameters.destination_port));
-  auto destination = destination_factory_(
-      parameter.destination_parameters.destination_topic_name,
-      udp::endpoint(udp::v4(), parameter.destination_parameters.source_port));
-  data_topic_container_->CreateData(parameter.data_connection_id,
-                                    std::move(source),
-                                    std::move(destination));
-                                    */
+
+  struct PluginLoadResult response = {
+      .is_success = result.is_success,
+      .port = result.port,
+      .error_message = result.error_message.c_str()};
+  return response;
 }
 
-void FfiBridgeImpl::delete_data_connection_callback(char* data_connection_id) {
-  // Todo: impl
-  // data_topic_container_->DeleteData(data_connection_id);
-  release_string(data_connection_id);
+void FfiBridgeImpl::delete_data_connection_callback(uint16_t port_num) {
+  router_->OnDeleteData(port_num);
 }
 
 Component<FfiBridge> getFfiComponent() {
