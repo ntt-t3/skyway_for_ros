@@ -38,6 +38,7 @@ class BinaryPluginRouter : public PluginRouter {
   ~BinaryPluginRouter();
 
   virtual PluginResult TryStart() override;
+  virtual uint16_t Port() override;
 };
 
 struct BinaryAnnotation {};

@@ -72,6 +72,8 @@ PluginResult StringPluginRouter::TryStart() {
   return {.is_success = true, .error_message = ""};
 }
 
+uint16_t StringPluginRouter::Port() { return socket_->Port(); }
+
 Component<fruit::Annotated<StringAnnotation, PluginRouterFactory>>
 getStringPluginRouterComponent() {
   return createComponent()

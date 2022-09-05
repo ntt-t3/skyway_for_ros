@@ -79,6 +79,8 @@ PluginResult JsonPluginRouter::TryStart() {
   return {.is_success = true, .error_message = ""};
 }
 
+uint16_t JsonPluginRouter::Port() { return socket_->Port(); }
+
 Component<fruit::Annotated<JsonAnnotation, PluginRouterFactory>>
 getJsonPluginRouterComponent() {
   return createComponent()

@@ -40,6 +40,8 @@ class JsonPluginRouter : public PluginRouter {
   ~JsonPluginRouter();
 
   virtual PluginResult TryStart() override;
+
+  virtual uint16_t Port() override;
 };
 
 struct JsonAnnotation {};

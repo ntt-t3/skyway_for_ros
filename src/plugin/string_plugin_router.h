@@ -37,6 +37,7 @@ class StringPluginRouter : public PluginRouter {
   ~StringPluginRouter();
 
   virtual PluginResult TryStart() override;
+  virtual uint16_t Port() override;
 };
 
 struct StringAnnotation {};

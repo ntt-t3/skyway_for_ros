@@ -70,6 +70,8 @@ PluginResult BinaryPluginRouter::TryStart() {
   return {.is_success = true, .error_message = ""};
 }
 
+uint16_t BinaryPluginRouter::Port() { return socket_->Port(); }
+
 Component<fruit::Annotated<BinaryAnnotation, PluginRouterFactory>>
 getBinaryPluginRouterComponent() {
   return createComponent()

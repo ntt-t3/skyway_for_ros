@@ -13,8 +13,6 @@ void UdpSocket::Start() {
     socket_->open(udp::v4());
     socket_->bind(local_endpoint_);
 
-    ros::NodeHandle nh_;
-
     // io_service_->runは同期実行なので、別スレッドで行う
     recv_thread_.reset(new std::thread([&] {
       wait_for_packets();

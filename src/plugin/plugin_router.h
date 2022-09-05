@@ -24,6 +24,7 @@ class PluginRouter {
   virtual PluginResult TryStart() {
     return {.is_success = true, .error_message = ""};
   }
+  virtual uint16_t Port() = 0;
 };
 
 using PluginRouterFactory = std::function<std::unique_ptr<PluginRouter>(
