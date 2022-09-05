@@ -5,15 +5,17 @@ std::function<void(int)> shutdown_handler;
 void signal_handler(int signal) { shutdown_handler(signal); }
 }  // namespace
 
-RouterImpl::RouterImpl(ControlServiceFactory control_service_factory,
-                       EventsServiceFactory event_service_factory,
-                       SourceFactory source_factory,
-                       DestinationFactory destination_factory,
-                       std::shared_ptr<DataTopicContainer> data_topic_container)
+RouterImpl::RouterImpl(
+    ControlServiceFactory control_service_factory,
+    EventsServiceFactory event_service_factory, SourceFactory source_factory,
+    DestinationFactory destination_factory,
+    std::shared_ptr<DataTopicContainer> data_topic_container,
+    std::shared_ptr<IPluginRouterFactory> plugin_router_factory)
     : control_service_factory_(control_service_factory),
       event_service_factory_(event_service_factory),
       source_factory_(source_factory),
-      destination_factory_(destination_factory) {
+      destination_factory_(destination_factory),
+      plugin_router_factory_(std::move(plugin_router_factory)) {
   shutdown_handler =
       std::bind(&RouterImpl::shutdown, this, std::placeholders::_1);
   // 終了時にROS-nodeが落ちる前に開放処理をしなければならないので、SIGINTをhookする
@@ -117,5 +119,6 @@ Component<Router> getRouterComponent() {
       .install(getEventsServiceComponent)
       .install(getSourceComponent)
       .install(getDestinationComponent)
-      .install(getDataTopicContainerComponent);
+      .install(getDataTopicContainerComponent)
+      .install(getPluginFactoryComponent);
 }

@@ -9,6 +9,7 @@
 
 #include "domain/entity.h"
 #include "ffi.h"
+#include "plugin/plugin_router_factory.h"
 #include "presentation/control_service.h"
 #include "presentation/events_service.h"
 
@@ -37,17 +38,20 @@ class RouterImpl : public Router {
   std::unique_ptr<ControlService> control_service_;
   std::unique_ptr<EventsService> event_service_;
 
+  std::shared_ptr<IPluginRouterFactory> plugin_router_factory_;
+
   void shutdown(int signal);
   std::string on_control_message(std::string);
   std::string on_event_request();
 
  public:
   RouterImpl() = delete;
-  INJECT(RouterImpl(ControlServiceFactory control_service_factory,
-                    EventsServiceFactory event_service_factory,
-                    SourceFactory source_factory,
-                    DestinationFactory destination_factory,
-                    std::shared_ptr<DataTopicContainer> data_topic_container));
+  INJECT(RouterImpl(
+      ControlServiceFactory control_service_factory,
+      EventsServiceFactory event_service_factory, SourceFactory source_factory,
+      DestinationFactory destination_factory,
+      std::shared_ptr<DataTopicContainer> data_topic_container,
+      std::shared_ptr<IPluginRouterFactory> plugin_router_factory));
   ~RouterImpl() {}
 
   virtual void OnCreatePeer(char* peer_id, char* token) override;
