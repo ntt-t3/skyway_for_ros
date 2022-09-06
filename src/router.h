@@ -52,7 +52,11 @@ class RouterImpl : public Router {
       RouterImpl(ControlServiceFactory control_service_factory,
                  EventsServiceFactory event_service_factory,
                  std::shared_ptr<IPluginRouterFactory> plugin_router_factory));
-  ~RouterImpl() {}
+
+  ~RouterImpl() {
+    control_service_->Shutdown();
+    event_service_->Shutdown();
+  }
 
   virtual void OnCreatePeer(char* peer_id, char* token) override;
   virtual PluginResult OnConnectData(std::string target_ip, uint16_t,

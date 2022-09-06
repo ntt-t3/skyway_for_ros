@@ -46,13 +46,25 @@ std::string RouterImpl::on_event_request() {
 }
 
 void RouterImpl::shutdown(int signal) {
-  // 終了処理は全てここで行う
-  // control_service_->Shutdown();
-  // event_service_->Shutdown();
+  // ctrl-cを受けたあとの終了処理は全てここで行う
+
   // shutdown処理の中身はPeer Objectの開放なので、生成前であれば呼ぶ必要がない
   if (peer_id_ != "" && token_ != "") {
-    // FIXME
-    // shutdown_service(peer_id_.c_str(), token_.c_str());
+    std::stringstream ss;
+    ss << "{";
+    ss << "   \"request_type\": \"PEER\",";
+    ss << "   \"command\" : \"DELETE\", ";
+    ss << "   \"params\": {";
+    ss << "     \"peer_id\": \"";
+    ss << peer_id_;
+    ss << "\",";
+    ss << "     \"token\": \"";
+    ss << token_;
+    ss << "\"   }";
+    ss << "}";
+
+    std::string message = ss.str();
+    char* response = call_service(message.c_str());
   } else
     ros::shutdown();
 }
