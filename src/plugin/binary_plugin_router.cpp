@@ -7,7 +7,7 @@
 //===== private =====
 void BinaryPluginRouter::observe_socket(std::vector<uint8_t> data) {
   for (auto plugin = plugins_.rbegin(); plugin != plugins_.rend(); ++plugin) {
-    (*plugin)->execute(data);
+    (*plugin)->Execute(data);
   }
 }
 
@@ -31,6 +31,9 @@ BinaryPluginRouter::BinaryPluginRouter(
 
 BinaryPluginRouter::~BinaryPluginRouter() {
   if (socket_) socket_->Stop();
+  for (auto plugin = plugins_.rbegin(); plugin != plugins_.rend(); ++plugin) {
+    (*plugin)->Shutdown();
+  }
 }
 
 PluginResult BinaryPluginRouter::TryStart() {
@@ -54,7 +57,7 @@ PluginResult BinaryPluginRouter::TryStart() {
           plugin_loader_.createInstance(plugin_name.c_str());
       std::shared_ptr<rapidjson::Document> parameter(new rapidjson::Document);
       parameter->CopyFrom(*itr, parameter->GetAllocator());
-      plugin->initialize(std::move(parameter), callback);
+      plugin->Initialize(std::move(parameter), callback);
       plugins_.push_back(plugin);
     } catch (pluginlib::PluginlibException &ex) {
       // pluginがopenできなかったらここでreturnする

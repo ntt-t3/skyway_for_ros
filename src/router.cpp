@@ -65,8 +65,9 @@ void RouterImpl::shutdown(int signal) {
 
     std::string message = ss.str();
     char* response = call_service(message.c_str());
-  } else
+  } else {
     ros::shutdown();
+  }
 }
 
 void RouterImpl::OnCreatePeer(char* peer_id, char* token) {
@@ -102,7 +103,11 @@ void RouterImpl::OnDeleteData(uint16_t port_num) {
   std::stringstream ss;
   ss << "key-" << port_num;
   std::string key = ss.str();
-  plugin_map_.erase(key);
+  if (plugin_map_.find(key) != plugin_map_.end()) {
+    plugin_map_.erase(key);
+  } else {
+    ROS_ERROR("data connection not found at onDeleteData");
+  }
 }
 
 Component<Router> getRouterComponent() {

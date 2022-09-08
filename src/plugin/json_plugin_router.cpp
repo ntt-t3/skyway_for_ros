@@ -6,12 +6,14 @@
 
 //===== private =====
 void JsonPluginRouter::observe_socket(std::vector<uint8_t> data) {
+  ROS_WARN("observe socket");
   std::string message(data.begin(), data.end());
   std::shared_ptr<rapidjson::Document> doc(new rapidjson::Document);
   doc->Parse(message.c_str());
 
   for (auto plugin = plugins_.rbegin(); plugin != plugins_.rend(); ++plugin) {
-    (*plugin)->execute(doc);
+    ROS_WARN("send data to plugin");
+    (*plugin)->Execute(doc);
   }
 }
 
@@ -40,7 +42,12 @@ JsonPluginRouter::JsonPluginRouter(std::shared_ptr<rapidjson::Document> config,
 }
 
 JsonPluginRouter::~JsonPluginRouter() {
+  ROS_ERROR("deconstructor of json plugin router1");
   if (socket_) socket_->Stop();
+  for (auto plugin = plugins_.rbegin(); plugin != plugins_.rend(); ++plugin) {
+    (*plugin)->Shutdown();
+  }
+  ROS_ERROR("deconstructor of json plugin router2");
 }
 
 PluginResult JsonPluginRouter::TryStart() {
@@ -63,7 +70,7 @@ PluginResult JsonPluginRouter::TryStart() {
           plugin_loader_.createInstance(plugin_name);
       std::shared_ptr<rapidjson::Document> parameter(new rapidjson::Document);
       parameter->CopyFrom(*itr, parameter->GetAllocator());
-      plugin->initialize(std::move(parameter), callback);
+      plugin->Initialize(std::move(parameter), callback);
       plugins_.push_back(plugin);
     } catch (pluginlib::PluginlibException &ex) {
       // pluginがopenできなかったらここでreturnする

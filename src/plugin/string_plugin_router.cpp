@@ -9,7 +9,7 @@ void StringPluginRouter::observe_socket(std::vector<uint8_t> data) {
   std::string message(data.begin(), data.end());
 
   for (auto plugin = plugins_.begin(); plugin != plugins_.end(); ++plugin) {
-    (*plugin)->execute(message);
+    (*plugin)->Execute(message);
   }
 }
 
@@ -34,6 +34,9 @@ StringPluginRouter::StringPluginRouter(
 
 StringPluginRouter::~StringPluginRouter() {
   if (socket_) socket_->Stop();
+  for (auto plugin = plugins_.rbegin(); plugin != plugins_.rend(); ++plugin) {
+    (*plugin)->Shutdown();
+  }
 }
 
 // try startにして、errorを返せるようにする
@@ -56,7 +59,7 @@ PluginResult StringPluginRouter::TryStart() {
           plugin_loader_.createInstance(plugin_name.c_str());
       std::shared_ptr<rapidjson::Document> parameter(new rapidjson::Document);
       parameter->CopyFrom(*itr, parameter->GetAllocator());
-      plugin->initialize(std::move(parameter), callback);
+      plugin->Initialize(std::move(parameter), callback);
       plugins_.push_back(plugin);
     } catch (pluginlib::PluginlibException &ex) {
       // pluginがopenできなかったらここでreturnする

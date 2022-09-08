@@ -33,10 +33,15 @@ void UdpSocket::Stop() {
     socket_->close();
   }
   if (recv_thread_) {
-    if (recv_thread_->joinable()) {
-      recv_thread_->join();
+    try {
+      if (recv_thread_->joinable()) {
+        recv_thread_->join();
+      }
+      recv_thread_.reset();
+    } catch (std::system_error& e) {
+      const std::error_code& ec = e.code();
+      ROS_ERROR("recv_thread_join_error %d %s", ec.value(), e.what());
     }
-    recv_thread_.reset();
   }
   if (io_service_) {
     io_service_->stop();

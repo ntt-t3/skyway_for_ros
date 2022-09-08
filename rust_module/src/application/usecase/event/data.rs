@@ -26,8 +26,10 @@ impl EventReceiveImpl {
                 }
             }
             DataResponse::Event(DataConnectionEventEnum::CLOSE(close)) => {
+                println!("data close event");
                 let data_info = self.state.remove_topic(&close.data_connection_id);
                 data_info.map(|item| {
+                    println!("{:?}", item);
                     self.callback
                         .data_connection_deleted_callback(item.data_pipe_port_num);
                 });
