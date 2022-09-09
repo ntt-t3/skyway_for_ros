@@ -14,6 +14,7 @@
 
 #include "std_msgs/UInt8MultiArray.h"
 
+using boost::asio::ip::address;
 using boost::asio::ip::udp;
 using fruit::Component;
 using fruit::createComponent;
@@ -46,6 +47,8 @@ TEST(TestSuite, socket_callback) {
   // 受信スレッドに対してデータを送信
   unsigned short port = source->Port();
   std::thread sending_thread([&] {
+    ros::Rate wait_rate(10);
+    wait_rate.sleep();
     boost::asio::io_service io_service;
     udp::resolver resolver(io_service);
     udp::endpoint receiver_endpoint(udp::v4(), port);
@@ -55,6 +58,8 @@ TEST(TestSuite, socket_callback) {
 
     std::vector<uint8_t> cvec = {0, 1, 2, 3, 4};
     auto buf = boost::asio::buffer(cvec);
+    ROS_ERROR("send to %s:%d", receiver_endpoint.address().to_string().c_str(),
+              receiver_endpoint.port());
     socket.send_to(buf, receiver_endpoint);
   });
 
@@ -109,6 +114,8 @@ TEST(TestSuite, socket_callback_twice) {
   // 受信スレッドに対してデータを送信
   unsigned short port = source->Port();
   std::thread sending_thread([&] {
+    ros::Rate wait_rate(10);
+    wait_rate.sleep();
     boost::asio::io_service io_service;
     udp::resolver resolver(io_service);
     udp::endpoint receiver_endpoint(udp::v4(), port);
@@ -172,6 +179,8 @@ TEST(TestSuite, socket_callback_in_map) {
   // 受信スレッドに対してデータを送信
   unsigned short port = map.at("socket")->Port();
   std::thread sending_thread([&] {
+    ros::Rate wait_rate(10);
+    wait_rate.sleep();
     boost::asio::io_service io_service;
     udp::resolver resolver(io_service);
     udp::endpoint receiver_endpoint(udp::v4(), port);

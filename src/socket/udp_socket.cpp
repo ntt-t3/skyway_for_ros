@@ -1,114 +1,87 @@
 //
-// Created by nakakura on 22/08/19.
+// Created by nakakura on 22/09/08.
 //
 
 #include "udp_socket.h"
 
-// UDPの受信スレッドを開始する
-// 重複コールは許容するが、stop後の再開はサポートしない(未定義動作)
+UdpSocket::UdpSocket(
+    udp::endpoint target_socket,
+    std::shared_ptr<std::function<void(std::vector<uint8_t>)>> callback)
+    : target_socket_(target_socket), callback_(callback) {
+  local_endpoint_ = getFreePort();
+  send_socket_->open(udp::v4());
+}
+
+UdpSocket::~UdpSocket() {
+  send_socket_->cancel();
+  send_io_service_->stop();
+  send_socket_->close();
+}
+
 void UdpSocket::Start() {
   if (is_running_) return;
-
-  if (!recv_thread_) {
-    socket_->open(udp::v4());
-    socket_->bind(local_endpoint_);
-
-    // io_service_->runは同期実行なので、別スレッドで行う
-    recv_thread_.reset(new std::thread([&] {
-      wait_for_packets();
-      io_service_->run();
-    }));
-  }
-
   is_running_ = true;
+
+  recv_thread_.reset(new std::thread([&] {
+    boost::asio::io_service io_service;
+    boost::asio::io_service::work work(io_service);
+    std::thread io_thread([&io_service]() { io_service.run(); });
+
+    udp::socket socket(io_service, local_endpoint_);
+    udp::endpoint remote_endpoint;
+
+    while (ros::ok() && is_running_) {
+      std::vector<unsigned char> vec(1500, 0);
+      std::future<std::size_t> recv_length;
+
+      recv_length =
+          socket.async_receive_from(boost::asio::buffer(vec), remote_endpoint,
+                                    0, boost::asio::use_future);
+
+      if (recv_length.wait_for(std::chrono::milliseconds(100)) ==
+          std::future_status::timeout) {
+        socket.cancel();
+      } else {
+        vec.resize(recv_length.get());
+        (*callback_)(vec);
+      }
+    }
+
+    io_service.stop();
+    io_thread.join();
+  }));
 }
 
-// UDP受信スレッドを停止する
-// 重複コールは許容する
-// 各種サービスを停止し、threadのポインタをクリアする
 void UdpSocket::Stop() {
   if (!is_running_) return;
-  if (socket_) {
-    socket_->cancel();
-    socket_->close();
-  }
-  if (recv_thread_) {
-    try {
-      if (recv_thread_->joinable()) {
-        recv_thread_->join();
-      }
-      recv_thread_.reset();
-    } catch (std::system_error& e) {
-      const std::error_code& ec = e.code();
-      ROS_ERROR("recv_thread_join_error %d %s", ec.value(), e.what());
-    }
-  }
-  if (io_service_) {
-    io_service_->stop();
-    io_service_.reset();
-  }
 
   is_running_ = false;
+  recv_thread_->join();
 }
 
-// 内部で保持しているソケットのポート番号を取得する
-unsigned short UdpSocket::Port() {
-  if (socket_ && socket_->is_open()) {
-    return socket_->local_endpoint().port();
-  } else {
-    return 0;
-  }
-}
+unsigned short UdpSocket::Port() { return local_endpoint_.port(); }
 
-void UdpSocket::SendData(std::vector<uint8_t> vec) {
-  std::string message(vec.begin(), vec.end());
-
-  socket_->async_send_to(
-      boost::asio::buffer(vec), target_socket_,
-      boost::bind(&UdpSocket::send_handler, this,
-                  boost::asio::placeholders::error,
-                  boost::asio::placeholders::bytes_transferred));
-}
-
-// ========== private methods ==========
-
-// boost::asioがasyncでデータ送信完了した際のcallback
-void UdpSocket::send_handler(const boost::system::error_code& error,
+void UdpSocket::send_handler(const boost::system::error_code &error,
                              std::size_t len) {
   if (error.value() != boost::system::errc::success) {
     ROS_WARN("fail to send data. %s", error.message().c_str());
   }
 }
 
-// boost::asioがUDPパケットを受信した際に呼ばれるコールバックメソッド
-void UdpSocket::receive_handler(const boost::system::error_code& error,
-                                size_t bytes_transferred) {
-  if (error) {
-    if (error.message() != "Operation canceled") {
-      ROS_ERROR("Receive failed: %s", error.message().c_str());
-    }
-    return;
-  }
-
-  // 受信データの処理開始前に非同期受信を再開しておく
-  wait_for_packets();
-
-  std::vector<uint8_t> vec;
-  vec.insert(vec.end(), &recv_buffer_[0], &recv_buffer_[bytes_transferred]);
-  (*callback_)(vec);
+void UdpSocket::SendData(std::vector<uint8_t> vec) {
+  send_socket_->async_send_to(
+      boost::asio::buffer(vec), target_socket_,
+      boost::bind(&UdpSocket::send_handler, this,
+                  boost::asio::placeholders::error,
+                  boost::asio::placeholders::bytes_transferred));
 }
 
-// boost::asioで待受を開始する
-void UdpSocket::wait_for_packets() {
-  socket_.get();
-  if (socket_) {
-    udp::endpoint remote_port;
-    socket_->async_receive_from(
-        boost::asio::buffer(recv_buffer_), remote_port,
-        boost::bind(&UdpSocket::receive_handler, this,
-                    boost::asio::placeholders::error,
-                    boost::asio::placeholders::bytes_transferred));
-  }
+udp::endpoint getFreePort() {
+  boost::asio::io_service service;
+  udp::socket socket(service);
+  socket.open(udp::v4());
+  socket.bind(udp::endpoint(udp::v4(), 0));
+  return socket.local_endpoint();
 }
 
 Component<SocketFactory> getUdpSocketComponent() {
