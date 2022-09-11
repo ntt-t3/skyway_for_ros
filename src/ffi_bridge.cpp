@@ -20,10 +20,7 @@ void create_peer_callback_ffi(char* peer_id, char* token) {
 }
 
 // Peer Closeイベントが発火したときにプログラム全体を終了する
-void peer_deleted_callback_ffi() {
-  ROS_ERROR("peer deleted callback ffi");
-  ros::shutdown();
-}
+void peer_deleted_callback_ffi() { ros::shutdown(); }
 
 PluginLoadResult create_data_callback_ffi(char* target_ip, uint16_t target_port,
                                           char* plugin_type,
@@ -33,7 +30,6 @@ PluginLoadResult create_data_callback_ffi(char* target_ip, uint16_t target_port,
 }
 
 void data_connection_close_event_callback_ffi(uint16_t port_num) {
-  ROS_ERROR("data connection close ffi");
   data_connection_close_event_callback_handler(port_num);
 }
 }
@@ -82,7 +78,6 @@ PluginLoadResult FfiBridgeImpl::create_data_connection_callback(
 }
 
 void FfiBridgeImpl::delete_data_connection_callback(uint16_t port_num) {
-  ROS_ERROR("delete data callback");
   router_->OnDeleteData(port_num);
 }
 
