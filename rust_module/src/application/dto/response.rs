@@ -10,6 +10,12 @@ use crate::domain::entity::{
 };
 use crate::error;
 
+//========== System ==========
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct SystemResponseDto {
+    pub(crate) is_success: bool,
+}
+
 //========== Peer ==========
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -186,6 +192,8 @@ pub(crate) enum ResponseDto {
     Media(MediaResponseDto),
     #[serde(rename = "DATA")]
     Data(DataResponseDto),
+    #[serde(rename = "SYSTEM")]
+    System(SystemResponseDto),
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]

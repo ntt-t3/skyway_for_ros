@@ -46,6 +46,10 @@ impl Factory for FactoryImpl {
                 let module = MediaAnswerService::builder().build();
                 module.resolve()
             }
+            RequestDto::System(_) => {
+                let module = SystemService::builder().build();
+                module.resolve()
+            }
             _ => {
                 let module = GeneralService::builder().build();
                 module.resolve()

@@ -1,6 +1,3 @@
-use std::thread::sleep;
-use std::time::Duration;
-
 use shaku::HasComponent;
 
 use super::EventReceiveImpl;
@@ -13,7 +10,6 @@ use crate::di::*;
 use crate::domain::entity::response::PeerResponse;
 use crate::domain::entity::PeerEventEnum;
 use crate::error;
-use crate::ffi::rust_to_c_bridge::state_objects::ProgramState;
 
 impl EventReceiveImpl {
     pub(crate) async fn process_peer_event(
@@ -25,13 +21,6 @@ impl EventReceiveImpl {
                 Ok(PeerResponseDto::Event(PeerEventEnumDto::OPEN(event)))
             }
             PeerResponse::Event(PeerEventEnum::CLOSE(close)) => {
-                std::thread::spawn(|| {
-                    sleep(Duration::from_millis(100));
-                    let module = CppObjctsModule::builder().build();
-                    let state: &dyn ProgramState = module.resolve_ref();
-                    state.shutdown();
-                });
-
                 Ok(PeerResponseDto::Event(PeerEventEnumDto::CLOSE(close)))
             }
             PeerResponse::Event(PeerEventEnum::CONNECTION(connection)) => {

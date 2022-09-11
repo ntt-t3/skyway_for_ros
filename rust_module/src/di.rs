@@ -8,6 +8,7 @@ use crate::application::usecase::general::service::General;
 use crate::application::usecase::media::answer::AnswerService;
 use crate::application::usecase::media::call::Call;
 use crate::application::usecase::peer::create::Create;
+use crate::application::usecase::system::System;
 use crate::ffi::rust_to_c_bridge::state_objects::{
     CallbackFunctionsImpl, GlobalStateImpl, LoggerImpl, ProgramStateImpl,
 };
@@ -37,6 +38,13 @@ module! {
 module! {
     pub(crate) GeneralService {
         components = [General, RepositoryImpl, GlobalStateImpl],
+        providers = []
+    }
+}
+
+module! {
+    pub(crate) SystemService {
+        components = [System],
         providers = []
     }
 }

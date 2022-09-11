@@ -11,6 +11,13 @@ use crate::domain::entity::{
 };
 use crate::error;
 
+//========== System ==========
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub(crate) struct SystemRequestDto {
+    pub(crate) command: String,
+}
+
 //========== Peer ==========
 impl Command for PeerRequestDto {
     fn command(&self) -> String {
@@ -182,6 +189,8 @@ pub(crate) enum RequestDto {
     Data(DataRequestDto),
     #[serde(rename = "MEDIA")]
     Media(MediaRequestDto),
+    #[serde(rename = "SYSTEM")]
+    System(SystemRequestDto),
     #[cfg(test)]
     Test,
 }
@@ -196,6 +205,7 @@ impl RequestDto {
             RequestDto::Peer(ref _p) => "PEER".to_string(),
             RequestDto::Data(ref _d) => "DATA".to_string(),
             RequestDto::Media(ref _m) => "MEDIA".to_string(),
+            RequestDto::System(ref _m) => "SYSTEM".to_string(),
             #[cfg(test)]
             _ => "TEST".to_string(),
         }
@@ -213,6 +223,7 @@ impl Command for RequestDto {
             RequestDto::Peer(ref peer) => peer.command(),
             RequestDto::Data(ref data) => data.command(),
             RequestDto::Media(ref media) => media.command(),
+            RequestDto::System(_) => "SYSTEM".to_string(),
             #[cfg(test)]
             RequestDto::Test => {
                 unreachable!()
