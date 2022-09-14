@@ -82,10 +82,12 @@ impl Service for Redirect {
                 (
                     result.is_success,
                     result.port,
-                    unsafe { CStr::from_ptr(result.error_message) }
-                        .to_str()
-                        .unwrap()
-                        .to_string(),
+                    "plugin load failed".to_string(), /* FIXME
+                                                      unsafe { CStr::from_ptr(result.error_message) }
+                                                          .to_str()
+                                                          .unwrap()
+                                                          .to_string(),
+                                                       */
                 )
             };
 

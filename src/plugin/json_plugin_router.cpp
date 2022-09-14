@@ -72,7 +72,8 @@ PluginResult JsonPluginRouter::TryStart() {
       // pluginがopenできなかったらここでreturnする
       std::ostringstream stream;
       stream << "Failed to load " << plugin_name << ex.what();
-      return {.is_success = false, .error_message = stream.str()};
+      ROS_ERROR("%s ", stream.str().c_str());
+      return {.is_success = false, .error_message = "failed to load plugin"};
     }
   }
 
