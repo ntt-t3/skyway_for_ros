@@ -68,12 +68,15 @@ PluginResult JsonPluginRouter::TryStart() {
       parameter->CopyFrom(*itr, parameter->GetAllocator());
       plugin->Initialize(std::move(parameter), callback);
       plugins_.push_back(plugin);
-    } catch (pluginlib::PluginlibException &ex) {
+    } catch (pluginlib::PluginlibException& ex) {
       // pluginがopenできなかったらここでreturnする
       std::ostringstream stream;
       stream << "Failed to load " << plugin_name << ex.what();
-      ROS_ERROR("%s ", stream.str().c_str());
-      return {.is_success = false, .error_message = "failed to load plugin"};
+      std::string message = stream.str();
+      char* data = (char*)malloc(strlen(message.c_str()) + 1);
+      strcpy(data, message.c_str());
+
+      return {.is_success = false, .error_message = (const char*)data};
     }
   }
 

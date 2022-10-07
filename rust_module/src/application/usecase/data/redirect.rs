@@ -79,16 +79,12 @@ impl Service for Redirect {
                     &redirect_params.plugin_info.r#type,
                     &plugin_params,
                 );
-                (
-                    result.is_success,
-                    result.port,
-                    "plugin load failed".to_string(), /* FIXME
-                                                      unsafe { CStr::from_ptr(result.error_message) }
-                                                          .to_str()
-                                                          .unwrap()
-                                                          .to_string(),
-                                                       */
-                )
+                let error_message = unsafe { CStr::from_ptr(result.error_message) }
+                    .to_str()
+                    .unwrap()
+                    .to_string();
+                self.callback.release_string_callback(result.error_message);
+                (result.is_success, result.port, error_message)
             };
 
             if !flag {

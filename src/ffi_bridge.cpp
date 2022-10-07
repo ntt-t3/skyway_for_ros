@@ -34,10 +34,7 @@ void data_connection_close_event_callback_ffi(uint16_t port_num) {
 }
 
 // リソース開放処理
-void release_string_ffi(char* str) {
-  ROS_ERROR("release str");
-  free(str);
-}
+void release_string_ffi(char* str) { free(str); }
 }
 
 FfiBridgeImpl::FfiBridgeImpl(std::shared_ptr<Router> router)
@@ -77,10 +74,9 @@ PluginLoadResult FfiBridgeImpl::create_data_connection_callback(
   release_string(plugin_type);
   release_string(plugin_param);
 
-  struct PluginLoadResult response = {
-      .is_success = result.is_success,
-      .port = result.port,
-      .error_message = result.error_message.c_str()};
+  struct PluginLoadResult response = {.is_success = result.is_success,
+                                      .port = result.port,
+                                      .error_message = result.error_message};
   return response;
 }
 

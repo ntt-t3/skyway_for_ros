@@ -1,5 +1,6 @@
 // C++側とオブジェクトのやり取りをする回数を最低限にするため、C++側のモジュールで本来所持するべきオブジェクトはOnceCellで保持する
 use std::collections::HashMap;
+use std::ffi::c_char;
 use std::sync::Arc;
 
 use once_cell::sync::OnceCell;
@@ -46,6 +47,7 @@ pub(crate) trait CallbackFunctions: Interface {
         json_parameter: &str,
     ) -> PluginLoadResult;
     fn data_connection_deleted_callback(&self, data_connection_id: u16);
+    fn release_string_callback(&self, message: *const c_char);
 }
 
 impl CallbackFunctions for CallbackFunctionsImpl {
@@ -74,6 +76,10 @@ impl CallbackFunctions for CallbackFunctionsImpl {
 
     fn data_connection_deleted_callback(&self, port_num: u16) {
         CallbackFunctionsHolder::global().data_connection_deleted_callback(port_num);
+    }
+
+    fn release_string_callback(&self, message: *const c_char) {
+        CallbackFunctionsHolder::global().release_str(message);
     }
 }
 

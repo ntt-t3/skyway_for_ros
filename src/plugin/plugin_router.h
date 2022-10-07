@@ -14,7 +14,7 @@ using namespace rapidjson;
 struct PluginResult {
   bool is_success;
   uint16_t port;
-  std::string error_message;
+  const char* error_message;
 };
 
 class PluginRouter {
