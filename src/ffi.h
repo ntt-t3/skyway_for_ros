@@ -33,6 +33,7 @@ struct Function {
   void_void_func peer_deleted_callback;
   plugin_topicparam_func create_data_callback;
   void_uint16_func data_connection_deleted_callback;
+  void_char_func release_string_callback;
 };
 
 struct run_response_t {
@@ -58,6 +59,8 @@ void register_program_state(bool_void_func is_running_c,
                             void_void_func shutdown_c);
 run_response_t run();
 void join_handler(void* handler);
+
+void print_string(char* message);
 };
 
 // Rust側から呼び出されるC++側関数の定義

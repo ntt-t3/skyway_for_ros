@@ -22,6 +22,7 @@ pub struct CallbackFunctionsHolder {
         plugin_param: *mut c_char,
     ) -> PluginLoadResult,
     data_connection_deleted_callback_c: extern "C" fn(data_connection_id: u16),
+    release_str_c: extern "C" fn(data_connection_id: *const c_char),
 }
 
 impl CallbackFunctionsHolder {
@@ -35,12 +36,14 @@ impl CallbackFunctionsHolder {
             plugin_param: *mut c_char,
         ) -> PluginLoadResult,
         data_connection_deleted_callback_c: extern "C" fn(data_connection_id: u16),
+        release_str_c: extern "C" fn(message: *const c_char),
     ) -> Self {
         CallbackFunctionsHolder {
             create_peer_callback_c,
             peer_deleted_callback,
             data_callback_c,
             data_connection_deleted_callback_c,
+            release_str_c,
         }
     }
 
@@ -79,6 +82,10 @@ impl CallbackFunctionsHolder {
     pub fn data_connection_deleted_callback(&self, port_num: u16) {
         (self.data_connection_deleted_callback_c)(port_num);
     }
+
+    pub fn release_str(&self, message: *const c_char) {
+        (self.release_str_c)(message);
+    }
 }
 
 // Rust側でイベントが発生した際にC++側に通知するためのコールバック関数の実体をC++側から受け取る
@@ -89,6 +96,7 @@ pub extern "C" fn register_callbacks(param: &CallbackFunctionsHolder) {
         param.peer_deleted_callback,
         param.data_callback_c,
         param.data_connection_deleted_callback_c,
+        param.release_str_c,
     );
 
     if CALLBACK_FUNCTIONS.set(functions).is_err() {

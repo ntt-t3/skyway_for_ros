@@ -122,3 +122,10 @@ pub extern "C" fn release_string(message: *mut c_char) {
         let _ = CString::from_raw(message);
     }
 }
+
+#[no_mangle]
+pub extern "C" fn print_string(message: *const c_char) {
+    let str = unsafe { CStr::from_ptr(message) }.to_str().unwrap();
+    println!("{}", str);
+    CallbackFunctionsHolder::global().release_str(message);
+}

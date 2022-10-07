@@ -32,6 +32,12 @@ PluginLoadResult create_data_callback_ffi(char* target_ip, uint16_t target_port,
 void data_connection_close_event_callback_ffi(uint16_t port_num) {
   data_connection_close_event_callback_handler(port_num);
 }
+
+// リソース開放処理
+void release_string_ffi(char* str) {
+  ROS_ERROR("release str");
+  free(str);
+}
 }
 
 FfiBridgeImpl::FfiBridgeImpl(std::shared_ptr<Router> router)
@@ -51,7 +57,8 @@ FfiBridgeImpl::FfiBridgeImpl(std::shared_ptr<Router> router)
 
   Function functions{create_peer_callback_ffi, peer_deleted_callback_ffi,
                      create_data_callback_ffi,
-                     data_connection_close_event_callback_ffi};
+                     data_connection_close_event_callback_ffi,
+                     release_string_ffi};
   register_callbacks(functions);
 }
 
