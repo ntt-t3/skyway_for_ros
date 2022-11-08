@@ -8,7 +8,7 @@
 #include <ros/ros.h>
 
 #include "ffi.h"
-#include "plugin/plugin_router_factory.h"
+#include "plugin_router/plugin_router_factory.h"
 #include "presentation/control_service.h"
 #include "presentation/events_service.h"
 

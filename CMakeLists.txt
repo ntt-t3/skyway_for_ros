@@ -13,7 +13,6 @@ find_package(catkin REQUIRED COMPONENTS
         roscpp
         std_msgs
         pluginlib
-        skyway_plugin
         )
 
 add_service_files(
@@ -26,11 +25,14 @@ generate_messages(
 )
 
 catkin_package(
+        INCLUDE_DIRS include
+        LIBRARIES ${PROJECT_NAME}_plugin
         CATKIN_DEPENDS std_msgs message_runtime
 )
 
 
 include_directories(
+        include
         ${catkin_INCLUDE_DIRS}
         ${VENDOR_DIR}/fruit/include
         ${VENDOR_DIR}/rapidjson/include
@@ -72,7 +74,7 @@ ExternalProject_Add(${PROJECT_NAME}_rapidjson
 
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${VENDOR_DIR})
 
-aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/plugin PLUGIN)
+aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/plugin_router PLUGIN)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/socket SOCKET)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/presentation PRESENTATION)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/infra INFRA)
@@ -106,9 +108,21 @@ target_link_libraries(${PROJECT_NAME}
         rt
         )
 
+add_library(${PROJECT_NAME}_plugin
+        src/plugin/samples/binary_loopback.cpp
+        src/plugin/samples/json_loopback.cpp
+        src/plugin/samples/string_loopback.cpp
+        src/plugin/skyway_plugin.cpp)
+
+add_dependencies(${PROJECT_NAME}_plugin
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS}
+        ${PROJECT_NAME}
+        ${PROJECT_NAME}_rapidjson)
+
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test TESTS)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/socket SOCKET_TESTS)
-aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/plugin PLUGIN_TESTS)
+aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/plugin_router PLUGIN_TESTS)
 aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/stub STUB)
 
 if (CATKIN_ENABLE_TESTING)

@@ -1,4 +1,4 @@
-#include "../../src/plugin/binary_plugin_router.h"
+#include "../../src/plugin_router/binary_plugin_router.h"
 
 #include <fruit/fruit.h>
 #include <gtest/gtest.h>

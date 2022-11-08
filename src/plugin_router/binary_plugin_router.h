@@ -11,7 +11,7 @@
 
 #include "../socket/udp_socket.h"
 #include "plugin_router.h"
-#include "skyway_plugin/skyway_plugin.h"
+#include "skyway/skyway_plugin.h"
 
 using fruit::Component;
 using fruit::createComponent;

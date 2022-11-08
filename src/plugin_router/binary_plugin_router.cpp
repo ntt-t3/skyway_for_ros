@@ -19,7 +19,7 @@ void BinaryPluginRouter::observe_plugins(std::vector<uint8_t> data) {
 BinaryPluginRouter::BinaryPluginRouter(
     std::shared_ptr<rapidjson::Document> config, udp::endpoint target_socket,
     SocketFactory factory)
-    : plugin_loader_("skyway_plugin", "skyway_plugin::SkyWayBinaryPlugin"),
+    : plugin_loader_("skyway", "skyway_plugin::SkyWayBinaryPlugin"),
       config_(std::move(config)),
       target_socket_(target_socket) {
   // Socketからのcallbackを与えてSocketを生成`

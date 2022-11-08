@@ -250,7 +250,7 @@ mod redirect_data_test {
             .returning(|_, _, _, _| PluginLoadResult {
                 is_success: false,
                 port: 0,
-                error_message: CString::new("plugin load error").unwrap().into_raw(),
+                error_message: CString::new("plugin_router load error").unwrap().into_raw(),
             });
 
         // 以下のMockはこのテストでは呼ばれない
@@ -293,7 +293,7 @@ mod redirect_data_test {
 
         let result = service.execute(request).await;
         if let Err(error::Error::LocalError(e)) = result {
-            assert_eq!(e, "plugin load error");
+            assert_eq!(e, "plugin_router load error");
         }
     }
 

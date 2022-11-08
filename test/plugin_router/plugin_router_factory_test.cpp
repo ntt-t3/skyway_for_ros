@@ -1,4 +1,4 @@
-#include "../../src/plugin/plugin_router_factory.h"
+#include "../../src/plugin_router/plugin_router_factory.h"
 
 #include <fruit/fruit.h>
 #include <gtest/gtest.h>
@@ -12,9 +12,9 @@
 #include <memory>
 #include <unordered_map>
 
-#include "../../src/plugin/binary_plugin_router.h"
-#include "../../src/plugin/json_plugin_router.h"
-#include "../../src/plugin/string_plugin_router.h"
+#include "../../src/plugin_router/binary_plugin_router.h"
+#include "../../src/plugin_router/json_plugin_router.h"
+#include "../../src/plugin_router/string_plugin_router.h"
 
 using fruit::Component;
 using fruit::createComponent;
