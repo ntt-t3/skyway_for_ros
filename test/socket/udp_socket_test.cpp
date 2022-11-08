@@ -58,8 +58,6 @@ TEST(TestSuite, socket_callback) {
 
     std::vector<uint8_t> cvec = {0, 1, 2, 3, 4};
     auto buf = boost::asio::buffer(cvec);
-    ROS_ERROR("send to %s:%d", receiver_endpoint.address().to_string().c_str(),
-              receiver_endpoint.port());
     socket.send_to(buf, receiver_endpoint);
   });
 

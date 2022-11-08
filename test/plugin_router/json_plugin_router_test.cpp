@@ -90,7 +90,7 @@ TEST(TestSuite, json_plugin_try_start_with_invalid_xml) {
   auto result = source->TryStart();
   // TryStartに失敗して、config間違いのエラーメッセージを受け取る
   ASSERT_FALSE(result.is_success);
-  ASSERT_EQ(result.error_message, "invalid config parameters");
+  ASSERT_STREQ(result.error_message, "invalid config parameters");
 }
 
 // pluginが見つからないケース
@@ -112,7 +112,8 @@ TEST(TestSuite, json_plugin_try_start_not_found_plugin) {
   auto result = source->TryStart();
   // TryStartに失敗して、pluginがない旨のメッセージを受け取る
   ASSERT_FALSE(result.is_success);
-  ASSERT_EQ(result.error_message.rfind("Failed to load"), 0);
+  std::string error_message = result.error_message;
+  ASSERT_EQ(error_message.rfind("Failed to load"), 0);
 }
 
 // Loopback Pluginを使うケース
