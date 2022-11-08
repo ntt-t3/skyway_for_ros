@@ -7,10 +7,16 @@
 
 #include <skyway/skyway_plugin.h>
 
+#include <thread>
+
 namespace string_send_recv {
 class StringSendRecv : public skyway_plugin::SkyWayStringPlugin {
  private:
   std::shared_ptr<std::function<void(std::string)>> callback_;
+  std::thread loop_thread_;
+  bool is_running_;
+
+  void service_thread();
 
  public:
   StringSendRecv();
