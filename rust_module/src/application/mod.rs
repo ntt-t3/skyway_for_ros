@@ -42,6 +42,13 @@ struct ErrorMessageInternal {
 /// 特別な処理を行うものは、usecase内のdata, media, peer moduleの中で実装される。
 /// その他のものはgeneral moduleの中で処理される。
 pub(crate) async fn call_service(message: String) -> String {
+    // 正常にparseできなかった場合に、request_typeとcommandをユーザに返すために取得を試みる
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    pub(crate) struct RequestTypeAndCommand {
+        request_type: String,
+        command: String,
+    }
+
     match RequestDto::from_str(&message) {
         Ok(dto) => {
             let module = GeneralFactory::builder().build();
@@ -72,9 +79,17 @@ pub(crate) async fn call_service(message: String) -> String {
             }
         }
         Err(_e) => {
+            let type_and_command = match serde_json::from_str::<RequestTypeAndCommand>(&message) {
+                Ok(request_type_and_command) => (
+                    Some(request_type_and_command.request_type),
+                    Some(request_type_and_command.command),
+                ),
+                Err(_e) => (None, None),
+            };
+
             let internal = ErrorMessageInternal {
-                request_type: None,
-                command: None,
+                request_type: type_and_command.0,
+                command: type_and_command.1,
                 error: format!("invalid message: {}", message),
             };
             let error_message = ErrorMessage {
