@@ -252,6 +252,10 @@ mod redirect_data_test {
                 port: 0,
                 error_message: CString::new("plugin_router load error").unwrap().into_raw(),
             });
+        caller
+            .expect_release_string_callback()
+            .times(1)
+            .returning(|_| ());
 
         // 以下のMockはこのテストでは呼ばれない
         let mut repository = MockRepository::new();
@@ -353,6 +357,10 @@ mod redirect_data_test {
                 port: 60000,
                 error_message: CString::new("").unwrap().into_raw(),
             });
+        caller
+            .expect_release_string_callback()
+            .times(1)
+            .returning(|_| ());
 
         let mut state = MockGlobalState::new();
         state.expect_store_topic().times(1).returning(
