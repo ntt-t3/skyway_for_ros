@@ -9,6 +9,7 @@ use crate::domain::entity::request::{DataRequest, MediaRequest, Request};
 use crate::domain::entity::response::{
     DataResponse, MediaResponse, PeerResponse, Response, ResponseResult,
 };
+use crate::domain::entity::ConnectQuery;
 use crate::error;
 
 pub(crate) trait Command {
@@ -21,6 +22,17 @@ pub(crate) fn dto_to_request(dto: RequestDto) -> Result<Request, error::Error> {
         RequestDto::Peer(parameter) => Ok(Request::Peer(parameter)),
         RequestDto::Data(DataRequestDto::Create) => {
             Ok(Request::Data(DataRequest::Create { params: true }))
+        }
+        RequestDto::Data(DataRequestDto::Connect { params }) => {
+            let query = ConnectQuery {
+                peer_id: params.peer_id,
+                token: params.token,
+                options: params.options,
+                target_id: params.target_id,
+                params: params.params,
+                redirect_params: params.redirect_params,
+            };
+            Ok(Request::Data(DataRequest::Connect { params: query }))
         }
         RequestDto::Data(DataRequestDto::Delete { params }) => {
             Ok(Request::Data(DataRequest::Delete { params }))

@@ -6,8 +6,9 @@ use serde_json::Value;
 use crate::application::dto::Command;
 use crate::domain::entity::request::IsVideo;
 use crate::domain::entity::{
-    DataConnectionId, DataConnectionIdWrapper, DataIdWrapper, MediaConnectionId,
-    MediaConnectionIdWrapper, MediaIdWrapper, PeerId, RedirectParameters, RtcpIdWrapper, Token,
+    ConnectQueryOption, DataConnectionId, DataConnectionIdWrapper, DataIdWrapper,
+    MediaConnectionId, MediaConnectionIdWrapper, MediaIdWrapper, PeerId, PhantomId,
+    RedirectParameters, RtcpIdWrapper, SocketInfo, Token,
 };
 use crate::error;
 
@@ -133,6 +134,12 @@ pub(crate) struct ConnectDtoParams {
     pub peer_id: PeerId,
     pub token: Token,
     pub target_id: PeerId,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub options: Option<ConnectQueryOption>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub params: Option<DataIdWrapper>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub redirect_params: Option<SocketInfo<PhantomId>>,
     pub plugin_info: PluginInfo,
 }
 
