@@ -11,6 +11,7 @@ use std::ffi::CStr;
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use serde_json::{json, Value};
 use shaku::Component;
 
 use crate::application::dto::request::{DataRequestDto, RequestDto};
@@ -20,7 +21,7 @@ use crate::application::usecase::Service;
 use crate::domain::entity::request::{DataRequest, Request};
 use crate::domain::entity::response::{DataResponse, Response, ResponseResult};
 use crate::domain::entity::{
-    ConnectQuery, DataIdWrapper, PhantomId, SerializableSocket, SocketInfo,
+    ConnectQuery, ConnectQueryOption, DataIdWrapper, PhantomId, SerializableSocket, SocketInfo,
 };
 use crate::domain::repository::Repository;
 use crate::error;
@@ -103,7 +104,7 @@ impl Service for Connect {
                 let params = ConnectQuery {
                     peer_id: connect_params.peer_id,
                     token: connect_params.token,
-                    options: None,
+                    options: connect_params.options,
                     target_id: connect_params.target_id,
                     params: Some(DataIdWrapper {
                         data_id: data_id.clone(),

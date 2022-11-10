@@ -30,6 +30,10 @@ impl Factory for FactoryImpl {
                 let module = PeerCreateService::builder().build();
                 module.resolve()
             }
+            RequestDto::Data(DataRequestDto::Connect { params: _ }) => {
+                let module = DataConnectService::builder().build();
+                module.resolve()
+            }
             RequestDto::Data(DataRequestDto::Redirect { params: _ }) => {
                 let module = DataRedirectService::builder().build();
                 module.resolve()
