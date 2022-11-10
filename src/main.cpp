@@ -6,6 +6,8 @@
 #include "router.h"
 
 int main(int argc, char** argv) {
+  // 日本語を出力する場合のため
+  setlocale(LC_CTYPE, "ja_JP.UTF-8");
   ros::init(argc, argv, "skyway");
   ros::AsyncSpinner spinner(4);
   spinner.start();
