@@ -79,11 +79,19 @@ impl Service for Redirect {
                     &redirect_params.plugin_info.r#type,
                     &plugin_params,
                 );
-                let error_message = unsafe { CStr::from_ptr(result.error_message) }
-                    .to_str()
-                    .unwrap()
-                    .to_string();
-                self.callback.release_string_callback(result.error_message);
+
+                let error_message = match result.is_success {
+                    true => "".to_string(),
+                    false => {
+                        let error_message = unsafe { CStr::from_ptr(result.error_message) }
+                            .to_str()
+                            .unwrap()
+                            .to_string();
+                        self.callback.release_string_callback(result.error_message);
+                        error_message
+                    }
+                };
+
                 (result.is_success, result.port, error_message)
             };
 
@@ -359,7 +367,7 @@ mod redirect_data_test {
             });
         caller
             .expect_release_string_callback()
-            .times(1)
+            .times(0)
             .returning(|_| ());
 
         let mut state = MockGlobalState::new();

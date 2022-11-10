@@ -10,13 +10,13 @@ path = "src/lib.rs"
 
 [dependencies]
 async-trait = "*"
-futures = "0.3.12"
-skyway-webrtc-gateway-caller = "0.2.0"
+futures = "0.3.25"
+skyway-webrtc-gateway-caller = "0.2.1"
 once_cell = "*"
-serde = { version = "1.0.126", features = ["derive"] }
-serde_json = { version = "1.0.64", default-features = false, features = ["alloc"] }
+serde = { version = "1.0.147", features = ["derive"] }
+serde_json = { version = "1.0.87", default-features = false, features = ["alloc"] }
 shaku = "*"
-tokio = { version = "1.17.0", features = ["full"] }
+tokio = { version = "1.21.2", features = ["full"] }
 
 [dev-dependencies]
-mockall = "0.9.1"
+mockall = "0.11.3"
