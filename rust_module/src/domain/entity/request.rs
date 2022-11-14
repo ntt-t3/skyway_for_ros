@@ -61,6 +61,8 @@ pub(crate) enum MediaRequest {
     Call { params: CallQuery },
     #[serde(rename = "ANSWER")]
     Answer { params: AnswerParameters },
+    #[serde(rename = "STATUS")]
+    Status { params: MediaConnectionIdWrapper },
     #[serde(rename = "DISCONNECT")]
     Disconnect { params: MediaConnectionIdWrapper },
 }

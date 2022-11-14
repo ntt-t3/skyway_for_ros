@@ -108,6 +108,8 @@ pub(crate) enum MediaRequestDto {
     RtcpDelete { params: RtcpIdWrapper },
     #[serde(rename = "CALL")]
     Call { params: CallQueryDto },
+    #[serde(rename = "STATUS")]
+    Status { params: MediaConnectionIdWrapper },
     #[serde(rename = "ANSWER")]
     Answer { params: AnswerParametersDto },
     #[serde(rename = "DISCONNECT")]
@@ -122,6 +124,7 @@ impl Command for MediaRequestDto {
             MediaRequestDto::RtcpCreate { .. } => "RTCP_CREATE".to_string(),
             MediaRequestDto::RtcpDelete { .. } => "RTCP_DELETE".to_string(),
             MediaRequestDto::Call { .. } => "CALL".to_string(),
+            MediaRequestDto::Status { .. } => "STATUS".to_string(),
             MediaRequestDto::Answer { .. } => "ANSWER".to_string(),
             MediaRequestDto::Disconnect { .. } => "DISCONNECT".to_string(),
         }

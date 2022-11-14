@@ -90,7 +90,7 @@ pub(crate) async fn call_service(message: String) -> String {
             let internal = ErrorMessageInternal {
                 request_type: type_and_command.0,
                 command: type_and_command.1,
-                error: format!("invalid message: {}", message),
+                error: format!("invalid message in call_service: {}", message),
             };
             let error_message = ErrorMessage {
                 is_success: false,
@@ -118,7 +118,7 @@ pub async fn receive_events() -> String {
             let internal = ErrorMessageInternal {
                 request_type: None,
                 command: None,
-                error: format!("invalid message: {:?}", error),
+                error: format!("invalid message in receive_events: {:?}", error),
             };
             let error_message = ErrorMessage {
                 is_success: false,

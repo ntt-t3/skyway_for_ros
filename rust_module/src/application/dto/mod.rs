@@ -55,6 +55,9 @@ pub(crate) fn dto_to_request(dto: RequestDto) -> Result<Request, error::Error> {
         RequestDto::Media(MediaRequestDto::RtcpDelete { params }) => {
             Ok(Request::Media(MediaRequest::RtcpDelete { params }))
         }
+        RequestDto::Media(MediaRequestDto::Status { params }) => {
+            Ok(Request::Media(MediaRequest::Status { params }))
+        }
         RequestDto::Media(MediaRequestDto::Disconnect { params }) => {
             Ok(Request::Media(MediaRequest::Disconnect { params }))
         }
@@ -100,6 +103,9 @@ pub(crate) fn result_to_dto(response: ResponseResult) -> Result<ResponseDtoResul
         ),
         ResponseResult::Success(Response::Media(MediaResponse::RtcpDelete(params))) => Ok(
             ResponseDtoResult::Success(ResponseDto::Media(MediaResponseDto::RtcpDelete(params))),
+        ),
+        ResponseResult::Success(Response::Media(MediaResponse::Status(params))) => Ok(
+            ResponseDtoResult::Success(ResponseDto::Media(MediaResponseDto::Status(params))),
         ),
         ResponseResult::Success(Response::Media(MediaResponse::Disconnect(params))) => Ok(
             ResponseDtoResult::Success(ResponseDto::Media(MediaResponseDto::Disconnect(params))),
