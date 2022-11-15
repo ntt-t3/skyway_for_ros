@@ -112,7 +112,7 @@ add_library(${PROJECT_NAME}_plugin
         src/plugin/samples/binary_loopback.cpp
         src/plugin/samples/json_loopback.cpp
         src/plugin/samples/string_loopback.cpp
-        src/plugin/samples/string_send_recv.cpp
+        src/plugin/samples/string_pub_sub.cpp
         src/plugin/skyway_plugin.cpp)
 
 add_dependencies(${PROJECT_NAME}_plugin
