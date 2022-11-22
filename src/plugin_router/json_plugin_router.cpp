@@ -10,6 +10,14 @@ void JsonPluginRouter::observe_socket(std::vector<uint8_t> data) {
   std::shared_ptr<rapidjson::Document> doc(new rapidjson::Document);
   doc->Parse(message.c_str());
 
+  if (doc->HasParseError()) {
+    ROS_ERROR("invalid json message: %s", message.c_str());
+    ROS_ERROR("error location: %ld", doc->GetErrorOffset());
+    ROS_ERROR("error mesasge: %s",
+              rapidjson::GetParseError_En(doc->GetParseError()));
+    return;
+  }
+
   for (auto plugin = plugins_.rbegin(); plugin != plugins_.rend(); ++plugin) {
     (*plugin)->Execute(doc);
   }

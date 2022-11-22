@@ -8,6 +8,7 @@
 #include <fruit/fruit.h>
 #include <pluginlib/class_loader.h>
 #include <rapidjson/document.h>
+#include <rapidjson/error/en.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 #include <ros/ros.h>
