@@ -31,3 +31,6 @@ Peer Objectが生成できたら、MediaConnection, DataConnectionの接続処�
 - [DataConnectionの確立](./doc/data_connect.md)
 - [DataConnectionの待ち受け](./doc/data_connect.md)
 - [イベントの監視](./doc/event_request.md)
+
+DataConnectionが確立できたら、Pluginを介して外部ROS Moduleとデータのやり取りを行えます。
+Pluginの仕様については[こちらのドキュメント](./doc/plugin.md)を参照してください。
