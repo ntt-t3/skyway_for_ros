@@ -7,13 +7,27 @@ SkyWayはWebRTCプラットフォームであり、SkyWayを利用すること�
 WebRTCは映像と音声を双方向通信するためのMediaStreamと、データを転送するためのDataChannelが定義されています。
 Skyway for ROSを利用することで、MediaStreamとDataChannelをROSパッケージから利用することができます。
 
-SkyWay for ROSでは2つのサービスが提供されており、これらを利用し操作を行います。
+全体的なモジュール構成は下図の通りです。
+![モジュール](./doc/img/component.png "モジュール図")
+
+SkyWay for ROSでは2つのサービスが提供されており、これらを利用し操作を行うことで、外部プログラム(Peer)に対してMediaStreamとDataConnection(over DataChannel)の確立を行います。
  
 - [SkyWayControl](./srv/SkyWayControl.srv)
 - [SkyWayEvents](./srv/SkyWayEvents.srv)
 
+SkyWay for ROS内のMediaSocketに対してRTP/RTCPを送信することで、確立されたMedia Connectionを経由して、Peerに対して映像と音声を送ることができます。
+また、データ転送用のROS Pluginをユーザ側で定義することができ、そのPluginに対してROS Topic, Service, Actionなどを用いてデータを送受信することで、
+Peerとデータのやりとりを行うことができます。
 
-各サービスへのアクセス方法は以下の通りです。
+## 操作方法とAPI仕様
+
+まずSkyWay for ROS内に、SkyWayサーバとやり取りするために　Peer Objectを生成します。以下のドキュメントを参照してください。
 
 - [PeerObjectの生成](./doc/peer_create.md)
 - [PeerObjectの状態確認](./doc/peer_create.md)
+
+Peer Objectが生成できたら、MediaConnection, DataConnectionの接続処理及び待ち受けが行えるようになります。以下のページを参照してください。
+
+- [DataConnectionの確立](./doc/data_connect.md)
+- [DataConnectionの待ち受け](./doc/data_connect.md)
+- [イベントの監視](./doc/event_request.md)
