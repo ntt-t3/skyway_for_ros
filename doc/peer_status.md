@@ -6,7 +6,7 @@ Peer Objectの生成後に、Peer Objectの状態を確認することができ�
 ![Peer Statusの確認](./img/sequence_peer_status.png "Peer Statusの確認")
 
 ### 1. Peer Status Requestの送信
-SkyWay for ROSに対して、`SkyWayControl`サービスを介してPeer Statusの確認リクエストを送ります。
+SkyWay for ROSに対して、`skyway_control`サービスを介してPeer Statusの確認リクエストを送ります。
 メッセージの内容は以下の通りです。
 
 **Peer Status Request**

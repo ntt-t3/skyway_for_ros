@@ -8,7 +8,7 @@
 
 ### 1. Peer Create Requestの送信
 
-SkyWay for ROSに対して、`SkyWayControl`サービスを介してPeer Objectの生成リクエストを送ります。
+SkyWay for ROSに対して、`skyway_control`サービスを介してPeer Objectの生成リクエストを送ります。
 メッセージの内容は以下の通りです。
 
 **Peer Request**
@@ -63,7 +63,7 @@ API_KEYごとにユニークである必要があります。
 
 ### 4. Peer Create Responseの取得
 
-PeerCreateRequestに対する応答は、`SkyWayControl`サービスの戻り値として取得できます。
+PeerCreateRequestに対する応答は、`skyway_control`サービスの戻り値として取得できます。
 
 **Create Peer Response**
 
