@@ -17,5 +17,5 @@
   - PeerObjectに関するイベントが格納されます
 - [Data](./data_event.md)
   - DataConnectionに関するイベントが格納されます
-- Media
+- [Media](./media_event.md)
   - MediaConnectionに関するイベントが格納されます
