@@ -21,9 +21,7 @@ class PluginRouter {
  private:
  public:
   virtual ~PluginRouter() = default;
-  virtual PluginResult TryStart() {
-    return {.is_success = true, .error_message = ""};
-  }
+  virtual PluginResult TryStart() { return {true, 0, ""}; }
   virtual uint16_t Port() = 0;
 };
 

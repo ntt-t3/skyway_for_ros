@@ -43,7 +43,7 @@ StringPluginRouter::~StringPluginRouter() {
 PluginResult StringPluginRouter::TryStart() {
   // plugin情報の配列を与えられていない場合は開始できない
   if (!config_->IsArray()) {
-    return {.is_success = false, .error_message = "invalid config parameters"};
+    return {false, 0, "invalid config parameters"};
   }
 
   auto callback = std::make_shared<std::function<void(std::string)>>(std::bind(
@@ -68,14 +68,14 @@ PluginResult StringPluginRouter::TryStart() {
       std::string message = stream.str();
       char* data = (char*)malloc(strlen(message.c_str()) + 1);
       strcpy(data, message.c_str());
-      return {.is_success = false, .error_message = (const char*)data};
+      return {false, 0, (const char*)data};
     }
   }
 
   // ここでsocket startするとデータが流れ始める
   socket_->Start();
 
-  return {.is_success = true, .port = socket_->Port(), .error_message = ""};
+  return {true, socket_->Port(), ""};
 }
 
 uint16_t StringPluginRouter::Port() { return socket_->Port(); }
