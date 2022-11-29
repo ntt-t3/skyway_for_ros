@@ -6,8 +6,6 @@ include(ExternalProject)
 
 SET(VENDOR_DIR ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}/vendor)
 
-SET(SKYWAY_LIB_FILE ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/rust_module/target/release/libskyway.a)
-
 find_package(catkin REQUIRED COMPONENTS
         message_generation
         roscpp
@@ -72,30 +70,42 @@ ExternalProject_Add(${PROJECT_NAME}_rapidjson
         UPDATE_DISCONNECTED 1
         )
 
-set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${VENDOR_DIR})
+# add skyway library
+SET(SKYWAY_LIB_FILE /tmp/libskyway_20.04.a)
+ExternalProject_Add(${PROJECT_NAME}_skyway
+        URL https://github.com/nakakura/library/releases/download/v0.0.1/libskyway_20.04.a
+        UPDATE_COMMAND ""
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND ""
+        INSTALL_COMMAND ""
+        DOWNLOAD_DIR /tmp
+        BINARY_DIR /tmp
+        UPDATE_DISCONNECTED 1
+        DOWNLOAD_NO_EXTRACT 1
+        )
 
-aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/plugin_router PLUGIN)
-aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/socket SOCKET)
-aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/presentation PRESENTATION)
-aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/infra INFRA)
+set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${VENDOR_DIR})
 
 add_executable(${PROJECT_NAME}
         src/main.cpp
-        src/router.cpp
-        src/di.cpp
         src/ffi.cpp
         src/ffi_bridge.cpp
-        ${SOCKET}
-        ${PLUGIN}
-        ${PRESENTATION}
-        ${INFRA}
+        src/router.cpp
+        src/plugin_router/binary_plugin_router.cpp
+        src/plugin_router/json_plugin_router.cpp
+        src/plugin_router/plugin_router_factory.cpp
+        src/plugin_router/string_plugin_router.cpp
+        src/presentation/control_service.cpp
+        src/presentation/events_service.cpp
+        src/socket/udp_socket.cpp
         )
 
 add_dependencies(${PROJECT_NAME}
         ${${PROJECT_NAME}_EXPORTED_TARGETS}
         ${catkin_EXPORTED_TARGETS}
         ${PROJECT_NAME}_fruit
-        ${PROJECT_NAME}_rapidjson)
+        ${PROJECT_NAME}_rapidjson
+        ${PROJECT_NAME}_skyway)
 
 target_link_libraries(${PROJECT_NAME}
         ${catkin_LIBRARIES}
@@ -119,23 +129,34 @@ add_dependencies(${PROJECT_NAME}_plugin
         ${${PROJECT_NAME}_EXPORTED_TARGETS}
         ${catkin_EXPORTED_TARGETS}
         ${PROJECT_NAME}
-        ${PROJECT_NAME}_rapidjson)
+        ${PROJECT_NAME}_rapidjson
+        ${PROJECT_NAME}_skyway)
 
-aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test TESTS)
-aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/socket SOCKET_TESTS)
-aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/plugin_router PLUGIN_TESTS)
-aux_source_directory(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test/stub STUB)
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_plugin
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 if (CATKIN_ENABLE_TESTING)
     find_package(rostest REQUIRED)
     add_rostest_gtest(${PROJECT_NAME}_test_node test/unit_test.test
-            ${TESTS}
-            ${SOCKET_TESTS}
-            ${PLUGIN_TESTS}
-            ${STUB}
-            ${INFRA}
-            ${SOCKET}
-            ${PLUGIN}
+            test/test_main.cpp
+            test/plugin_router/binary_plugin_router_test.cpp
+            test/plugin_router/json_plugin_router_test.cpp
+            test/plugin_router/plugin_router_factory_test.cpp
+            test/plugin_router/string_plugin_router_test.cpp
+            test/socket/udp_socket_test.cpp
+            src/plugin_router/binary_plugin_router.cpp
+            src/plugin_router/json_plugin_router.cpp
+            src/plugin_router/plugin_router_factory.cpp
+            src/plugin_router/string_plugin_router.cpp
+            src/presentation/control_service.cpp
+            src/presentation/events_service.cpp
+            src/socket/udp_socket.cpp
             )
     target_link_libraries(${PROJECT_NAME}_test_node
             ${catkin_LIBRARIES}

@@ -18,3 +18,7 @@ EventsServiceImpl::EventsServiceImpl(ASSISTED(std::string) name,
     : name_(name), callback_(callback) {
   service_ = nh_.advertiseService(name, &EventsServiceImpl::callback, this);
 }
+
+Component<EventsServiceFactory> getEventsServiceComponent() {
+  return createComponent().bind<EventsService, EventsServiceImpl>();
+}
