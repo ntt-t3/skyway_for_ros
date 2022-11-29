@@ -7,6 +7,7 @@
 
 #include <skyway/skyway_plugin.h>
 
+#include <mutex>
 #include <thread>
 
 #include "std_msgs/String.h"
