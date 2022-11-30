@@ -36,3 +36,5 @@ Peer Objectが生成できたら、MediaConnection, DataConnectionの接続処�
 
 DataConnectionが確立できたら、Pluginを介して外部ROS Moduleとデータのやり取りを行えます。
 Pluginの仕様については[こちらのドキュメント](./doc/plugin.md)を参照してください。
+
+[tips](./doc/tips.md)も参照して下さい。
