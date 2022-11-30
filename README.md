@@ -28,6 +28,8 @@ Peerとデータのやりとりを行うことができます。
 
 Peer Objectが生成できたら、MediaConnection, DataConnectionの接続処理及び待ち受けが行えるようになります。以下のページを参照してください。
 
+- [MediaConnectionの確立](./doc/media_call.md)
+- [MediaConnectionの待ち受け](./doc/media_answer.md)
 - [DataConnectionの確立](./doc/data_connect.md)
 - [DataConnectionの待ち受け](./doc/data_connect.md)
 - [イベントの監視](./doc/event_request.md)
