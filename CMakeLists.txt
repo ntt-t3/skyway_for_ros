@@ -28,7 +28,6 @@ catkin_package(
         CATKIN_DEPENDS std_msgs message_runtime
 )
 
-
 include_directories(
         include
         ${catkin_INCLUDE_DIRS}
@@ -140,6 +139,9 @@ install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_plugin
 
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+install(FILES ${PROJECT_NAME}_plugin.xml
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 if (CATKIN_ENABLE_TESTING)
     find_package(rostest REQUIRED)
