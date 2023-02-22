@@ -9,6 +9,9 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
+#include <functional>
+#include <vector>
+
 using namespace rapidjson;
 
 namespace skyway_plugin {
