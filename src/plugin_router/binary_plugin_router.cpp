@@ -33,6 +33,7 @@ BinaryPluginRouter::~BinaryPluginRouter() {
   if (socket_) socket_->Stop();
   for (auto plugin = plugins_.rbegin(); plugin != plugins_.rend(); ++plugin) {
     (*plugin)->Shutdown();
+    plugin->reset();
   }
 }
 
