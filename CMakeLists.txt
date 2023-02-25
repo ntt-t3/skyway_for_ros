@@ -72,7 +72,7 @@ ExternalProject_Add(${PROJECT_NAME}_rapidjson
 # add skyway library
 SET(SKYWAY_LIB_FILE /tmp/libskyway_20.04.a)
 ExternalProject_Add(${PROJECT_NAME}_skyway
-        URL https://github.com/nakakura/library/releases/download/v0.0.1/libskyway_20.04.a
+        URL https://github.com/nakakura/library/releases/download/v0.0.2/libskyway_20.04.a
         UPDATE_COMMAND ""
         CONFIGURE_COMMAND ""
         BUILD_COMMAND ""
