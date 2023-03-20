@@ -42,9 +42,7 @@ include_directories(
 # add DI framework
 SET(FRUIT_LIB_FILE ${VENDOR_DIR}/fruit/src/libfruit.a)
 ExternalProject_Add(${PROJECT_NAME}_fruit
-        GIT_REPOSITORY https://github.com/google/fruit.git
-        GIT_TAG v3.6.0
-        DOWNLOAD_COMMAND git clone --depth 1 https://github.com/google/fruit.git .
+        URL https://github.com/google/fruit/archive/refs/tags/v3.7.1.zip
         UPDATE_COMMAND ""
         INSTALL_COMMAND ""
         SOURCE_DIR ${VENDOR_DIR}/fruit
@@ -56,9 +54,7 @@ ExternalProject_Add(${PROJECT_NAME}_fruit
 
 # add json library
 ExternalProject_Add(${PROJECT_NAME}_rapidjson
-        GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
-        GIT_TAG v1.1.0
-        DOWNLOAD_COMMAND git clone --depth 1 https://github.com/Tencent/rapidjson.git .
+        URL https://github.com/Tencent/rapidjson/archive/refs/tags/v1.1.0.zip
         UPDATE_COMMAND ""
         CONFIGURE_COMMAND ""
         BUILD_COMMAND ""
@@ -70,18 +66,38 @@ ExternalProject_Add(${PROJECT_NAME}_rapidjson
         )
 
 # add skyway library
-SET(SKYWAY_LIB_FILE /tmp/libskyway_20.04.a)
-ExternalProject_Add(${PROJECT_NAME}_skyway
-        URL https://github.com/nakakura/library/releases/download/v0.0.2/libskyway_20.04.a
-        UPDATE_COMMAND ""
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ""
-        DOWNLOAD_DIR /tmp
-        BINARY_DIR /tmp
-        UPDATE_DISCONNECTED 1
-        DOWNLOAD_NO_EXTRACT 1
-        )
+if("$ENV{ROS_DISTRO}" STREQUAL "noetic")
+    message(STATUS "Download library for noetic")
+    SET(SKYWAY_LIB_FILE ${VENDOR_DIR}/libskyway_20.04.a)
+    ExternalProject_Add(${PROJECT_NAME}_skyway
+            URL https://github.com/ntt-t3/skyway_for_ros/releases/download/v0.0.1/libskyway_20.04.a
+            UPDATE_COMMAND ""
+            CONFIGURE_COMMAND ""
+            BUILD_COMMAND ""
+            INSTALL_COMMAND ""
+            DOWNLOAD_DIR ${VENDOR_DIR}
+            BINARY_DIR ${VENDOR_DIR}
+            UPDATE_DISCONNECTED 1
+            DOWNLOAD_NO_EXTRACT 1
+            )
+endif()
+
+if("$ENV{ROS_DISTRO}" STREQUAL "melodic")
+    message(STATUS "Download library for melodic")
+    SET(SKYWAY_LIB_FILE ${VENDOR_DIR}/libskyway_18.04.a)
+    ExternalProject_Add(${PROJECT_NAME}_skyway
+            URL https://github.com/ntt-t3/skyway_for_ros/releases/download/v0.0.1/libskyway_18.04.a
+            UPDATE_COMMAND ""
+            CONFIGURE_COMMAND ""
+            BUILD_COMMAND ""
+            INSTALL_COMMAND ""
+            DOWNLOAD_DIR ${VENDOR_DIR}
+            BINARY_DIR ${VENDOR_DIR}
+            UPDATE_DISCONNECTED 1
+            DOWNLOAD_NO_EXTRACT 1
+            )
+endif()
+
 
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${VENDOR_DIR})
 
@@ -160,8 +176,15 @@ if (CATKIN_ENABLE_TESTING)
             src/presentation/events_service.cpp
             src/socket/udp_socket.cpp
             )
+    add_dependencies(${PROJECT_NAME}_test_node
+            ${${PROJECT_NAME}_EXPORTED_TARGETS}
+            ${catkin_EXPORTED_TARGETS}
+            ${PROJECT_NAME}_fruit
+            ${PROJECT_NAME}_rapidjson
+            ${PROJECT_NAME}_skyway)
     target_link_libraries(${PROJECT_NAME}_test_node
             ${catkin_LIBRARIES}
+            ${SKYWAY_LIB_FILE}
             ${FRUIT_LIB_FILE}
             crypto
             ssl
