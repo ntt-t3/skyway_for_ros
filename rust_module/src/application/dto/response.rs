@@ -19,6 +19,16 @@ pub struct SystemResponseDto {
 //========== Peer ==========
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct PeerCallEventDto {
+    /// Pair of PeerId and Token. Indicate which Peer Object is regarded.
+    pub params: PeerInfo,
+    /// Id to identify the DataConnection
+    pub call_params: MediaConnectionIdWrapper,
+    /// status of the DataConnection
+    pub status: MediaConnectionStatus,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct PeerConnectionEventDto {
     /// Pair of PeerId and Token. Indicate which Peer Object is regarded.
     pub params: PeerInfo,
@@ -34,7 +44,7 @@ pub enum PeerEventEnumDto {
     OPEN(PeerOpenEvent),
     CLOSE(PeerCloseEvent),
     CONNECTION(PeerConnectionEventDto),
-    CALL(PeerCallEvent),
+    CALL(PeerCallEventDto),
     ERROR(PeerErrorEvent),
     TIMEOUT,
 }

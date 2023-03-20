@@ -1,10 +1,10 @@
 use shaku::HasComponent;
 
 use super::EventReceiveImpl;
-use crate::application::dto::request::RequestDto;
+use crate::application::dto::request::{MediaRequestDto, RequestDto};
 use crate::application::dto::response::{
-    DataResponseDto, PeerConnectionEventDto, PeerEventEnumDto, PeerResponseDto, ResponseDto,
-    ResponseDtoResult,
+    DataResponseDto, MediaResponseDto, PeerCallEventDto, PeerConnectionEventDto, PeerEventEnumDto,
+    PeerResponseDto, ResponseDto, ResponseDtoResult,
 };
 use crate::di::*;
 use crate::domain::entity::response::PeerResponse;
@@ -56,7 +56,35 @@ impl EventReceiveImpl {
                 }
             }
             PeerResponse::Event(PeerEventEnum::CALL(event)) => {
-                Ok(PeerResponseDto::Event(PeerEventEnumDto::CALL(event)))
+                use serde::{Deserialize, Serialize};
+
+                use crate::application::dto::request::MediaRequestDto;
+                use crate::application::Factory;
+
+                let module = GeneralFactory::builder().build();
+                let factory: &dyn Factory = module.resolve_ref();
+
+                let request_dto = RequestDto::Media(MediaRequestDto::Status {
+                    params: event.call_params.clone(),
+                });
+                let service = factory.create_service(&request_dto);
+                let result = service.execute(request_dto).await;
+
+                if let Ok(ResponseDtoResult::Success(ResponseDto::Media(
+                    MediaResponseDto::Status(status),
+                ))) = result
+                {
+                    let message = serde_json::to_string(&status).unwrap();
+                    let event_dto = PeerCallEventDto {
+                        params: event.params,
+                        call_params: event.call_params,
+                        status,
+                    };
+                    Ok(PeerResponseDto::Event(PeerEventEnumDto::CALL(event_dto)))
+                } else {
+                    let message = format!("call request is received from {}. But failed to get MediaConnection Status.", event.params.peer_id().as_str());
+                    Err(error::Error::create_local_error(&message))
+                }
             }
             PeerResponse::Event(PeerEventEnum::TIMEOUT) => unreachable!(),
             _ => {
