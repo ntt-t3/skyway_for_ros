@@ -70,7 +70,7 @@ if("$ENV{ROS_DISTRO}" STREQUAL "noetic")
     message(STATUS "Download library for noetic")
     SET(SKYWAY_LIB_FILE ${VENDOR_DIR}/libskyway_20.04.a)
     ExternalProject_Add(${PROJECT_NAME}_skyway
-            URL https://github.com/ntt-t3/skyway_for_ros/releases/download/v0.0.1/libskyway_20.04.a
+            URL https://github.com/ntt-t3/skyway_for_ros/releases/download/lib_v0.0.1/libskyway_20.04.a
             UPDATE_COMMAND ""
             CONFIGURE_COMMAND ""
             BUILD_COMMAND ""
@@ -86,7 +86,7 @@ if("$ENV{ROS_DISTRO}" STREQUAL "melodic")
     message(STATUS "Download library for melodic")
     SET(SKYWAY_LIB_FILE ${VENDOR_DIR}/libskyway_18.04.a)
     ExternalProject_Add(${PROJECT_NAME}_skyway
-            URL https://github.com/ntt-t3/skyway_for_ros/releases/download/v0.0.1/libskyway_18.04.a
+            URL https://github.com/ntt-t3/skyway_for_ros/releases/download/lib_v0.0.1/libskyway_18.04.a
             UPDATE_COMMAND ""
             CONFIGURE_COMMAND ""
             BUILD_COMMAND ""

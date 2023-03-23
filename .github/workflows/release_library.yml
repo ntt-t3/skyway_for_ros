@@ -3,7 +3,7 @@ name: ReleaseLibrary
 on:
   push:
     tags:
-      - "v[0-9].[0-9]+.[0-9]+"
+      - "lib_v[0-9].[0-9]+.[0-9]+"
 
 jobs:
   setup-release:
