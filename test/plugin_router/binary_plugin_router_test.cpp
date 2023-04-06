@@ -87,7 +87,7 @@ TEST(TestSuite, binary_plugin_try_start_with_invalid_xml) {
 TEST(TestSuite, binary_plugin_try_start_not_found_plugin) {
   std::shared_ptr<rapidjson::Document> config(new rapidjson::Document);
   config->Parse(
-      "[{\"plugin_name\":\"bnary_loopback::BinaryLoopback\",\"param\":"
+      "[{\"plugin_name\":\"binary_loopback::BinaryLoopback\",\"param\":"
       "\"Parameter\"},{"
       "\"plugin_name\":\"not_found_plugin::NotFoundPlugin\"}]");
 
