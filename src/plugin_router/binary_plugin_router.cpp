@@ -35,6 +35,8 @@ BinaryPluginRouter::~BinaryPluginRouter() {
     (*plugin)->Shutdown();
     plugin->reset();
   }
+
+  ROS_DEBUG("Succeeded in unloading all plugins");
 }
 
 PluginResult BinaryPluginRouter::TryStart() {
@@ -60,12 +62,14 @@ PluginResult BinaryPluginRouter::TryStart() {
       parameter->CopyFrom(*itr, parameter->GetAllocator());
       plugin->Initialize(std::move(parameter), callback);
       plugins_.push_back(plugin);
+      ROS_DEBUG("plugin %s has been loaded successfully", plugin_name.c_str());
     } catch (pluginlib::PluginlibException& ex) {
       // pluginがopenできなかったらここでreturnする
       std::ostringstream stream;
       stream << "Failed to load " << plugin_name << ex.what();
       std::string message = stream.str();
       char* data = (char*)malloc(strlen(message.c_str()) + 1);
+      ROS_ERROR("plugin load error: %s", message.c_str());
       strcpy(data, message.c_str());
       return {.is_success = false, 0, .error_message = (const char*)data};
     }

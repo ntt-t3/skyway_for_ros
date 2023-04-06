@@ -38,6 +38,8 @@ StringPluginRouter::~StringPluginRouter() {
     (*plugin)->Shutdown();
     plugin->reset();
   }
+
+  ROS_DEBUG("Succeeded in unloading all plugins");
 }
 
 // try startにして、errorを返せるようにする
@@ -61,6 +63,7 @@ PluginResult StringPluginRouter::TryStart() {
       std::shared_ptr<rapidjson::Document> parameter(new rapidjson::Document);
       parameter->CopyFrom(*itr, parameter->GetAllocator());
       plugin->Initialize(std::move(parameter), callback);
+      ROS_DEBUG("plugin %s has been loaded successfully", plugin_name.c_str());
       plugins_.push_back(plugin);
     } catch (pluginlib::PluginlibException& ex) {
       // pluginがopenできなかったらここでreturnする
@@ -68,6 +71,7 @@ PluginResult StringPluginRouter::TryStart() {
       stream << "Failed to load " << plugin_name << ex.what();
       std::string message = stream.str();
       char* data = (char*)malloc(strlen(message.c_str()) + 1);
+      ROS_ERROR("plugin load error: %s", message.c_str());
       strcpy(data, message.c_str());
       return {false, 0, (const char*)data};
     }
