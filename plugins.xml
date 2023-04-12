@@ -1,0 +1,8 @@
+<library path="skyway_plugin">
+    <class type="json_plugin::Square" base_class_type="skyway_plugin::SkyWayPlugin">
+        <description>This is a square plugin.</description>
+    </class>
+    <class type="json_plugin::Triangle" base_class_type="skyway_plugin::SkyWayPlugin">
+        <description>This is a triangle plugin.</description>
+    </class>
+</library>
