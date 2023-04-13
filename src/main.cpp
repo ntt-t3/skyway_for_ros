@@ -1,10 +1,7 @@
 #include <ros/ros.h>
 
 #include "ffi/callback_from_rust.h"
-#include "ffi/ros_functions.h"
 #include "ffi/rust_functions.h"
-#include "presentation/control_service.h"
-#include "router.h"
 
 int main(int argc, char** argv) {
   // 日本語を出力する場合のため
