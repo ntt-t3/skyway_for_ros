@@ -1,8 +1,8 @@
 #include <ros/ros.h>
 
+#include "ffi/callback_from_rust.h"
 #include "ffi/ros_functions.h"
 #include "ffi/rust_functions.h"
-#include "ffi_bridge.h"
 #include "presentation/control_service.h"
 #include "router.h"
 
@@ -23,9 +23,9 @@ int main(int argc, char** argv) {
   if (response.flag) {
     // Rust側の処理が正常に開始した
     ROS_DEBUG("program starts successfully");
-    Injector<FfiBridge> apiInjector(getFfiComponent);
-    std::shared_ptr<FfiBridge> ffi =
-        apiInjector.get<std::shared_ptr<FfiBridge>>();
+    Injector<CallbackFromRust> apiInjector(getCallbackFromRustComponent);
+    std::shared_ptr<CallbackFromRust> ffi =
+        apiInjector.get<std::shared_ptr<CallbackFromRust>>();
 
     //メインスレッドはここで止めてあとはSeviceとActionからの処理を待ち受け続ける
     ros::waitForShutdown();

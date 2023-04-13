@@ -2,17 +2,11 @@
 // Created by nakakura on 22/09/04.
 //
 
-#include "ffi_bridge.h"
-#include "ffi/rust_functions.h"
+#include "callback_from_rust.h"
+
 #include <signal.h>
 
-namespace {
-std::function<void(int)> shutdown_handler;
-std::function<void(char*, char*)> create_peer_callback_handler;
-std::function<PluginLoadResult(char*, uint16_t, char*, char*)>
-    create_data_callback_handler;
-std::function<void(uint16_t)> data_connection_close_event_callback_handler;
-}  // namespace
+#include "rust_functions.h"
 
 extern "C" {
 void create_peer_callback_ffi(char* peer_id, char* token) {
@@ -37,19 +31,19 @@ void data_connection_close_event_callback_ffi(uint16_t port_num) {
 void release_string_ffi(char* str) { free(str); }
 }
 
-FfiBridgeImpl::FfiBridgeImpl(std::shared_ptr<Router> router)
+CallbackFromRustImpl::CallbackFromRustImpl(std::shared_ptr<Router> router)
     : router_(std::move(router)) {
   create_peer_callback_handler =
-      std::bind(&FfiBridgeImpl::create_peer_callback, this,
+      std::bind(&CallbackFromRustImpl::create_peer_callback, this,
                 std::placeholders::_1, std::placeholders::_2);
 
   create_data_callback_handler =
-      std::bind(&FfiBridgeImpl::create_data_connection_callback, this,
+      std::bind(&CallbackFromRustImpl::create_data_connection_callback, this,
                 std::placeholders::_1, std::placeholders::_2,
                 std::placeholders::_3, std::placeholders::_4);
 
   data_connection_close_event_callback_handler =
-      std::bind(&FfiBridgeImpl::delete_data_connection_callback, this,
+      std::bind(&CallbackFromRustImpl::delete_data_connection_callback, this,
                 std::placeholders::_1);
 
   Function functions{create_peer_callback_ffi, peer_deleted_callback_ffi,
@@ -59,14 +53,14 @@ FfiBridgeImpl::FfiBridgeImpl(std::shared_ptr<Router> router)
   register_callbacks(functions);
 }
 
-void FfiBridgeImpl::create_peer_callback(char* peer_id, char* token) {
+void CallbackFromRustImpl::create_peer_callback(char* peer_id, char* token) {
   router_->OnCreatePeer(peer_id, token);
 
   release_string(peer_id);
   release_string(token);
 }
 
-PluginLoadResult FfiBridgeImpl::create_data_connection_callback(
+PluginLoadResult CallbackFromRustImpl::create_data_connection_callback(
     char* target_ip, uint16_t port, char* plugin_type, char* plugin_param) {
   auto result =
       router_->OnConnectData(target_ip, port, plugin_type, plugin_param);
@@ -80,11 +74,12 @@ PluginLoadResult FfiBridgeImpl::create_data_connection_callback(
   return response;
 }
 
-void FfiBridgeImpl::delete_data_connection_callback(uint16_t port_num) {
+void CallbackFromRustImpl::delete_data_connection_callback(uint16_t port_num) {
   router_->OnDeleteData(port_num);
 }
 
-Component<FfiBridge> getFfiComponent() {
-  return fruit::createComponent().bind<FfiBridge, FfiBridgeImpl>().install(
-      getRouterComponent);
+Component<CallbackFromRust> getCallbackFromRustComponent() {
+  return fruit::createComponent()
+      .bind<CallbackFromRust, CallbackFromRustImpl>()
+      .install(getRouterComponent);
 }

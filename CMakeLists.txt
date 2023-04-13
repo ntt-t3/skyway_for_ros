@@ -104,7 +104,7 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${VENDOR_DIR})
 add_executable(${PROJECT_NAME}
         src/main.cpp
         src/ffi/ros_functions.cpp
-        src/ffi_bridge.cpp
+        src/ffi/callback_from_rust.cpp
         src/router.cpp
         src/plugin_router/binary_plugin_router.cpp
         src/plugin_router/json_plugin_router.cpp
