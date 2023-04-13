@@ -1,8 +1,8 @@
 #include <ros/ros.h>
 
-#include "ffi.h"
-#include "ffi_bridge.h"
+#include "ffi/ros_functions.h"
 #include "ffi/rust_functions.h"
+#include "ffi_bridge.h"
 #include "presentation/control_service.h"
 #include "router.h"
 

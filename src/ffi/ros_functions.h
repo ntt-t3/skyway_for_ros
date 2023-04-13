@@ -6,10 +6,7 @@
 #define SKYWAY_FFI_H
 
 #include <ros/ros.h>
-
-#include "router.h"
-
-
+#include "../router.h"
 
 // Rust側から呼び出されるC++側関数の定義
 extern "C" {

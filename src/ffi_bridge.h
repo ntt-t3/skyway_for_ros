@@ -8,8 +8,9 @@
 
 #include <fruit/fruit.h>
 #include <ros/ros.h>
+
 #include "ffi/common.h"
-#include "ffi.h"
+#include "ffi/ros_functions.h"
 
 using fruit::Component;
 using fruit::Injector;
