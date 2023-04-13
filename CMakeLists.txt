@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(skyway)
 
+include(ExternalProject)
+
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
@@ -19,13 +21,42 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(rclcpp REQUIRED)
+
+# add json library
+SET(VENDOR_DIR ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}/vendor)
+ExternalProject_Add(${PROJECT_NAME}_rapidjson
+        URL https://github.com/Tencent/rapidjson/archive/refs/tags/v1.1.0.zip
+        UPDATE_COMMAND ""
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND ""
+        INSTALL_COMMAND ""
+        SOURCE_DIR ${VENDOR_DIR}/rapidjson
+        DOWNLOAD_DIR ${VENDOR_DIR}/rapidjson
+        BINARY_DIR ${VENDOR_DIR}/rapidjson
+        UPDATE_DISCONNECTED 1
+        )
+include_directories(
+        include
+        ${VENDOR_DIR}/rapidjson/include
+)
 
 # Plugin Definition
-add_library(skyway_plugin SHARED src/plugin_ros2/skyway_plugin.cpp)
+add_library(skyway_plugin SHARED
+        src/plugin_ros2/skyway_plugin.cpp
+        src/plugin_ros2/samples/binary_loopback.cpp
+        src/plugin_ros2/samples/json_loopback.cpp
+        src/plugin_ros2/samples/string_loopback.cpp
+        )
 target_include_directories(skyway_plugin PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(skyway_plugin pluginlib)
+target_link_libraries(skyway_plugin ${rclcpp_LIBRARIES})
+add_dependencies(skyway_plugin
+        skyway_plugin
+        ${PROJECT_NAME}_rapidjson
+        )
 pluginlib_export_plugin_description_file(skyway plugins.xml)
 target_compile_definitions(skyway_plugin PRIVATE "POLYGON_PLUGINS_BUILDING_LIBRARY")
 install(
@@ -47,6 +78,7 @@ target_include_directories(skyway_node PUBLIC
         $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(skyway_node pluginlib)
 add_dependencies(skyway_node skyway_plugin)
+target_link_libraries(skyway_node ${rclcpp_LIBRARIES})
 install(
         DIRECTORY include/
         DESTINATION include

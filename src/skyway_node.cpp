@@ -1,29 +1,20 @@
+#include <skyway/skyway_plugin.h>
+
 #include <pluginlib/class_loader.hpp>
-#include <skyway/skyway_plugin.hpp>
+#include <rclcpp/rclcpp.hpp>
 
-int main(int argc, char** argv)
-{
-    // To avoid unused parameter warnings
-    (void) argc;
-    (void) argv;
+int main(int argc, char** argv) {
+  rclcpp::init(argc, argv);
 
-    pluginlib::ClassLoader<skyway_plugin::SkyWayPlugin> poly_loader("skyway", "skyway_plugin::SkyWayPlugin");
+  pluginlib::ClassLoader<skyway_plugin::SkyWayStringPlugin> poly_loader(
+      "skyway", "skyway_plugin::SkyWayStringPlugin");
 
-    try
-    {
-        std::shared_ptr<skyway_plugin::SkyWayPlugin> triangle = poly_loader.createSharedInstance("json_plugin::Triangle");
-        triangle->initialize(10.0);
+  try {
+    std::shared_ptr<skyway_plugin::SkyWayStringPlugin> triangle =
+        poly_loader.createSharedInstance("string_loopback::StringLoopback");
+  } catch (pluginlib::PluginlibException& ex) {
+    printf("The plugin failed to load for some reason. Error: %s\n", ex.what());
+  }
 
-        std::shared_ptr<skyway_plugin::SkyWayPlugin> square = poly_loader.createSharedInstance("json_plugin::Square");
-        square->initialize(10.0);
-
-        printf("Triangle area: %.2f\n", triangle->area());
-        printf("Square area: %.2f\n", square->area());
-    }
-    catch(pluginlib::PluginlibException& ex)
-    {
-        printf("The plugin failed to load for some reason. Error: %s\n", ex.what());
-    }
-
-    return 0;
+  return 0;
 }
