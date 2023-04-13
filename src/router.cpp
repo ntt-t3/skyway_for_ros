@@ -1,4 +1,5 @@
 #include "router.h"
+#include "ffi/rust_functions.h"
 
 namespace {
 std::function<void(int)> shutdown_handler;

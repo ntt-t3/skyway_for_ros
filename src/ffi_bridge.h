@@ -8,7 +8,7 @@
 
 #include <fruit/fruit.h>
 #include <ros/ros.h>
-
+#include "ffi/common.h"
 #include "ffi.h"
 
 using fruit::Component;

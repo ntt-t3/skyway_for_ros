@@ -3,7 +3,7 @@
 //
 
 #include "ffi_bridge.h"
-
+#include "ffi/rust_functions.h"
 #include <signal.h>
 
 namespace {

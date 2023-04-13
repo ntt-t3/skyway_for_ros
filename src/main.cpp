@@ -2,6 +2,7 @@
 
 #include "ffi.h"
 #include "ffi_bridge.h"
+#include "ffi/rust_functions.h"
 #include "presentation/control_service.h"
 #include "router.h"
 

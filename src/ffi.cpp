@@ -3,6 +3,7 @@
 //
 
 #include "ffi.h"
+#include "ffi/rust_functions.h"
 
 // Rust側から呼び出されるC++側関数の実体
 extern "C" {
