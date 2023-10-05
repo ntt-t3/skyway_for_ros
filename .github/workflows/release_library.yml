@@ -34,6 +34,38 @@ jobs:
           name: artifact
           path: artifact/url.txt
 
+  build_22_04:
+    name: Build 22.04 binary
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        run: cargo build --release --all-features --manifest-path rust_module/Cargo.toml
+
+      - name: Download artifact to get url to upload to release
+        uses: actions/download-artifact@v1
+        with:
+          name: artifact
+
+      - name: Get url to upload to release from artifact
+        id: get_url
+        run: |
+          url=$(cat artifact/url.txt)
+          echo "upload_url=$url" >> $GITHUB_ENV
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.upload_url }}
+          asset_path: rust_module/target/release/libskyway.a
+          asset_name: libskyway_22.04.a
+          asset_content_type: application/octet-stream
+
   build_20_04:
     name: Build 20.04 binary
     runs-on: ubuntu-20.04
