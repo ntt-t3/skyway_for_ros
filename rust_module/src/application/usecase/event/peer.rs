@@ -87,10 +87,13 @@ impl EventReceiveImpl {
                 }
             }
             PeerResponse::Event(PeerEventEnum::TIMEOUT) => unreachable!(),
+            PeerResponse::Event(PeerEventEnum::ERROR(error)) => {
+                Ok(PeerResponseDto::Event(PeerEventEnumDto::ERROR(error)))
+            }
             _ => {
-                let message = format!("Non-Event object is processed in EventReceiveImpl as Peer");
-                self.logger.error(&message);
-                unreachable!()
+                return Err(error::Error::create_local_error(
+                    "Non-Event object is processed in EventReceiveImpl",
+                ))
             }
         }
     }

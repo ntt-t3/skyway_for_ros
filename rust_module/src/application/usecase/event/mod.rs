@@ -64,10 +64,7 @@ impl EventReceiveImpl {
             ResponseResult::Success(Response::Media(response)) => Ok(ResponseDtoResult::Success(
                 ResponseDto::Media(self.process_media_event(response).await?),
             )),
-            ResponseResult::Error(e) => {
-                let message = format!("EventReceiveImpl receives error message {}", e);
-                Err(error::Error::create_local_error(&message))
-            }
+            ResponseResult::Error(e) => Err(error::Error::create_local_error(&e)),
         }
     }
 }
