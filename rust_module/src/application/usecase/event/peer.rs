@@ -21,6 +21,11 @@ impl EventReceiveImpl {
                 Ok(PeerResponseDto::Event(PeerEventEnumDto::OPEN(event)))
             }
             PeerResponse::Event(PeerEventEnum::CLOSE(close)) => {
+                //let peer_id = peer_info.peer_id();
+                //let token = peer_info.token();
+                // shutdown処理のためにpeer_id, tokenをC++側に通知
+                self.callback.peer_deleted_callback();
+
                 Ok(PeerResponseDto::Event(PeerEventEnumDto::CLOSE(close)))
             }
             PeerResponse::Event(PeerEventEnum::CONNECTION(connection)) => {
